@@ -1,0 +1,525 @@
+# rules/go_crypto.yaml
+# Go standard library crypto detection rules.
+#
+# PRATYAKSHA constraint: all algorithm names, primitives, parameter sets, and
+# quantum-status mappings belong here — never hardcoded in Python detector code.
+#
+# Schema for each entry in functions:
+#   <pkg>.<FuncName>:
+#     canonical: <string>              # Canonical algorithm name
+#     primitive: <string>              # Primitive enum value
+#     parameter_set: <string | null>   # Parameter set / key size identifier
+#     mode: <string | null>            # Mode identifier (e.g. gcm)
+#     quantum_status: <string>         # broken-by-shor | weakened-by-grover | broken-classically | quantum-safe | unknown
+#     oid: <string | null>             # OID if known
+#
+# quantum_status values mirror pratyaksha.model.assets.QuantumStatus:
+#   broken-by-shor        – asymmetric; vulnerable to Shor's algorithm on CRQC
+#   weakened-by-grover    – symmetric/hash; key size halved by Grover
+#   broken-classically    – already broken without a quantum computer
+#   quantum-safe          – believed secure classically and quantum
+#   unknown               – status not yet assessed
+
+functions:
+
+  # ---------------------------------------------------------------------------
+  # Asymmetric — crypto/rsa
+  # ---------------------------------------------------------------------------
+  rsa.GenerateKey:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  rsa.GenerateMultiPrimeKey:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  rsa.EncryptOAEP:
+    canonical: RSA-OAEP
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.7"
+
+  rsa.DecryptOAEP:
+    canonical: RSA-OAEP
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.7"
+
+  rsa.EncryptPKCS1v15:
+    canonical: RSA-PKCS1v15
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  rsa.DecryptPKCS1v15:
+    canonical: RSA-PKCS1v15
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  rsa.SignPKCS1v15:
+    canonical: RSASSA-PKCS1v15
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  rsa.VerifyPKCS1v15:
+    canonical: RSASSA-PKCS1v15
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  rsa.SignPSS:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  rsa.VerifyPSS:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  # ---------------------------------------------------------------------------
+  # Asymmetric — crypto/ecdsa & crypto/elliptic
+  # ---------------------------------------------------------------------------
+  ecdsa.GenerateKey:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ecdsa.Sign:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ecdsa.SignASN1:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ecdsa.Verify:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ecdsa.VerifyASN1:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  elliptic.P224:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "224"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.0.33"
+
+  elliptic.P256:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.3.1.7"
+
+  elliptic.P384:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "384"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.0.34"
+
+  elliptic.P521:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "521"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.0.35"
+
+  # ---------------------------------------------------------------------------
+  # Asymmetric — crypto/ecdh
+  # ---------------------------------------------------------------------------
+  ecdh.P256:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P384:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "384"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P521:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "521"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.X25519:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  # ---------------------------------------------------------------------------
+  # Asymmetric — crypto/ed25519 & crypto/dsa
+  # ---------------------------------------------------------------------------
+  ed25519.GenerateKey:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  ed25519.NewKeyFromSeed:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  ed25519.Sign:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  ed25519.Verify:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  dsa.GenerateKey:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  dsa.GenerateParameters:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  # ---------------------------------------------------------------------------
+  # Symmetric — crypto/aes & crypto/cipher
+  # ---------------------------------------------------------------------------
+  aes.NewCipher:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  cipher.NewGCM:
+    canonical: AES
+    primitive: ae
+    parameter_set: null
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  cipher.NewGCMWithNonceSize:
+    canonical: AES
+    primitive: ae
+    parameter_set: null
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  cipher.NewGCMWithTagSize:
+    canonical: AES
+    primitive: ae
+    parameter_set: null
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  cipher.NewCBCEncrypter:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: null
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: null
+
+  cipher.NewCBCDecrypter:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: null
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: null
+
+  cipher.NewCTR:
+    canonical: AES
+    primitive: stream-cipher
+    parameter_set: null
+    mode: ctr
+    quantum_status: weakened-by-grover
+    oid: null
+
+  # ---------------------------------------------------------------------------
+  # Symmetric — crypto/des & crypto/rc4 (classically broken)
+  # ---------------------------------------------------------------------------
+  des.NewCipher:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  des.NewTripleDESCipher:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  rc4.NewCipher:
+    canonical: RC4
+    primitive: stream-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.4"
+
+  # ---------------------------------------------------------------------------
+  # Hash functions — crypto/md5 & crypto/sha1 (classically broken)
+  # ---------------------------------------------------------------------------
+  md5.New:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  md5.Sum:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  sha1.New:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  sha1.Sum:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  # ---------------------------------------------------------------------------
+  # Hash functions — crypto/sha256 & crypto/sha512 (weakened by Grover)
+  # ---------------------------------------------------------------------------
+  sha256.New:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  sha256.New224:
+    canonical: SHA-224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.4"
+
+  sha256.Sum256:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  sha256.Sum224:
+    canonical: SHA-224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.4"
+
+  sha512.New:
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  sha512.New384:
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  sha512.New512_224:
+    canonical: SHA-512/224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  sha512.New512_256:
+    canonical: SHA-512/256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.6"
+
+  sha512.Sum512:
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  sha512.Sum384:
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  sha512.Sum512_224:
+    canonical: SHA-512/224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  sha512.Sum512_256:
+    canonical: SHA-512/256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.6"
+
+  # ---------------------------------------------------------------------------
+  # Stream & AEAD — x/crypto/chacha20 & chacha20poly1305
+  # ---------------------------------------------------------------------------
+  chacha20.NewUnauthenticatedCipher:
+    canonical: ChaCha20
+    primitive: stream-cipher
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  chacha20poly1305.New:
+    canonical: ChaCha20-Poly1305
+    primitive: ae
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  chacha20poly1305.NewX:
+    canonical: XChaCha20-Poly1305
+    primitive: ae
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  # ---------------------------------------------------------------------------
+  # MAC — crypto/hmac
+  # ---------------------------------------------------------------------------
+  hmac.New:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null

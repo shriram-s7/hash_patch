@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pratyaksha"
+version = "0.1.0"
+description = "PRATYAKSHA — offline cryptographic discovery and post-quantum risk analysis tool producing CycloneDX 1.6 CBOM output."
+requires-python = ">=3.11"
+dependencies = [
+    "typer",
+    "pydantic>=2",
+    "pyyaml",
+    "rich",
+    "cyclonedx-python-lib",
+    "jsonschema",
+    "tree-sitter>=0.26",
+    "tree-sitter-java",
+    "tree-sitter-python",
+    "tree-sitter-go",
+    "tree-sitter-c",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+pratyaksha = "pratyaksha.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pratyaksha"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

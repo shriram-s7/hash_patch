@@ -1,0 +1,704 @@
+# rules/python_crypto.yaml
+# Python cryptography library detection rules.
+#
+# PRATYAKSHA constraint: all algorithm names, primitives, parameter sets, and
+# quantum-status mappings belong here — never hardcoded in Python detector code.
+#
+# Two patterns are detected (both by inspecting "module.attribute" call shapes):
+#
+#   Pattern A — PyCA `cryptography` library (object/class constructor calls):
+#     The "module" (left side) is a known namespace like `hashes`, `algorithms`,
+#     `ec`, `rsa`, etc. The "attribute" (right side) names the algorithm/curve.
+#     Examples:  hashes.SHA256()   algorithms.AES(key)   ec.SECP256R1()
+#
+#   Pattern B — pycryptodome / PyCrypto (module-level function calls):
+#     The "object" (left side) IS the algorithm name, and the method is a
+#     factory like `new` or `generate`.
+#     Examples:  AES.new(key, AES.MODE_GCM)   RSA.generate(2048)   MD5.new()
+#
+# For Pattern A: the key in `pyca_modules` is the namespace identifier, and
+#   the value is a dict mapping each attribute name → algo rule.
+# For Pattern B: the key in `pycryptodome_classes` maps object-name.method
+#   directly to an algo rule.
+#
+# quantum_status values mirror pratyaksha.model.assets.QuantumStatus:
+#   broken-by-shor        – asymmetric; vulnerable to Shor's algorithm on CRQC
+#   weakened-by-grover    – symmetric/hash; key size halved by Grover
+#   broken-classically    – already broken without a quantum computer
+#   quantum-safe          – believed secure classically and quantum
+#   unknown               – status not yet assessed
+
+# ---------------------------------------------------------------------------
+# Pattern A — PyCA `cryptography` library
+#
+# pyca_modules:
+#   <namespace>:          # the left-hand identifier (e.g. "hashes")
+#     <AttributeName>:    # the right-hand identifier (e.g. "SHA256")
+#       canonical: <name> # canonical algorithm name for the CBOM
+#       primitive: <str>
+#       parameter_set: <str|null>
+#       quantum_status: <str>
+#       oid: <str|null>
+# ---------------------------------------------------------------------------
+pyca_modules:
+
+  hashes:
+    SHA1:
+      canonical: SHA-1
+      primitive: hash
+      parameter_set: "160"
+      quantum_status: broken-classically
+      oid: "1.3.14.3.2.26"
+
+    SHA224:
+      canonical: SHA-224
+      primitive: hash
+      parameter_set: "224"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.4"
+
+    SHA256:
+      canonical: SHA-256
+      primitive: hash
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.1"
+
+    SHA384:
+      canonical: SHA-384
+      primitive: hash
+      parameter_set: "384"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.2"
+
+    SHA512:
+      canonical: SHA-512
+      primitive: hash
+      parameter_set: "512"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.3"
+
+    SHA512_224:
+      canonical: SHA-512/224
+      primitive: hash
+      parameter_set: "224"
+      quantum_status: weakened-by-grover
+      oid: null
+
+    SHA512_256:
+      canonical: SHA-512/256
+      primitive: hash
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.6"
+
+    SHA3_224:
+      canonical: SHA3-224
+      primitive: hash
+      parameter_set: "224"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.7"
+
+    SHA3_256:
+      canonical: SHA3-256
+      primitive: hash
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.8"
+
+    SHA3_384:
+      canonical: SHA3-384
+      primitive: hash
+      parameter_set: "384"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.9"
+
+    SHA3_512:
+      canonical: SHA3-512
+      primitive: hash
+      parameter_set: "512"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.10"
+
+    SHAKE128:
+      canonical: SHAKE128
+      primitive: xof
+      parameter_set: "128"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.11"
+
+    SHAKE256:
+      canonical: SHAKE256
+      primitive: xof
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.12"
+
+    MD5:
+      canonical: MD5
+      primitive: hash
+      parameter_set: "128"
+      quantum_status: broken-classically
+      oid: "1.2.840.113549.2.5"
+
+    MD5_SHA1:
+      canonical: MD5-SHA1
+      primitive: hash
+      parameter_set: null
+      quantum_status: broken-classically
+      oid: null
+
+    BLAKE2b:
+      canonical: BLAKE2b
+      primitive: hash
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
+    BLAKE2s:
+      canonical: BLAKE2s
+      primitive: hash
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
+    SM3:
+      canonical: SM3
+      primitive: hash
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "1.2.156.10197.1.401"
+
+  algorithms:
+    AES:
+      canonical: AES
+      primitive: block-cipher
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.1"
+
+    TripleDES:
+      canonical: 3DES
+      primitive: block-cipher
+      parameter_set: "112"
+      quantum_status: broken-classically
+      oid: "1.2.840.113549.3.7"
+
+    Blowfish:
+      canonical: Blowfish
+      primitive: block-cipher
+      parameter_set: null
+      quantum_status: broken-classically
+      oid: null
+
+    CAST5:
+      canonical: CAST5
+      primitive: block-cipher
+      parameter_set: null
+      quantum_status: broken-classically
+      oid: null
+
+    SEED:
+      canonical: SEED
+      primitive: block-cipher
+      parameter_set: "128"
+      quantum_status: weakened-by-grover
+      oid: "1.2.410.200004.1.4"
+
+    IDEA:
+      canonical: IDEA
+      primitive: block-cipher
+      parameter_set: null
+      quantum_status: broken-classically
+      oid: null
+
+    ChaCha20:
+      canonical: ChaCha20
+      primitive: stream-cipher
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: null
+
+    SM4:
+      canonical: SM4
+      primitive: block-cipher
+      parameter_set: "128"
+      quantum_status: weakened-by-grover
+      oid: "1.2.156.10197.1.104"
+
+    ARC4:
+      canonical: RC4
+      primitive: stream-cipher
+      parameter_set: null
+      quantum_status: broken-classically
+      oid: null
+
+  rsa:
+    generate_private_key:
+      canonical: RSA
+      primitive: pke
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.1"
+
+    import_private_key:
+      canonical: RSA
+      primitive: pke
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.1"
+
+    import_public_key:
+      canonical: RSA
+      primitive: pke
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.1"
+
+    recover_prime_factors:
+      canonical: RSA
+      primitive: pke
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.1"
+
+  dsa:
+    generate_private_key:
+      canonical: DSA
+      primitive: signature
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.10040.4.1"
+
+    generate_parameters:
+      canonical: DSA
+      primitive: signature
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.10040.4.1"
+
+  ec:
+    generate_private_key:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.10045.4.3.2"
+
+    derive_private_key:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.10045.4.3.2"
+
+    # Curve constructors are also called directly:
+    #   ec.SECP256R1(), ec.SECP384R1(), ec.SECP521R1(), ec.Curve25519()
+    # These appear as `ec.<CurveName>()` — detected by the same mechanism.
+    SECP192R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "192"
+      quantum_status: broken-by-shor
+      oid: "1.2.840.10045.3.1.1"
+
+    SECP224R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "224"
+      quantum_status: broken-by-shor
+      oid: "1.3.132.0.33"
+
+    SECP256K1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "256"
+      quantum_status: broken-by-shor
+      oid: "1.3.132.0.10"
+
+    SECP256R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "256"
+      quantum_status: broken-by-shor
+      oid: "1.2.840.10045.3.1.7"
+
+    SECP384R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "384"
+      quantum_status: broken-by-shor
+      oid: "1.3.132.0.34"
+
+    SECP521R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "521"
+      quantum_status: broken-by-shor
+      oid: "1.3.132.0.35"
+
+    BrainpoolP256R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "256"
+      quantum_status: broken-by-shor
+      oid: "1.3.36.3.3.2.8.1.1.7"
+
+    BrainpoolP384R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "384"
+      quantum_status: broken-by-shor
+      oid: "1.3.36.3.3.2.8.1.1.11"
+
+    BrainpoolP512R1:
+      canonical: ECDSA
+      primitive: signature
+      parameter_set: "512"
+      quantum_status: broken-by-shor
+      oid: "1.3.36.3.3.2.8.1.1.13"
+
+  dh:
+    generate_parameters:
+      canonical: DH
+      primitive: key-agree
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.3.1"
+
+    generate_private_key:
+      canonical: DH
+      primitive: key-agree
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.3.1"
+
+  x25519:
+    generate_key:
+      canonical: X25519
+      primitive: key-agree
+      parameter_set: "255"
+      quantum_status: broken-by-shor
+      oid: "1.3.101.110"
+
+    from_private_bytes:
+      canonical: X25519
+      primitive: key-agree
+      parameter_set: "255"
+      quantum_status: broken-by-shor
+      oid: "1.3.101.110"
+
+  x448:
+    generate_key:
+      canonical: X448
+      primitive: key-agree
+      parameter_set: "448"
+      quantum_status: broken-by-shor
+      oid: "1.3.101.111"
+
+  ed25519:
+    generate:
+      canonical: Ed25519
+      primitive: signature
+      parameter_set: "255"
+      quantum_status: broken-by-shor
+      oid: "1.3.101.112"
+
+    from_private_bytes:
+      canonical: Ed25519
+      primitive: signature
+      parameter_set: "255"
+      quantum_status: broken-by-shor
+      oid: "1.3.101.112"
+
+  ed448:
+    generate:
+      canonical: Ed448
+      primitive: signature
+      parameter_set: "448"
+      quantum_status: broken-by-shor
+      oid: "1.3.101.113"
+
+  padding:
+    OAEP:
+      canonical: RSA-OAEP
+      primitive: pke
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.7"
+
+    PSS:
+      canonical: RSASSA-PSS
+      primitive: signature
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.10"
+
+    PKCS1v15:
+      canonical: RSA-PKCS1v15
+      primitive: pke
+      parameter_set: null
+      quantum_status: broken-by-shor
+      oid: "1.2.840.113549.1.1.1"
+
+  hmac:
+    HMAC:
+      canonical: HMAC
+      primitive: mac
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
+  poly1305:
+    Poly1305:
+      canonical: Poly1305
+      primitive: mac
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
+  cmac:
+    CMAC:
+      canonical: CMAC
+      primitive: mac
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
+# ---------------------------------------------------------------------------
+# Pattern B — pycryptodome / PyCrypto
+#
+# pycryptodome_classes:
+#   <ClassName>.<method>:   # e.g. "AES.new" or "RSA.generate"
+#     canonical: <name>
+#     primitive: <str>
+#     parameter_set: <str|null>
+#     quantum_status: <str>
+#     oid: <str|null>
+# ---------------------------------------------------------------------------
+pycryptodome_classes:
+
+  AES.new:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  DES.new:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  DES3.new:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  ARC2.new:
+    canonical: RC2
+    primitive: block-cipher
+    parameter_set: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.2"
+
+  ARC4.new:
+    canonical: RC4
+    primitive: stream-cipher
+    parameter_set: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.4"
+
+  Blowfish.new:
+    canonical: Blowfish
+    primitive: block-cipher
+    parameter_set: null
+    quantum_status: broken-classically
+    oid: null
+
+  CAST.new:
+    canonical: CAST5
+    primitive: block-cipher
+    parameter_set: null
+    quantum_status: broken-classically
+    oid: null
+
+  ChaCha20.new:
+    canonical: ChaCha20
+    primitive: stream-cipher
+    parameter_set: "256"
+    quantum_status: weakened-by-grover
+    oid: null
+
+  Salsa20.new:
+    canonical: Salsa20
+    primitive: stream-cipher
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  RSA.generate:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA.import_key:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA.construct:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  DSA.generate:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  ElGamal.generate:
+    canonical: ElGamal
+    primitive: pke
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: null
+
+  ECC.generate:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECC.import_key:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECC.construct:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  # pycryptodome hash modules: MD5.new(), SHA1.new(), SHA256.new(), etc.
+  MD5.new:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  SHA1.new:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  SHA224.new:
+    canonical: SHA-224
+    primitive: hash
+    parameter_set: "224"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.4"
+
+  SHA256.new:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  SHA384.new:
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  SHA512.new:
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  SHA3_224.new:
+    canonical: SHA3-224
+    primitive: hash
+    parameter_set: "224"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.7"
+
+  SHA3_256.new:
+    canonical: SHA3-256
+    primitive: hash
+    parameter_set: "256"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.8"
+
+  SHA3_384.new:
+    canonical: SHA3-384
+    primitive: hash
+    parameter_set: "384"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.9"
+
+  SHA3_512.new:
+    canonical: SHA3-512
+    primitive: hash
+    parameter_set: "512"
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.10"
+
+  BLAKE2b.new:
+    canonical: BLAKE2b
+    primitive: hash
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  BLAKE2s.new:
+    canonical: BLAKE2s
+    primitive: hash
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  CMAC.new:
+    canonical: CMAC
+    primitive: mac
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  HMAC.new:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  Poly1305.new:
+    canonical: Poly1305
+    primitive: mac
+    parameter_set: null
+    quantum_status: weakened-by-grover
+    oid: null

@@ -1,0 +1,367 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "crypto-asset:02a75555626eb20d409430884eda91b2",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "128",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.2.5"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 53, \"snippet\": \"MessageDigest.getInstance(\\\"MD5\\\")\", \"source_type\": \"source\"}",
+            "line": 43,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 1658
+          }
+        ]
+      },
+      "name": "MD5",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "broken-classically"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:1757943a95e36514119f775237e450ad",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "key-agree"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.10045.2.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 62, \"snippet\": \"KeyPairGenerator.getInstance(\\\"EC\\\")\", \"source_type\": \"source\"}",
+            "line": 58,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 2369
+          }
+        ]
+      },
+      "name": "EC",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 60, \"snippet\": \"KeyPairGenerator.getInstance(\\\"RSA\\\")\", \"source_type\": \"source\"}",
+            "line": 26,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 889
+          },
+          {
+            "additionalContext": "{\"column\": 62, \"snippet\": \"KeyPairGenerator.getInstance(\\\"RSA\\\", \\\"BC\\\")\", \"source_type\": \"source\"}",
+            "line": 66,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 2800
+          }
+        ]
+      },
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:43881076677c8df2564de0238139b04f",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "block-cipher"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 51, \"snippet\": \"KeyGenerator.getInstance(\\\"AES\\\")\", \"source_type\": \"source\"}",
+            "line": 34,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 1251
+          },
+          {
+            "additionalContext": "{\"column\": 43, \"snippet\": \"Cipher.getInstance(\\\"AES/GCM/NoPadding\\\")\", \"source_type\": \"source\"}",
+            "line": 36,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 1324
+          }
+        ]
+      },
+      "name": "AES",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.2.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 57, \"snippet\": \"MessageDigest.getInstance(\\\"SHA-256\\\")\", \"source_type\": \"source\"}",
+            "line": 74,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 3195
+          }
+        ]
+      },
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:5a2983fc716a6a723fdbf3ce0679f465",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "160",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.14.3.2.26"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 55, \"snippet\": \"MessageDigest.getInstance(\\\"SHA-1\\\")\", \"source_type\": \"source\"}",
+            "line": 51,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 2036
+          }
+        ]
+      },
+      "name": "SHA-1",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "broken-classically"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.10045.4.3.2"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 46, \"snippet\": \"Signature.getInstance(\\\"SHA256withECDSA\\\")\", \"source_type\": \"source\"}",
+            "line": 59,
+            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\java\\crypto_examples.java",
+            "offset": 2422
+          }
+        ]
+      },
+      "name": "ECDSA",
+      "properties": [
+        {
+          "name": "pratyaksha:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "pratyaksha:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "pratyaksha:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "pratyaksha:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "pratyaksha:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "crypto-asset:02a75555626eb20d409430884eda91b2"
+    },
+    {
+      "ref": "crypto-asset:1757943a95e36514119f775237e450ad"
+    },
+    {
+      "ref": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde"
+    },
+    {
+      "ref": "crypto-asset:43881076677c8df2564de0238139b04f"
+    },
+    {
+      "ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c"
+    },
+    {
+      "ref": "crypto-asset:5a2983fc716a6a723fdbf3ce0679f465"
+    },
+    {
+      "ref": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "PRATYAKSHA",
+          "type": "application",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:585a3a05-eaa3-519f-abbf-8600af0c194b",
+  "specVersion": "1.6",
+  "version": 1
+}

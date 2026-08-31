@@ -1,0 +1,898 @@
+# rules/c_openssl.yaml
+# OpenSSL C/C++ crypto detection rules (legacy and EVP APIs).
+#
+# PRATYAKSHA constraint: all algorithm names, primitives, parameter sets, and
+# quantum-status mappings belong here — never hardcoded in Python detector code.
+#
+# Schema for entries:
+#   canonical: <string>              # Canonical algorithm name
+#   primitive: <string>              # Primitive enum value
+#   parameter_set: <string | null>   # Parameter set / key size identifier
+#   mode: <string | null>            # Mode identifier (e.g. gcm, cbc, ctr)
+#   quantum_status: <string>         # broken-by-shor | weakened-by-grover | broken-classically | quantum-safe | unknown
+#   oid: <string | null>             # OID if known
+#
+# quantum_status values mirror pratyaksha.model.assets.QuantumStatus:
+#   broken-by-shor        – asymmetric; vulnerable to Shor's algorithm on CRQC
+#   weakened-by-grover    – symmetric/hash; key size halved by Grover
+#   broken-classically    – already broken without a quantum computer
+#   quantum-safe          – believed secure classically and quantum
+#   unknown               – status not yet assessed
+
+# -----------------------------------------------------------------------------
+# Functions whose identifier arguments are matched against macro_args
+# -----------------------------------------------------------------------------
+macro_arg_functions:
+  - EVP_PKEY_CTX_new_id
+  - EVP_PKEY_new_raw_private_key
+  - EVP_PKEY_new_raw_public_key
+  - EVP_PKEY_Q_keygen
+  - EC_KEY_new_by_curve_name
+
+# -----------------------------------------------------------------------------
+# Functions whose string literal arguments are matched against string_args
+# -----------------------------------------------------------------------------
+string_arg_functions:
+  - EVP_CIPHER_fetch
+  - EVP_MD_fetch
+  - EVP_PKEY_Q_keygen
+  - EVP_get_cipherbyname
+  - EVP_get_digestbyname
+
+# -----------------------------------------------------------------------------
+# 1. Direct function calls
+# -----------------------------------------------------------------------------
+functions:
+
+  # ---------------------------------------------------------------------------
+  # Legacy RSA API (openssl/rsa.h)
+  # ---------------------------------------------------------------------------
+  RSA_generate_key_ex:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_generate_key:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_new:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_public_encrypt:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_private_decrypt:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_sign:
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_verify:
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  # ---------------------------------------------------------------------------
+  # Legacy EC / ECDSA API (openssl/ec.h, openssl/ecdsa.h)
+  # ---------------------------------------------------------------------------
+  EC_KEY_new:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  EC_KEY_new_by_curve_name:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  EC_KEY_generate_key:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECDSA_sign:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECDSA_verify:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECDSA_do_sign:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECDSA_do_verify:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  # ---------------------------------------------------------------------------
+  # Legacy DSA / DH API
+  # ---------------------------------------------------------------------------
+  DSA_generate_key:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  DSA_generate_parameters_ex:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  DH_generate_key:
+    canonical: DH
+    primitive: key-agree
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.3.1"
+
+  # ---------------------------------------------------------------------------
+  # EVP Ciphers — AES
+  # ---------------------------------------------------------------------------
+  EVP_aes_128_gcm:
+    canonical: AES
+    primitive: ae
+    parameter_set: "128"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  EVP_aes_192_gcm:
+    canonical: AES
+    primitive: ae
+    parameter_set: "192"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  EVP_aes_256_gcm:
+    canonical: AES
+    primitive: ae
+    parameter_set: "256"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  EVP_aes_128_cbc:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "128"
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  EVP_aes_192_cbc:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "192"
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  EVP_aes_256_cbc:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "256"
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  EVP_aes_128_ctr:
+    canonical: AES
+    primitive: stream-cipher
+    parameter_set: "128"
+    mode: ctr
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_aes_256_ctr:
+    canonical: AES
+    primitive: stream-cipher
+    parameter_set: "256"
+    mode: ctr
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_aes_128_ecb:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "128"
+    mode: ecb
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_aes_256_ecb:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "256"
+    mode: ecb
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_aes_128_ccm:
+    canonical: AES
+    primitive: ae
+    parameter_set: "128"
+    mode: ccm
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_aes_256_ccm:
+    canonical: AES
+    primitive: ae
+    parameter_set: "256"
+    mode: ccm
+    quantum_status: weakened-by-grover
+    oid: null
+
+  # ---------------------------------------------------------------------------
+  # EVP Ciphers — ChaCha20
+  # ---------------------------------------------------------------------------
+  EVP_chacha20:
+    canonical: ChaCha20
+    primitive: stream-cipher
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_chacha20_poly1305:
+    canonical: ChaCha20-Poly1305
+    primitive: ae
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  # ---------------------------------------------------------------------------
+  # EVP Ciphers — DES / 3DES / RC4 (classically broken)
+  # ---------------------------------------------------------------------------
+  EVP_des_ede3_cbc:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    mode: cbc
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  EVP_des_ede3_ecb:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    mode: ecb
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  EVP_des_cbc:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: cbc
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  EVP_des_ecb:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: ecb
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  EVP_rc4:
+    canonical: RC4
+    primitive: stream-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.4"
+
+  # ---------------------------------------------------------------------------
+  # Legacy DES & RC4 APIs (openssl/des.h, openssl/rc4.h)
+  # ---------------------------------------------------------------------------
+  DES_set_key:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  DES_set_key_checked:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  DES_set_key_unchecked:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  DES_ecb_encrypt:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: ecb
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  DES_ncbc_encrypt:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: cbc
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  DES_ede3_cbc_encrypt:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    mode: cbc
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  DES_ede3_ecb_encrypt:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    mode: ecb
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  RC4_set_key:
+    canonical: RC4
+    primitive: stream-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.4"
+
+  RC4:
+    canonical: RC4
+    primitive: stream-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.4"
+
+  # ---------------------------------------------------------------------------
+  # EVP Message Digests (SHA-2, SHA-3, SHA-1, MD5)
+  # ---------------------------------------------------------------------------
+  EVP_sha256:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  EVP_sha224:
+    canonical: SHA-224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.4"
+
+  EVP_sha384:
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  EVP_sha512:
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  EVP_sha512_224:
+    canonical: SHA-512/224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  EVP_sha512_256:
+    canonical: SHA-512/256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.6"
+
+  EVP_sha3_224:
+    canonical: SHA3-224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.7"
+
+  EVP_sha3_256:
+    canonical: SHA3-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.8"
+
+  EVP_sha3_384:
+    canonical: SHA3-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.9"
+
+  EVP_sha3_512:
+    canonical: SHA3-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.10"
+
+  EVP_shake128:
+    canonical: SHAKE128
+    primitive: xof
+    parameter_set: "128"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.11"
+
+  EVP_shake256:
+    canonical: SHAKE256
+    primitive: xof
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.12"
+
+  EVP_sha1:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  EVP_md5:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  # ---------------------------------------------------------------------------
+  # Legacy Digest APIs (openssl/md5.h, openssl/sha.h)
+  # ---------------------------------------------------------------------------
+  MD5_Init:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  MD5_Update:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  MD5_Final:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  MD5:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  SHA1_Init:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  SHA1_Update:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  SHA1_Final:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  SHA1:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  SHA224_Init:
+    canonical: SHA-224
+    primitive: hash
+    parameter_set: "224"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.4"
+
+  SHA256_Init:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  SHA256:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  SHA384_Init:
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  SHA512_Init:
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+# -----------------------------------------------------------------------------
+# 2. Macro argument identifiers (e.g. in EVP_PKEY_CTX_new_id, EC_KEY_new_by_curve_name)
+# -----------------------------------------------------------------------------
+macro_args:
+
+  EVP_PKEY_RSA:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  EVP_PKEY_RSA_PSS:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  EVP_PKEY_EC:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  EVP_PKEY_ED25519:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  EVP_PKEY_ED448:
+    canonical: Ed448
+    primitive: signature
+    parameter_set: "448"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.113"
+
+  EVP_PKEY_X25519:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  EVP_PKEY_X448:
+    canonical: X448
+    primitive: key-agree
+    parameter_set: "448"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.111"
+
+  EVP_PKEY_DSA:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  EVP_PKEY_DH:
+    canonical: DH
+    primitive: key-agree
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.3.1"
+
+  NID_X9_62_prime256v1:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.3.1.7"
+
+  NID_secp384r1:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "384"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.0.34"
+
+  NID_secp521r1:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "521"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.0.35"
+
+  NID_secp256k1:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.0.10"
+
+# -----------------------------------------------------------------------------
+# 3. String literal arguments (for EVP_CIPHER_fetch, EVP_MD_fetch, etc.)
+# -----------------------------------------------------------------------------
+string_args:
+
+  "AES-256-GCM":
+    canonical: AES
+    primitive: ae
+    parameter_set: "256"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  "AES-128-GCM":
+    canonical: AES
+    primitive: ae
+    parameter_set: "128"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  "AES-256-CBC":
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "256"
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  "AES-128-CBC":
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: "128"
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  "SHA256":
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  "SHA-256":
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  "SHA384":
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  "SHA-384":
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  "SHA512":
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  "SHA-512":
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  "SHA1":
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  "SHA-1":
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  "MD5":
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  "RSA":
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  "EC":
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  "ED25519":
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  "X25519":
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
