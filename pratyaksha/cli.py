@@ -8,6 +8,7 @@ from typing import Annotated, Iterator
 import typer
 
 from pratyaksha import __version__
+from pratyaksha.analyze.reachability import apply_reachability
 from pratyaksha.detect import registry  # triggers side-effect detector registration
 from pratyaksha.detect.base import Detector
 from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
@@ -68,12 +69,21 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     )
 
     detectors: list[Detector] = registry.detectors()
+    scanned_files: list[Path] = []
 
     for file_path in _iter_targets(path):
+        scanned_files.append(file_path)
         for detector in detectors:
             if detector.supports(file_path):
                 for asset in detector.detect(file_path):
                     result.add_asset(asset)
+
+    # Reachability classification for Python/Java assets (Go/C keep the
+    # model's default Reachability.UNKNOWN — see pratyaksha/detect/go.py and
+    # pratyaksha/detect/c.py). Runs over the whole scanned file set so calls
+    # across files in the same target are resolved, per
+    # pratyaksha/analyze/reachability.py.
+    apply_reachability(result.assets, scanned_files)
 
     return result
 

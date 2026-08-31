@@ -1,0 +1,55 @@
+{
+  "_comment": "MANIFEST-style expected-reachability fixture for the corpus additions under testdata/python/ and testdata/java/ (see docs/REACHABILITY.md). Consumed by tests/golden/test_reachability_corpus.py.",
+  "python": [
+    {
+      "algorithm": "SHA-512",
+      "locator_suffix": "reachability_live_external.py",
+      "expected": "live-external",
+      "scenario": "hashes.SHA512() inside a helper called from a @app.route-decorated function"
+    },
+    {
+      "algorithm": "SHA3-256",
+      "locator_suffix": "reachability_live_internal.py",
+      "expected": "live-internal",
+      "scenario": "hashes.SHA3_256() inside a helper called from an ordinary (non-entry-point) function"
+    },
+    {
+      "algorithm": "ElGamal",
+      "locator_suffix": "reachability_inert.py",
+      "expected": "inert",
+      "scenario": "ElGamal.generate() inside a helper whose only caller is a test file"
+    },
+    {
+      "algorithm": "ChaCha20",
+      "locator_suffix": "reachability_unknown_dynamic.py",
+      "expected": "unknown",
+      "scenario": "ChaCha20.new() inside a helper reachable only via an unresolved dynamic-dispatch table lookup"
+    }
+  ],
+  "java": [
+    {
+      "algorithm": "SHA-512",
+      "locator_suffix": "ReachabilityLiveExternal.java",
+      "expected": "live-external",
+      "scenario": "MessageDigest.getInstance(\"SHA-512\") inside a helper called from a @RestController public method"
+    },
+    {
+      "algorithm": "SHA3-256",
+      "locator_suffix": "ReachabilityLiveInternal.java",
+      "expected": "live-internal",
+      "scenario": "MessageDigest.getInstance(\"SHA3-256\") inside a helper called from an ordinary (non-entry-point) method"
+    },
+    {
+      "algorithm": "DSA",
+      "locator_suffix": "ReachabilityInert.java",
+      "expected": "inert",
+      "scenario": "Signature.getInstance(\"SHA256withDSA\") inside a method whose only caller is a *Test.java file"
+    },
+    {
+      "algorithm": "DES",
+      "locator_suffix": "ReachabilityUnknownDynamic.java",
+      "expected": "unknown",
+      "scenario": "Cipher.getInstance(\"DES\") inside a method reachable only via an unresolved Map<String, Runnable> dispatch"
+    }
+  ]
+}

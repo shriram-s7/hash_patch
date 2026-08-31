@@ -189,6 +189,11 @@ class COpenSSLDetector(Detector):
     instantiation time. No algorithm names are hardcoded in this class.
     """
 
+    # Reachability classification (pratyaksha/analyze/reachability.py) is only
+    # wired up for Python and Java; C is out of scope for now, so assets from
+    # this detector keep the model's default CryptoAsset.reachability = UNKNOWN
+    # rather than risk a wrong (unsafe) classification from an unbuilt call graph.
+
     detector_id: str = _DETECTOR_ID
     detector_version: str = _DETECTOR_VERSION
 

@@ -141,11 +141,22 @@ def test_run_scan_on_directory_result_asset_count_matches_file_scan() -> None:
     )
 
 
-def test_run_scan_on_directory_negative_fixture_adds_no_extra_assets() -> None:
+def test_run_scan_on_directory_negative_fixture_adds_no_extra_assets(tmp_path: Path) -> None:
     """The negative fixture mentions RSA only in comments; it must not inflate
-    the directory scan's asset count above the single-file scan count.
+    the asset count above what the positive fixture alone produces.
+
+    Scans an isolated temp directory containing only {positive, negative}
+    fixtures rather than the whole testdata/java/ tree, so this assertion
+    stays scoped to the negative fixture's own behaviour even as other
+    legitimate positive fixtures (e.g. the reachability corpus) are added
+    to testdata/java/ over time.
     """
-    dir_result = run_scan(TESTDATA_JAVA_DIR)
+    isolated = tmp_path / "java_negative_check"
+    isolated.mkdir()
+    (isolated / POSITIVE_FILE.name).write_text(POSITIVE_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+    (isolated / NEGATIVE_FILE.name).write_text(NEGATIVE_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+
+    dir_result = run_scan(isolated)
     file_result = run_scan(POSITIVE_FILE)
 
     # Asset IDs are deterministic — if two files produce the same logical
@@ -314,9 +325,25 @@ def test_run_scan_python_directory_asset_ids_match_file_scan() -> None:
     assert not missing, f"Dir scan missing assets found in file scan: {missing}"
 
 
-def test_run_scan_python_negative_fixture_adds_no_extra_assets() -> None:
-    """The negative fixture must not add any new asset IDs beyond the positive file."""
-    dir_result = run_scan(TESTDATA_PY_DIR)
+def test_run_scan_python_negative_fixture_adds_no_extra_assets(tmp_path: Path) -> None:
+    """The negative fixture must not add any new asset IDs beyond the positive file.
+
+    Scans an isolated temp directory containing only {positive, negative}
+    fixtures rather than the whole testdata/python/ tree, so this assertion
+    stays scoped to the negative fixture's own behaviour even as other
+    legitimate positive fixtures (e.g. the reachability corpus) are added
+    to testdata/python/ over time.
+    """
+    isolated = tmp_path / "python_negative_check"
+    isolated.mkdir()
+    (isolated / POSITIVE_PY_FILE.name).write_text(
+        POSITIVE_PY_FILE.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (isolated / NEGATIVE_PY_FILE.name).write_text(
+        NEGATIVE_PY_FILE.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+
+    dir_result = run_scan(isolated)
     file_result = run_scan(POSITIVE_PY_FILE)
     dir_ids = sorted(a.id for a in dir_result.assets)
     file_ids = sorted(a.id for a in file_result.assets)

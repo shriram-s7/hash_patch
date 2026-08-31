@@ -202,6 +202,24 @@ real (non-editable) wheel install would need `schemas/` declared as package
 data to keep working. Not solved here — out of scope until this ships as a
 distributed package.
 
+## Reachability
+
+`CryptoAsset.reachability` (Python and Java only — Go and C keep the model
+default `UNKNOWN` unconditionally, see the one-line comments in
+`pratyaksha/detect/go.py` / `c.py`) is computed by
+`pratyaksha/analyze/{callgraph,entrypoints,reachability}.py` and wired into
+`pratyaksha scan` via `pratyaksha/cli.py::run_scan`.
+
+**HARD SAFETY RULE (non-negotiable): this analysis is fail-safe. A live,
+externally-reachable crypto call must NEVER be classified `INERT`. Whenever
+reachability genuinely cannot be determined, the answer is `UNKNOWN`, never
+`INERT`.**
+
+Entry-point patterns are config-driven in `rules/entrypoints.yaml`, not
+hardcoded in `analyze/`. See `docs/REACHABILITY.md` for the full pipeline,
+the exact entry-point and test-file definitions, and why "not reachable
+from anything" defaults to `UNKNOWN` rather than `INERT` for non-test code.
+
 ## Detection rules live in YAML, not Python
 
 All algorithm/pattern/OID detection rules belong in `rules/` as YAML data,
