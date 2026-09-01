@@ -171,14 +171,15 @@ something `to_cyclonedx` added.
     *specific* evidence came from which detector is not preserved beyond
     this asset-level aggregate (only `additionalContext`'s source_type/
     column/snippet stay per-occurrence).
-  - `pratyaksha:confidence` is always `"confirmed"`. Every asset that
-    reaches this module already has ≥1 `Evidence` (enforced below), so
-    every emitted finding is, by construction, direct-evidence. The
-    `inferred` value described in CLAUDE.md's Name section is reserved for
-    a future inference pathway (e.g. local-LLM-assisted detection) that
-    the model does not yet support — there is no code path today that can
-    construct an asset without evidence, so `confidence` cannot currently
-    be anything else.
+  - `pratyaksha:confidence` comes straight from `CryptoAsset.confidence`
+    (`"confirmed"` by default). Every real detector always leaves it at
+    `"confirmed"` — a direct observation, backed by ≥1 `Evidence` (enforced
+    below). The one existing `"inferred"` producer is the blast-radius
+    `db_column` name-pattern-only fallback (see "Blast Radius" below and
+    `pratyaksha/cli.py::_synthetic_asset_for_inferred_finding`): a
+    synthetic component that still carries real `Evidence` (the file/line
+    that suggested it) but is not a direct observation of which algorithm
+    produced the artefact, per CLAUDE.md's "Name" section.
   - Any `crypto_functions` / `mode` value that does *not* match the
     CycloneDX enum is preserved verbatim in
     `pratyaksha:cryptoFunctionsUnmapped` / `pratyaksha:modeUnmapped` rather
@@ -219,6 +220,38 @@ Entry-point patterns are config-driven in `rules/entrypoints.yaml`, not
 hardcoded in `analyze/`. See `docs/REACHABILITY.md` for the full pipeline,
 the exact entry-point and test-file definitions, and why "not reachable
 from anything" defaults to `UNKNOWN` rather than `INERT` for non-test code.
+
+## Blast Radius
+
+Pillar 3: `pratyaksha/analyze/blast_radius.py` predicts whether migrating a
+`BROKEN_BY_SHOR` `CryptoAsset` to its PQC replacement will overflow a
+statically declared size constraint (a C fixed-size buffer/heap allocation,
+or a SQL DDL fixed-width column — currently the only scope; Java/Go/Python
+buffers and wire-format/protocol detection are out of scope). Sizes come
+exclusively from `rules/pqc_sizes.yaml` (FIPS 203/204/205 — see the file's
+own header comments for sources); nothing duplicates those numbers as
+Python literals.
+
+**A `SizeConstraint` is only ever correlated with a `CryptoAsset` in the
+SAME FILE, and only the NEAREST plausible one by line distance.**
+Cross-file, name-only correlation is a false-positive machine and is never
+done; within a file, a constraint is never blindly cross-joined against
+every same-file asset either — a file with two unrelated crypto operations
+(e.g. RSA signing + Ed25519 keygen) must not let a buffer near one get
+credited to the other. The PQC replacement family for a real correlated
+asset always comes from that asset's own detected primitive, never a
+hardcoded default. The one documented exception (SQL DDL findings, which
+have no same-file `CryptoAsset` to correlate against since there is no SQL
+algorithm detector) uses a clearly-flagged, weaker-evidence name-pattern
+fallback instead of loosening the same-file rule — see
+docs/BLAST_RADIUS.md. Such a fallback finding is still emitted as a
+SYNTHETIC CBOM component (`pratyaksha:confidence = "inferred"`), not
+silently dropped from the report.
+
+`estimated_effort_days` on a `BlastRadiusFinding` is an explicitly
+documented **heuristic placeholder, not derived from real migration data**
+— see docs/BLAST_RADIUS.md before using it for anything beyond a rough
+sense of scale.
 
 ## Detection rules live in YAML, not Python
 

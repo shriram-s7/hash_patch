@@ -5,6 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from pratyaksha.model.assets import CryptoAsset
+from pratyaksha.model.blast_radius import BlastRadiusFinding
 
 
 class ScanResult(BaseModel):
@@ -14,6 +15,12 @@ class ScanResult(BaseModel):
     assets: list[CryptoAsset] = Field(default_factory=list)
     scan_started_at: datetime
     tool_version: str
+    # Pillar 3 (Blast Radius) findings — see pratyaksha/analyze/blast_radius.py.
+    # Not part of the CBOM document's own schema; the ones with a real
+    # correlated CryptoAsset are also mirrored onto that asset's `properties`
+    # (pratyaksha.cli.run_scan), the same way reachability is. This list is
+    # what the CLI summary line and any future report consumer read from.
+    blast_radius_findings: list[BlastRadiusFinding] = Field(default_factory=list)
 
     def add_asset(self, asset: CryptoAsset) -> None:
         """Add an asset, merging into an existing one with the same id.

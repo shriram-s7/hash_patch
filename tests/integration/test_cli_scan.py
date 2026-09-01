@@ -251,7 +251,7 @@ def test_cli_scan_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
     )
 
     # The summary line must report > 0 assets.
-    assert "0 assets" not in completed.stdout, (
+    assert "; 0 assets" not in completed.stdout, (
         f"CLI reported '0 assets' for directory scan.\nstdout: {completed.stdout}"
     )
     assert "assets" in completed.stdout, (
@@ -390,7 +390,7 @@ def test_cli_scan_python_directory_subprocess_nonzero_assets(tmp_path: Path) -> 
     assert completed.returncode == 0, (
         f"CLI exit {completed.returncode}.\nstdout: {completed.stdout}\nstderr: {completed.stderr}"
     )
-    assert "0 assets" not in completed.stdout, (
+    assert "; 0 assets" not in completed.stdout, (
         f"CLI reported '0 assets' for Python dir scan.\nstdout: {completed.stdout}"
     )
     assert cbom_out.is_file(), "CLI did not write the CBOM output file"
@@ -500,7 +500,7 @@ def test_cli_scan_go_directory_subprocess_nonzero_assets(tmp_path: Path) -> None
     assert completed.returncode == 0, (
         f"CLI exit {completed.returncode}.\nstdout: {completed.stdout}\nstderr: {completed.stderr}"
     )
-    assert "0 assets" not in completed.stdout, (
+    assert "; 0 assets" not in completed.stdout, (
         f"CLI reported '0 assets' for Go dir scan.\nstdout: {completed.stdout}"
     )
     assert cbom_out.is_file(), "CLI did not write the CBOM output file"
@@ -561,9 +561,21 @@ def test_run_scan_c_directory_asset_ids_match_file_scan() -> None:
     assert not missing, f"Dir scan missing assets found in file scan: {missing}"
 
 
-def test_run_scan_c_negative_fixture_adds_no_extra_assets() -> None:
-    """The negative fixture must not add any new asset IDs beyond the positive file."""
-    dir_result = run_scan(TESTDATA_C_DIR)
+def test_run_scan_c_negative_fixture_adds_no_extra_assets(tmp_path: Path) -> None:
+    """The negative fixture must not add any new asset IDs beyond the positive file.
+
+    Scans an isolated temp directory containing only {positive, negative}
+    fixtures rather than the whole testdata/c/ tree, so this assertion stays
+    scoped to the negative fixture's own behaviour even as other legitimate
+    positive fixtures (e.g. the blast-radius corpus) are added to
+    testdata/c/ over time.
+    """
+    isolated = tmp_path / "c_negative_check"
+    isolated.mkdir()
+    (isolated / POSITIVE_C_FILE.name).write_text(POSITIVE_C_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+    (isolated / NEGATIVE_C_FILE.name).write_text(NEGATIVE_C_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+
+    dir_result = run_scan(isolated)
     file_result = run_scan(POSITIVE_C_FILE)
     dir_ids = sorted(a.id for a in dir_result.assets)
     file_ids = sorted(a.id for a in file_result.assets)
@@ -610,7 +622,7 @@ def test_cli_scan_c_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
     assert completed.returncode == 0, (
         f"CLI exit {completed.returncode}.\nstdout: {completed.stdout}\nstderr: {completed.stderr}"
     )
-    assert "0 assets" not in completed.stdout, (
+    assert "; 0 assets" not in completed.stdout, (
         f"CLI reported '0 assets' for C dir scan.\nstdout: {completed.stdout}"
     )
     assert cbom_out.is_file(), "CLI did not write the CBOM output file"

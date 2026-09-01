@@ -1,0 +1,42 @@
+# rules/blast_radius_names.yaml
+#
+# Crypto-material NAME PATTERNS shared by both blast-radius detectors —
+# pratyaksha/detect/blast_radius/c_buffers.py (buffer/heap-alloc variable
+# names) and pratyaksha/detect/blast_radius/sql_ddl.py (column names) — so
+# the pattern list is defined exactly once, per CLAUDE.md's "detection
+# rules live in YAML, not Python".
+#
+# Matching is substring, case-insensitive, against the identifier (variable
+# or column name): e.g. "rsa_signature_buf" matches pattern "signature".
+#
+# `field` tells pratyaksha/analyze/blast_radius.py which pqc_sizes.yaml
+# field this name shape corresponds to (pubkey / signature / ciphertext).
+# A null field means the name clearly suggests cryptographic material, but
+# there is no single-field PQC size to compare it against — no
+# BlastRadiusFinding is ever produced for such a SizeConstraint, rather than
+# guessing which field applies. See docs/BLAST_RADIUS.md.
+patterns:
+  - name: sig
+    field: signature
+  - name: signature
+    field: signature
+  - name: pubkey
+    field: pubkey
+  - name: public_key
+    field: pubkey
+  - name: privkey
+    field: null # no PQC private-key reference size is used for correlation
+  - name: private_key
+    field: null
+  - name: cert
+    field: null # a certificate is a composite structure, not a single-field size
+  - name: certificate
+    field: null
+  - name: digest
+    field: null # hash output size; not applicable to broken-by-shor primitives
+  - name: hash
+    field: null
+  - name: ciphertext
+    field: ciphertext
+  - name: key
+    field: pubkey # generic fallback: treated as public-key-shaped

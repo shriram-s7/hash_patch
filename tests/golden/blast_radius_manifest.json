@@ -1,0 +1,37 @@
+{
+  "_comment": "MANIFEST-style expected fire/no-fire fixture for the Pillar 3 (Blast Radius) corpus under testdata/c/blast_radius_examples.c and testdata/sql/schema.sql. Consumed by tests/golden/test_blast_radius_golden.py. overflow_sign: 1 = must fire (overflow_bytes > 0), 0 = must NOT fire (no BlastRadiusFinding at all).",
+  "c": [
+    {
+      "name": "signature",
+      "declared_bytes": 256,
+      "line": 20,
+      "overflow_sign": 1,
+      "scenario": "RSA-2048 signature (256B classically) vs ML-DSA-65 signature (3309B)"
+    },
+    {
+      "name": "pubkey",
+      "declared_bytes": 32,
+      "line": 30,
+      "overflow_sign": 1,
+      "scenario": "Ed25519 public key (32B classically) vs ML-DSA-65 public key (1952B)"
+    },
+    {
+      "name": "rsa_signature_buf",
+      "declared_bytes": 8192,
+      "line": 37,
+      "overflow_sign": 0,
+      "scenario": "generously-sized buffer, fits ML-DSA-65's signature (3309B) easily"
+    }
+  ],
+  "c_unresolved_name": "sig_buffer",
+  "sql": [
+    {
+      "name": "signature",
+      "declared_bytes": 512,
+      "line": 14,
+      "overflow_sign": 1,
+      "scenario": "VARCHAR(512) signature column vs ML-DSA-65 signature (3309B), via the db_column name-pattern-only fallback"
+    }
+  ],
+  "sql_no_fire_column": "metadata"
+}

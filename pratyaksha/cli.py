@@ -1,17 +1,26 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Iterator
+from typing import Annotated
 
 import typer
 
 from pratyaksha import __version__
+from pratyaksha.analyze.blast_radius import (
+    is_inferred_finding,
+    primitive_for_replacement,
+    run_blast_radius,
+)
 from pratyaksha.analyze.reachability import apply_reachability
 from pratyaksha.detect import registry  # triggers side-effect detector registration
 from pratyaksha.detect.base import Detector
 from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
+from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
+from pratyaksha.model.blast_radius import BlastRadiusFinding
 from pratyaksha.model.findings import ScanResult
 
 app = typer.Typer(name="pratyaksha")
@@ -29,6 +38,83 @@ def _quantum_status_summary(result: ScanResult) -> str:
     counts = Counter(asset.quantum_status.value for asset in result.assets)
     breakdown = ", ".join(f"{status}={count}" for status, count in sorted(counts.items()))
     return f"{len(result.assets)} assets ({breakdown})"
+
+
+def _blast_radius_summary(findings: list[BlastRadiusFinding]) -> str:
+    total_days = sum(f.estimated_effort_days for f in findings)
+    return f"{len(findings)} blast-radius findings, estimated {total_days:g} engineer-days"
+
+
+def _blast_radius_property(finding: BlastRadiusFinding) -> tuple[str, str]:
+    ev = finding.size_constraint.evidence[0]
+    key = f"blastRadius.{finding.size_constraint.kind}.{finding.size_constraint.name}.{ev.line}"
+    value = json.dumps(
+        {
+            "declaredBytes": finding.size_constraint.declared_bytes,
+            "classicalBytes": finding.classical_bytes,
+            "pqcBytes": finding.pqc_bytes,
+            "overflowBytes": finding.overflow_bytes,
+            "pqcReplacement": finding.pqc_replacement_name,
+            "severity": finding.severity,
+            "estimatedEffortDays": finding.estimated_effort_days,
+            "locator": ev.locator,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return key, value
+
+
+def _synthetic_asset_for_inferred_finding(finding: BlastRadiusFinding) -> CryptoAsset:
+    """Build a SYNTHETIC CryptoAsset for a db_column name-pattern-only
+    fallback finding (see pratyaksha/analyze/blast_radius.py's module
+    docstring) so it's actually visible in the emitted CBOM instead of only
+    existing in the CLI summary line / ScanResult.blast_radius_findings.
+
+    Marked `confidence="inferred"` (never "confirmed" -- CLAUDE.md's "Name"
+    section) since this isn't a direct observation of which algorithm
+    produced the underlying data, only a name-pattern guess at what it would
+    need to become. It still carries real Evidence -- the SizeConstraint's
+    own file/line -- satisfying CLAUDE.md hard constraint #3.
+    """
+    return CryptoAsset.create(
+        asset_type=AssetType.ALGORITHM,
+        name=f"{finding.pqc_replacement_name} (inferred)",
+        primitive=primitive_for_replacement(finding.pqc_replacement_name),
+        quantum_status=QuantumStatus.UNKNOWN,
+        confidence="inferred",
+        evidence=list(finding.size_constraint.evidence),
+    )
+
+
+def _attach_blast_radius_properties(result: ScanResult) -> None:
+    """Mirror each blast-radius finding onto a CBOM component's `properties`
+    bag — the same `pratyaksha:property.<key>` CBOM namespacing pattern
+    CLAUDE.md already documents for arbitrary asset-level data (see
+    pratyaksha/emit/cyclonedx.py's field mapping).
+
+    A finding with a real correlated CryptoAsset (asset_id matches one in
+    result.assets) is attached directly to it. A finding from
+    analyze/blast_radius.py's db_column name-pattern-only fallback
+    (`is_inferred_finding`) has no real CryptoAsset to attach to, so a
+    SYNTHETIC component is built and added to result.assets instead
+    (`confidence="inferred"`) -- otherwise it would be reported by the CLI
+    summary line but invisible in the actual CBOM, defeating the point of a
+    written report. See that module's docstring.
+    """
+    by_id = {asset.id: asset for asset in result.assets}
+    for finding in result.blast_radius_findings:
+        asset = by_id.get(finding.asset_id)
+        if asset is None:
+            if not is_inferred_finding(finding):
+                continue
+            synthetic = _synthetic_asset_for_inferred_finding(finding)
+            result.add_asset(synthetic)
+            asset = next(a for a in result.assets if a.id == synthetic.id)
+            by_id[asset.id] = asset
+
+        key, value = _blast_radius_property(finding)
+        asset.properties[key] = value
 
 
 def _iter_targets(path: Path) -> Iterator[Path]:
@@ -85,6 +171,11 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     # pratyaksha/analyze/reachability.py.
     apply_reachability(result.assets, scanned_files)
 
+    # Pillar 3 (Blast Radius): only does anything when the scanned file set
+    # contains C and/or .sql files — see pratyaksha/analyze/blast_radius.py.
+    result.blast_radius_findings = run_blast_radius(result.assets, scanned_files)
+    _attach_blast_radius_properties(result)
+
     return result
 
 
@@ -120,11 +211,13 @@ def scan(
             raise typer.Exit(code=1)
 
     summary = _quantum_status_summary(result)
+    blast_radius_summary = _blast_radius_summary(result.blast_radius_findings)
     if output is not None:
         output.write_text(render_cbom_json(doc), encoding="utf-8")
         typer.echo(f"wrote CBOM to {output}; {summary}")
     else:
         typer.echo(summary)
+    typer.echo(blast_radius_summary)
 
 
 if __name__ == "__main__":

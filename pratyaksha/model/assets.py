@@ -2,10 +2,20 @@ from __future__ import annotations
 
 import hashlib
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from pratyaksha.model.evidence import Evidence
+
+# "confirmed" = directly observed by a detector (the default for every real
+# CryptoAsset). "inferred" = a name-pattern-only guess with no corroborating
+# direct evidence of *which* algorithm produced the artefact (e.g. the
+# blast-radius db_column fallback, see pratyaksha/analyze/blast_radius.py) —
+# per CLAUDE.md's "Name" section, this is never merged into the confirmed
+# inventory as if it were equivalent; it must stay visibly distinguishable in
+# the emitted CBOM (pratyaksha:confidence property, see emit/cyclonedx.py).
+Confidence = Literal["confirmed", "inferred"]
 
 
 class AssetType(str, Enum):
@@ -88,6 +98,7 @@ class CryptoAsset(BaseModel):
     reachability: Reachability = Reachability.UNKNOWN
     evidence: list[Evidence] = Field(default_factory=list)
     properties: dict[str, str] = Field(default_factory=dict)
+    confidence: Confidence = "confirmed"
 
     @classmethod
     def create(

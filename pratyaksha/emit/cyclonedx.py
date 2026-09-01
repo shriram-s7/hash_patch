@@ -27,13 +27,15 @@ from pratyaksha.model.findings import ScanResult
 _CRYPTO_FUNCTION_VALUES = {f.value for f in CryptoFunction}
 _CRYPTO_MODE_VALUES = {m.value for m in CryptoMode}
 
-# All emitted assets are, by construction, direct-evidence findings: an asset
-# with no Evidence is refused before it ever reaches this module (see
-# _asset_to_component below and CLAUDE.md hard constraint #3). So every
-# component gets `pratyaksha:confidence = confirmed`; the `inferred` value
-# described in CLAUDE.md's Name section is reserved for a future inference
-# pathway this model does not yet support.
-_CONFIDENCE_CONFIRMED = "confirmed"
+# Every asset still needs at least one Evidence entry regardless of
+# confidence (an asset with none is refused below -- CLAUDE.md hard
+# constraint #3). `pratyaksha:confidence` itself comes straight from
+# CryptoAsset.confidence: "confirmed" for a real detector finding, or
+# "inferred" for a name-pattern-only guess (e.g. the blast-radius db_column
+# fallback synthetic asset built in pratyaksha/cli.py) that still carries
+# real evidence (it points at the file/line that suggested it) but is not a
+# direct observation of which algorithm actually produced the artefact — see
+# CLAUDE.md's "Name" section.
 
 
 def _derive_serial_number(result: ScanResult) -> UUID:
@@ -118,7 +120,7 @@ def _asset_properties(
         Property(name="pratyaksha:reachability", value=asset.reachability.value),
         Property(name="pratyaksha:detectorId", value=",".join(detector_ids)),
         Property(name="pratyaksha:detectorVersion", value=",".join(detector_versions)),
-        Property(name="pratyaksha:confidence", value=_CONFIDENCE_CONFIRMED),
+        Property(name="pratyaksha:confidence", value=asset.confidence),
     ]
     if unmapped_functions:
         props.append(

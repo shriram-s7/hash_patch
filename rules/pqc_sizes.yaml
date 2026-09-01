@@ -1,0 +1,153 @@
+# rules/pqc_sizes.yaml
+#
+# Single source of truth for classical and post-quantum artefact byte sizes,
+# used by pratyaksha/analyze/blast_radius.py to decide whether a statically
+# declared buffer/column size will overflow once an algorithm is migrated to
+# its PQC replacement. Data only — no Python logic reads or duplicates these
+# numbers as literals anywhere else in the codebase.
+#
+# All sizes are byte counts of the raw encoded artefact (as it would be
+# copied into a buffer/column), not bit-lengths, not base64/hex text length.
+#
+# SOURCES (published, deterministic — no network access needed to reproduce):
+#   - classical.rsa_*                 : PKCS#1 / X.509 SubjectPublicKeyInfo
+#                                        conventions; signature = key size in
+#                                        bytes (RFC 8017 s.8.2 “k” value).
+#                                        Pubkey sizes are the typical DER
+#                                        SubjectPublicKeyInfo encoding size
+#                                        (approximate — ASN.1 DER overhead
+#                                        varies by a handful of bytes) and are
+#                                        marked `approximate: true`.
+#   - classical.ecdsa_p256            : SEC1 point encoding (65 uncompressed /
+#                                        33 compressed) for the public key;
+#                                        DER ECDSA-Sig-Value signature length
+#                                        varies with r/s leading-zero padding,
+#                                        typically 70-72 bytes, worst realistic
+#                                        case ~72 — recorded as a min/max
+#                                        range and marked `approximate: true`.
+#   - classical.ed25519 / ecdh_p256   : RFC 8032 (Ed25519), RFC 7748 (X25519)
+#                                        fixed-size encodings — exact, not
+#                                        approximate.
+#   - pqc.ml_kem_*                    : NIST FIPS 203 (Module-Lattice-Based
+#                                        Key-Encapsulation Mechanism Standard,
+#                                        final, Aug 2024), Table 2 — encapsulation
+#                                        key (pubkey), ciphertext, and
+#                                        decapsulation key (private key) byte
+#                                        lengths per parameter set.
+#   - pqc.ml_dsa_*                    : NIST FIPS 204 (Module-Lattice-Based
+#                                        Digital Signature Standard, final,
+#                                        Aug 2024), Table 2 — public key,
+#                                        private key, and signature byte
+#                                        lengths per parameter set.
+#   - pqc.slh_dsa_*                   : NIST FIPS 205 (Stateless Hash-Based
+#                                        Digital Signature Standard, final,
+#                                        Aug 2024), Table 1/10 — public key
+#                                        and signature byte lengths for the
+#                                        SHA2 "s" (small-signature) parameter
+#                                        sets. The "f" (fast) parameter sets
+#                                        (larger, faster to sign) exist too
+#                                        but are out of scope: this table only
+#                                        needs the sizes actually referenced
+#                                        elsewhere.
+#
+# All figures above are exact, standardised byte lengths except where noted
+# `approximate: true` (ASN.1 DER encodings have a few bytes of structural
+# overhead that vary with leading-zero padding of the encoded integers).
+
+classical:
+  rsa_2048:
+    pubkey_bytes: 270
+    signature_bytes: 256
+    approximate: true # pubkey: typical DER SubjectPublicKeyInfo size
+
+  rsa_3072:
+    pubkey_bytes: 398
+    signature_bytes: 384
+    approximate: true
+
+  rsa_4096:
+    pubkey_bytes: 526
+    signature_bytes: 512
+    approximate: true
+
+  ecdsa_p256:
+    pubkey_bytes: 65 # uncompressed SEC1 point (0x04 || X || Y)
+    pubkey_bytes_compressed: 33 # compressed SEC1 point (0x02/0x03 || X)
+    signature_bytes_min: 64 # DER ECDSA-Sig-Value, minimal r/s encoding
+    signature_bytes_max: 72 # DER ECDSA-Sig-Value, worst-case leading-zero padding
+    approximate: true
+
+  ed25519:
+    pubkey_bytes: 32
+    signature_bytes: 64
+    approximate: false
+
+  ecdh_p256:
+    pubkey_bytes: 65 # uncompressed SEC1 point, same encoding as ecdsa_p256
+    approximate: false
+
+pqc:
+  ml_kem_512:
+    pubkey_bytes: 800
+    ciphertext_bytes: 768
+    private_key_bytes: 1632
+    nist_security_level: 1
+
+  ml_kem_768:
+    pubkey_bytes: 1184
+    ciphertext_bytes: 1088
+    private_key_bytes: 2400
+    nist_security_level: 3
+
+  ml_kem_1024:
+    pubkey_bytes: 1568
+    ciphertext_bytes: 1568
+    private_key_bytes: 3168
+    nist_security_level: 5
+
+  ml_dsa_44:
+    pubkey_bytes: 1312
+    signature_bytes: 2420
+    private_key_bytes: 2560
+    nist_security_level: 2
+
+  ml_dsa_65:
+    pubkey_bytes: 1952
+    signature_bytes: 3309
+    private_key_bytes: 4032
+    nist_security_level: 3
+
+  ml_dsa_87:
+    pubkey_bytes: 2592
+    signature_bytes: 4627
+    private_key_bytes: 4896
+    nist_security_level: 5
+
+  slh_dsa_sha2_128s:
+    pubkey_bytes: 32
+    signature_bytes: 7856
+    nist_security_level: 1
+
+  slh_dsa_sha2_192s:
+    pubkey_bytes: 48
+    signature_bytes: 16224
+    nist_security_level: 3
+
+  slh_dsa_sha2_256s:
+    pubkey_bytes: 64
+    signature_bytes: 29792
+    nist_security_level: 5
+
+# ---------------------------------------------------------------------------
+# Which PQC parameter set pratyaksha/analyze/blast_radius.py uses as the
+# "smallest currently credible" replacement per classical primitive family.
+# Deliberately NOT the smallest entry in this file overall (ML-KEM-512 /
+# ML-DSA-44) — those are NIST category 1/2, below the security level most
+# migration guidance treats as the realistic floor. ML-KEM-768 / ML-DSA-65
+# (category 3) is the base case: picking a stronger parameter set later only
+# makes a buffer/column overflow worse, never better, so this is a
+# conservative lower bound on the blast radius, not an upper one.
+# ---------------------------------------------------------------------------
+default_replacement:
+  key_agreement_or_pke: ml_kem_768
+  signature: ml_dsa_65
