@@ -38,3 +38,5 @@ bench.json
 *.bench.json
 
 eval_results/
+
+ui_fixtures/
