@@ -15,13 +15,6 @@ dependencies = [
     "cyclonedx-python-lib",
     "cryptography>=50.0.0",
     "jsonschema",
-    # Pinned below 0.26: tree-sitter==0.26.0's Python bindings have a
-    # GC-triggered heap-corruption bug (crashes with "Garbage-collecting" in
-    # the faulthandler trace, STATUS_HEAP_CORRUPTION/access violation) when
-    # many Node objects derived from a moderately large real-world file
-    # coexist in the process — confirmed by toggling tree-sitter between
-    # 0.25.0 (stable) and 0.26.0 (crashes) with the grammar package held
-    # fixed. See tests/regression/test_tree_sitter_native_crash.py.
     "tree-sitter>=0.25,<0.26",
     "tree-sitter-java",
     "tree-sitter-python",
@@ -45,7 +38,7 @@ packages = ["pratyaksha"]
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["testdata"]
+extend-exclude = ["testdata", "tests/regression/fixtures"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
