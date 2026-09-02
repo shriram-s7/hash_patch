@@ -25,3 +25,6 @@ htmlcov/
 
 # PRATYAKSHA scan outputs
 *.cbom.json
+
+plan.json
+*.optimize.json
