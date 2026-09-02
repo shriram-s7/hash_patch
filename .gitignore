@@ -36,3 +36,5 @@ keys/*.key
 # Benchmark outputs
 bench.json
 *.bench.json
+
+eval_results/
