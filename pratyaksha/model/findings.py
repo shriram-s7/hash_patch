@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from pratyaksha.model.assets import CryptoAsset
 from pratyaksha.model.blast_radius import BlastRadiusFinding
+from pratyaksha.model.config_finding import ContradictionFinding, TlsConfigFinding
 from pratyaksha.model.shelf_life import ShelfLifeFinding
 
 
@@ -27,6 +28,10 @@ class ScanResult(BaseModel):
     # here always has a real correlated CryptoAsset (unlike blast radius's
     # db_column fallback) and is mirrored onto that asset's `properties`.
     shelf_life_findings: list[ShelfLifeFinding] = Field(default_factory=list)
+    # Pillar 4 (Cross-Layer Contradictions) findings — see
+    # pratyaksha/analyze/contradictions.py and docs/CONTRADICTIONS.md.
+    tls_config_findings: list[TlsConfigFinding] = Field(default_factory=list)
+    contradiction_findings: list[ContradictionFinding] = Field(default_factory=list)
 
     def add_asset(self, asset: CryptoAsset) -> None:
         """Add an asset, merging into an existing one with the same id.

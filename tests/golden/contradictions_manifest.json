@@ -1,0 +1,26 @@
+{
+  "_comment": "MANIFEST-style expected contradiction findings fixture for Pillar 4 (Cross-Layer Contradiction Detection) under testdata/contradictions. Consumed by tests/golden/test_contradictions_golden.py.",
+  "scenarios": [
+    {
+      "name": "scenario1_conflict",
+      "path": "testdata/contradictions/scenario1_conflict",
+      "expected_contradictions": 1,
+      "expected_severity": "medium",
+      "description": "Python source code enforces TLS 1.3 minimum, but co-located nginx.conf permits TLSv1 and TLSv1.1 (genuine cross-layer contradiction)."
+    },
+    {
+      "name": "scenario2_matching",
+      "path": "testdata/contradictions/scenario2_matching",
+      "expected_contradictions": 0,
+      "expected_severity": null,
+      "description": "Python source code enforces TLS 1.3 minimum and co-located nginx.conf permits only TLSv1.3 (aligned policies, no contradiction)."
+    },
+    {
+      "name": "scenario3_config_only",
+      "path": "testdata/contradictions/scenario3_config_only",
+      "expected_contradictions": 0,
+      "expected_severity": null,
+      "description": "nginx.conf permits legacy TLS, but no source file exists in the scope (config finding emitted, but no contradiction)."
+    }
+  ]
+}

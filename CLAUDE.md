@@ -272,6 +272,25 @@ documented **heuristic placeholder, not derived from real migration data**
 — see docs/BLAST_RADIUS.md before using it for anything beyond a rough
 sense of scale.
 
+## Cross-Layer Contradictions (Pillar 4)
+
+Pillar 4 introduces a second detection layer: static deployed TLS/SSL
+configuration files (`nginx.conf`, Apache `httpd.conf`, Java properties) and
+analyzes them alongside source-code TLS declarations (Python and Java source
+intent). It identifies policy contradictions where application code requests a
+strict TLS version (e.g. TLS 1.3 minimum), but deployed infrastructure configuration
+allows deprecated/broken protocols or ciphers (e.g. TLS 1.0, SSLv3, RC4).
+
+**Rules:** `rules/legacy_tls_config.yaml` (RFC 6176, RFC 7568, RFC 8996, RFC 7465)
+and `rules/tls_source_intent.yaml`. No directive or API names are hardcoded in Python.
+
+**Scope:** Same-target correlation only. It does not probe live endpoints and does
+not observe out-of-band configurations not committed to the scanned repository.
+
+**CBOM representation:** Emitted under `metadata.properties` as
+`pratyaksha:contradiction.<id>` rather than forced into the CVE-focused
+`vulnerabilities` array. See `docs/CONTRADICTIONS.md`.
+
 ## Optimiser
 
 Pillar 5: `pratyaksha optimize INPUT.cbom.json --budget-days N --parallelism

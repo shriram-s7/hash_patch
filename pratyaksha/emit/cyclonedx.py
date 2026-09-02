@@ -209,6 +209,10 @@ def _sort_document_for_determinism(doc: dict[str, Any]) -> dict[str, Any]:
                 crypto_functions
             )
 
+    metadata = doc.get("metadata")
+    if metadata and "properties" in metadata:
+        metadata["properties"] = sorted(metadata["properties"], key=lambda p: p["name"])
+
     doc["components"] = sorted(doc.get("components", []), key=lambda c: c["bom-ref"])
     return doc
 
@@ -223,6 +227,35 @@ def to_cyclonedx(result: ScanResult) -> dict[str, Any]:
     """
     components = [_asset_to_component(asset) for asset in result.sorted_assets()]
 
+    meta_props: list[Property] = []
+    for contra in sorted(result.contradiction_findings, key=lambda c: c.id):
+        src_ev = contra.source_intent.evidence[0] if contra.source_intent.evidence else None
+        cfg_ev = contra.deployed_config.evidence[0] if contra.deployed_config.evidence else None
+        val_data = {
+            "id": contra.id,
+            "severity": contra.severity,
+            "description": contra.description,
+            "sourceIntent": {
+                "format": contra.source_intent.config_format,
+                "value": contra.source_intent.value,
+                "locator": src_ev.locator if src_ev else contra.source_intent.source_file,
+                "line": src_ev.line if src_ev else None,
+            },
+            "deployedConfig": {
+                "format": contra.deployed_config.config_format,
+                "value": contra.deployed_config.value,
+                "legacyReasons": contra.deployed_config.legacy_reasons,
+                "locator": cfg_ev.locator if cfg_ev else contra.deployed_config.source_file,
+                "line": cfg_ev.line if cfg_ev else None,
+            },
+        }
+        meta_props.append(
+            Property(
+                name=f"pratyaksha:contradiction.{contra.id}",
+                value=json.dumps(val_data, sort_keys=True, separators=(",", ":")),
+            )
+        )
+
     metadata = BomMetaData(
         timestamp=result.scan_started_at,
         tools=ToolRepository(
@@ -234,6 +267,7 @@ def to_cyclonedx(result: ScanResult) -> dict[str, Any]:
                 )
             ]
         ),
+        properties=meta_props if meta_props else None,
     )
 
     bom = Bom(

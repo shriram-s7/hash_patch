@@ -24,6 +24,7 @@ from pratyaksha.detect.base import Detector
 from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
 from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
 from pratyaksha.model.blast_radius import BlastRadiusFinding
+from pratyaksha.model.config_finding import ContradictionFinding, TlsConfigFinding
 from pratyaksha.model.findings import ScanResult
 from pratyaksha.model.optimizer import OptimizationReport
 from pratyaksha.model.shelf_life import ShelfLifeFinding
@@ -55,6 +56,11 @@ def _shelf_life_summary(findings: list[ShelfLifeFinding]) -> str:
         return "0 shelf-life findings"
     longest = max(findings, key=lambda f: (f.shelf_life_years, f.category))
     return f"{len(findings)} shelf-life findings (longest: {longest.shelf_life_years} years, {longest.category})"
+
+
+def _contradictions_summary(findings: list[ContradictionFinding]) -> str:
+    high_count = sum(1 for f in findings if f.severity == "high")
+    return f"{len(findings)} cross-layer contradictions found ({high_count} high severity)"
 
 
 def _shelf_life_property(finding: ShelfLifeFinding) -> tuple[str, str]:
@@ -232,6 +238,26 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     result.shelf_life_findings = run_shelf_life(result.assets, result.scan_started_at.date())
     _attach_shelf_life_properties(result)
 
+    # Pillar 4 (Cross-Layer Contradictions): scans deployed TLS configuration
+    # files (nginx, apache, java properties) and source-code TLS intent (Python, Java),
+    # then detects policy contradictions between them within the same target scope.
+    from pratyaksha.analyze.contradictions import run_contradiction_analysis
+    from pratyaksha.detect.config.source_tls_intent import detect_source_tls_intent
+    from pratyaksha.detect.config.tls_config import detect_tls_config_file
+
+    tls_findings: list[TlsConfigFinding] = []
+    for file_path in scanned_files:
+        cfg_findings = detect_tls_config_file(file_path)
+        if cfg_findings:
+            tls_findings.extend(cfg_findings)
+        src_intent = detect_source_tls_intent(file_path)
+        if src_intent:
+            tls_findings.extend(src_intent)
+
+    result.tls_config_findings = tls_findings
+    target_root = path if path.is_dir() else path.parent
+    result.contradiction_findings = run_contradiction_analysis(tls_findings, target_root=target_root)
+
     return result
 
 
@@ -269,6 +295,7 @@ def scan(
     summary = _quantum_status_summary(result)
     blast_radius_summary = _blast_radius_summary(result.blast_radius_findings)
     shelf_life_summary = _shelf_life_summary(result.shelf_life_findings)
+    contradictions_summary = _contradictions_summary(result.contradiction_findings)
     if output is not None:
         output.write_text(render_cbom_json(doc), encoding="utf-8")
         typer.echo(f"wrote CBOM to {output}; {summary}")
@@ -276,6 +303,7 @@ def scan(
         typer.echo(summary)
     typer.echo(blast_radius_summary)
     typer.echo(shelf_life_summary)
+    typer.echo(contradictions_summary)
 
 
 def _optimize_summary(report: OptimizationReport) -> str:

@@ -1,0 +1,102 @@
+# rules/tls_source_intent.yaml — Language API patterns for detecting source-side TLS intent.
+# Used by Pillar 4 (Cross-Layer Contradiction Detection).
+
+python:
+  - id: "py_tls_version_13"
+    api: "ssl.TLSVersion.TLSv1_3"
+    kind: "protocol_version"
+    protocol: "TLSv1.3"
+    is_strict: true
+    allows_legacy: false
+    patterns:
+      - "ssl.TLSVersion.TLSv1_3"
+      - "TLSVersion.TLSv1_3"
+      - "PROTOCOL_TLSv1_3"
+
+  - id: "py_tls_version_12"
+    api: "ssl.TLSVersion.TLSv1_2"
+    kind: "protocol_version"
+    protocol: "TLSv1.2"
+    is_strict: true
+    allows_legacy: false
+    patterns:
+      - "ssl.TLSVersion.TLSv1_2"
+      - "TLSVersion.TLSv1_2"
+      - "PROTOCOL_TLSv1_2"
+
+  - id: "py_tls_version_10"
+    api: "ssl.TLSVersion.TLSv1"
+    kind: "protocol_version"
+    protocol: "TLSv1.0"
+    is_strict: false
+    allows_legacy: true
+    patterns:
+      - "ssl.TLSVersion.TLSv1"
+      - "TLSVersion.TLSv1"
+      - "PROTOCOL_TLSv1"
+
+  - id: "py_tls_legacy_sslv3"
+    api: "ssl.PROTOCOL_SSLv3"
+    kind: "protocol_version"
+    protocol: "SSLv3"
+    is_strict: false
+    allows_legacy: true
+    patterns:
+      - "ssl.PROTOCOL_SSLv3"
+      - "PROTOCOL_SSLv3"
+
+  - id: "py_tls_legacy_sslv23"
+    api: "ssl.PROTOCOL_SSLv23"
+    kind: "protocol_version"
+    protocol: "SSLv23"
+    is_strict: false
+    allows_legacy: true
+    patterns:
+      - "ssl.PROTOCOL_SSLv23"
+      - "PROTOCOL_SSLv23"
+
+java:
+  - id: "java_ssl_tls13"
+    api: "SSLContext.getInstance(\"TLSv1.3\")"
+    kind: "protocol_version"
+    protocol: "TLSv1.3"
+    is_strict: true
+    allows_legacy: false
+    patterns:
+      - "TLSv1.3"
+
+  - id: "java_ssl_tls12"
+    api: "SSLContext.getInstance(\"TLSv1.2\")"
+    kind: "protocol_version"
+    protocol: "TLSv1.2"
+    is_strict: true
+    allows_legacy: false
+    patterns:
+      - "TLSv1.2"
+
+  - id: "java_ssl_legacy_tls11"
+    api: "SSLContext.getInstance(\"TLSv1.1\")"
+    kind: "protocol_version"
+    protocol: "TLSv1.1"
+    is_strict: false
+    allows_legacy: true
+    patterns:
+      - "TLSv1.1"
+
+  - id: "java_ssl_legacy_tls10"
+    api: "SSLContext.getInstance(\"TLSv1\")"
+    kind: "protocol_version"
+    protocol: "TLSv1.0"
+    is_strict: false
+    allows_legacy: true
+    patterns:
+      - "TLSv1"
+
+  - id: "java_ssl_legacy_sslv3"
+    api: "SSLContext.getInstance(\"SSLv3\")"
+    kind: "protocol_version"
+    protocol: "SSLv3"
+    is_strict: false
+    allows_legacy: true
+    patterns:
+      - "SSLv3"

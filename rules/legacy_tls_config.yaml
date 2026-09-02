@@ -1,0 +1,98 @@
+# rules/legacy_tls_config.yaml — Definitions of deprecated / weak TLS protocols and cipher suites.
+# Used by Pillar 4 (Cross-Layer Contradiction Detection).
+#
+# References:
+# - RFC 6176 (Prohibiting Secure Sockets Layer Version 2.0)
+# - RFC 7568 (Deprecating Secure Sockets Layer Version 3.0)
+# - RFC 8996 (Deprecating TLS 1.0 and TLS 1.1)
+# - RFC 7465 (Prohibiting RC4 Cipher Suites)
+# - NIST SP 800-52 Rev. 2 (Guidelines for the Selection, Configuration, and Use of TLS Implementations)
+
+legacy_protocols:
+  - id: "sslv2"
+    name: "SSLv2"
+    severity: "high"
+    description: "SSL 2.0 (critically broken, RFC 6176)"
+    tokens:
+      - "SSLv2"
+      - "SSL2"
+
+  - id: "sslv3"
+    name: "SSLv3"
+    severity: "high"
+    description: "SSL 3.0 (vulnerable to POODLE, RFC 7568)"
+    tokens:
+      - "SSLv3"
+      - "SSL3"
+
+  - id: "tlsv1_0"
+    name: "TLSv1.0"
+    severity: "medium"
+    description: "TLS 1.0 (deprecated RFC 8996, lacks AEAD)"
+    tokens:
+      - "TLSv1"
+      - "TLSv1.0"
+      - "TLS 1.0"
+
+  - id: "tlsv1_1"
+    name: "TLSv1.1"
+    severity: "medium"
+    description: "TLS 1.1 (deprecated RFC 8996, lacks AEAD)"
+    tokens:
+      - "TLSv1.1"
+      - "TLS 1.1"
+
+legacy_ciphers:
+  - id: "null"
+    name: "NULL"
+    severity: "high"
+    description: "Unencrypted cipher suites"
+    patterns:
+      - "NULL"
+      - "aNULL"
+      - "eNULL"
+
+  - id: "export"
+    name: "EXPORT"
+    severity: "high"
+    description: "Export-grade 40/56-bit cryptography (vulnerable to FREAK/Logjam)"
+    patterns:
+      - "EXP"
+      - "EXPORT"
+
+  - id: "des"
+    name: "DES"
+    severity: "high"
+    description: "Single-DES (56-bit key, broken classically)"
+    patterns:
+      - "DES"
+      - "DES-CBC"
+
+  - id: "3des"
+    name: "3DES"
+    severity: "high"
+    description: "Triple-DES (Sweet32 64-bit block collision vulnerability)"
+    patterns:
+      - "3DES"
+      - "DES-CBC3"
+
+  - id: "rc4"
+    name: "RC4"
+    severity: "high"
+    description: "RC4 stream cipher (broken keystream biases, RFC 7465)"
+    patterns:
+      - "RC4"
+
+  - id: "md5"
+    name: "MD5"
+    severity: "high"
+    description: "MD5 MAC / integrity (collision vulnerabilities)"
+    patterns:
+      - "MD5"
+
+  - id: "cbc"
+    name: "CBC"
+    severity: "medium"
+    description: "Non-AEAD CBC mode suites without encrypt-then-mac (vulnerable to padding oracles)"
+    patterns:
+      - "CBC"
