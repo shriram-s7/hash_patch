@@ -23,6 +23,7 @@ from pratyaksha.detect import registry  # triggers side-effect detector registra
 from pratyaksha.detect.base import Detector
 from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
 from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
+from pratyaksha.model.benchmark import RecommendationFinding
 from pratyaksha.model.blast_radius import BlastRadiusFinding
 from pratyaksha.model.config_finding import ContradictionFinding, TlsConfigFinding
 from pratyaksha.model.findings import ScanResult
@@ -61,6 +62,36 @@ def _shelf_life_summary(findings: list[ShelfLifeFinding]) -> str:
 def _contradictions_summary(findings: list[ContradictionFinding]) -> str:
     high_count = sum(1 for f in findings if f.severity == "high")
     return f"{len(findings)} cross-layer contradictions found ({high_count} high severity)"
+
+
+def _recommendation_property(finding: RecommendationFinding) -> tuple[str, str]:
+    key = f"recommendation.{finding.target_algorithm}"
+    val = json.dumps(
+        {
+            "targetAlgorithm": finding.target_algorithm,
+            "targetStandard": finding.target_standard,
+            "confidence": finding.confidence,
+            "sourceNote": finding.source_note,
+            "rationale": finding.rationale,
+            "latencySummary": finding.latency_summary,
+            "sizeDeltaSummary": finding.size_delta_summary,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return key, val
+
+
+def _attach_recommendation_properties(
+    result: ScanResult, recs: list[RecommendationFinding]
+) -> None:
+    by_id = {asset.id: asset for asset in result.assets}
+    for rec in recs:
+        asset = by_id.get(rec.asset_id)
+        if asset is None:
+            continue
+        key, val = _recommendation_property(rec)
+        asset.properties[key] = val
 
 
 def _shelf_life_property(finding: ShelfLifeFinding) -> tuple[str, str]:
@@ -275,6 +306,13 @@ def scan(
             help="Validate the emitted CBOM against the vendored CycloneDX 1.6 schema.",
         ),
     ] = True,
+    benchmark_report: Annotated[
+        Path | None,
+        typer.Option(
+            "--benchmark-report",
+            help="Path to a benchmark report JSON to cite real measured latencies and sizes.",
+        ),
+    ] = None,
 ) -> None:
     """Scan PATH for cryptographic assets and emit a CycloneDX 1.6 CBOM.
 
@@ -283,6 +321,18 @@ def scan(
     supports it (matched by file extension).
     """
     result = run_scan(path)
+
+    recs: list[RecommendationFinding] = []
+    if benchmark_report is not None:
+        from pratyaksha.model.benchmark import BenchmarkReport
+        from pratyaksha.recommend import generate_recommendations
+
+        report_data = BenchmarkReport.model_validate_json(
+            benchmark_report.read_text(encoding="utf-8")
+        )
+        recs = generate_recommendations(result.assets, benchmark_report=report_data)
+        _attach_recommendation_properties(result, recs)
+
     doc = to_cyclonedx(result)
 
     if validate:
@@ -304,6 +354,9 @@ def scan(
     typer.echo(blast_radius_summary)
     typer.echo(shelf_life_summary)
     typer.echo(contradictions_summary)
+    if benchmark_report is not None:
+        meas_count = sum(1 for r in recs if r.confidence == "measured")
+        typer.echo(f"{len(recs)} PQC recommendations generated ({meas_count} measured)")
 
 
 def _optimize_summary(report: OptimizationReport) -> str:
@@ -445,6 +498,118 @@ def verify(
     else:
         typer.echo(f"ERROR: {result.message}", err=True)
         raise typer.Exit(code=2)
+
+
+@app.command()
+def benchmark(
+    iterations: Annotated[
+        int,
+        typer.Option("--iterations", "-n", help="Number of benchmark iterations per algorithm."),
+    ] = 50,
+    warmup: Annotated[
+        int,
+        typer.Option("--warmup", "-w", help="Number of warmup iterations to discard."),
+    ] = 5,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Path to write the full benchmark report JSON."),
+    ] = None,
+) -> None:
+    """Benchmark real PQC and classical algorithm latencies and byte sizes on this host."""
+    from rich.console import Console
+    from rich.table import Table
+
+    from pratyaksha.benchmark.pqc_bench import run_benchmark
+
+    console = Console()
+    with console.status(
+        f"[bold green]Running PQC benchmarks ({iterations} iterations, {warmup} warmup)..."
+    ):
+        report = run_benchmark(iterations=iterations, warmup=warmup)
+
+    rsa_res = report.get_result("RSA-2048")
+    ecdsa_res = report.get_result("ECDSA-P256")
+
+    title_text = (
+        "PRATYAKSHA Post-Quantum Cryptography Benchmark\n"
+        f"[dim]{report.metadata.platform} | Python {report.metadata.python_version} | "
+        f"cryptography {report.metadata.cryptography_version} ({iterations} iterations)[/dim]"
+    )
+    table = Table(title=title_text, caption=report.disclaimer)
+    table.add_column("Algorithm", style="cyan", no_wrap=True)
+    table.add_column("Standard", style="magenta")
+    table.add_column("Level", justify="center")
+    table.add_column("Keygen (p50)", justify="right")
+    table.add_column("Sign/Enc (p50)", justify="right")
+    table.add_column("Verify/Dec (p50)", justify="right")
+    table.add_column("Pubkey Size", justify="right")
+    table.add_column("Sig / CT Size", justify="right")
+    table.add_column("vs Classical Reference", style="green")
+
+    for r in report.results:
+        sec = f"Level {r.nist_security_level}" if r.nist_security_level else "-"
+        kg_timing = r.timings.get("keygen")
+        kg_str = f"{kg_timing.p50_ms:.2f} ms" if kg_timing else "-"
+
+        if "sign" in r.timings:
+            op2_str = f"{r.timings['sign'].p50_ms:.2f} ms (sign)"
+        elif "encapsulate" in r.timings:
+            op2_str = f"{r.timings['encapsulate'].p50_ms:.2f} ms (enc)"
+        else:
+            op2_str = "-"
+
+        if "verify" in r.timings:
+            op3_str = f"{r.timings['verify'].p50_ms:.2f} ms (ver)"
+        elif "decapsulate" in r.timings:
+            op3_str = f"{r.timings['decapsulate'].p50_ms:.2f} ms (dec)"
+        else:
+            op3_str = "-"
+
+        pub_str = f"{r.byte_sizes.public_key_bytes:,} B"
+        payload_bytes = r.byte_sizes.signature_bytes or r.byte_sizes.ciphertext_bytes or 0
+        payload_str = f"{payload_bytes:,} B"
+
+        comp_str = ""
+        if r.is_pqc:
+            if r.primitive_family == "signature" and rsa_res is not None:
+                class_pub = rsa_res.byte_sizes.public_key_bytes
+                class_sig = rsa_res.byte_sizes.signature_bytes or 1
+                pub_mult = r.byte_sizes.public_key_bytes / class_pub
+                sig_mult = payload_bytes / class_sig
+                sign_pqc = r.timings.get("sign")
+                sign_class = rsa_res.timings.get("sign")
+                lat_mult = (
+                    (sign_pqc.p50_ms / sign_class.p50_ms)
+                    if (sign_pqc and sign_class and sign_class.p50_ms > 0)
+                    else 1.0
+                )
+                comp_str = f"Pub {pub_mult:.1f}x, Sig {sig_mult:.1f}x, Sign {lat_mult:.1f}x vs RSA-2048"
+            elif r.primitive_family == "key_agreement_or_pke" and ecdsa_res is not None:
+                class_pub = ecdsa_res.byte_sizes.public_key_bytes
+                class_ct = ecdsa_res.byte_sizes.signature_bytes or 1
+                pub_mult = r.byte_sizes.public_key_bytes / class_pub
+                ct_mult = payload_bytes / class_ct
+                comp_str = f"Pub {pub_mult:.1f}x, CT {ct_mult:.1f}x vs P-256"
+        else:
+            comp_str = "[dim]Classical baseline[/dim]"
+
+        table.add_row(
+            r.algorithm,
+            r.standard,
+            sec,
+            kg_str,
+            op2_str,
+            op3_str,
+            pub_str,
+            payload_str,
+            comp_str,
+        )
+
+    console.print(table)
+
+    if output is not None:
+        output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+        typer.echo(f"wrote benchmark report to {output}")
 
 
 if __name__ == "__main__":

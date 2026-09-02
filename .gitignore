@@ -33,6 +33,6 @@ plan.json
 keys/*.key
 *.sig
 
-# Signing keys and demo artifacts
-keys/*.key
-*.sig
+# Benchmark outputs
+bench.json
+*.bench.json

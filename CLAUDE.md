@@ -342,6 +342,23 @@ signature containing the SHA-256 pre-check hash, public key fingerprint/PEM,
 and base64-encoded ML-DSA-65 signature bytes. See `docs/SIGNING.md` for full
 technical details, the detached signature format, and tamper-detection guarantees.
 
+## Benchmarking & Recommendations
+
+PRATYAKSHA provides a native PQC benchmark harness and hardware-grounded
+recommendation engine:
+- `pratyaksha benchmark --iterations N --warmup W [--output FILE.json]`:
+  Measures real keygen, sign/encapsulate, and verify/decapsulate latencies (min,
+  p50, p95, max) and exact wire byte sizes on the host system across ML-DSA-44/65/87,
+  ML-KEM-768/1024, and classical baselines (RSA-2048, ECDSA-P256).
+- `pratyaksha scan PATH --benchmark-report FILE.json`:
+  Attaches hardware-measured PQC migration recommendations (`pratyaksha:property.recommendation.*`)
+  to broken-by-shor assets citing real latency deltas, exact size increases, platform,
+  and date (`confidence="measured"`).
+- **Fallback & Gaps:** Without a benchmark report, the recommender falls back to
+  static FIPS published values (`confidence="estimated"`). Explicitly documents
+  the absence of SLH-DSA (FIPS 205) and ML-KEM-512 in `pyca/cryptography 50.0.1`.
+  See `docs/BENCHMARKING.md`.
+
 ## Detection rules live in YAML, not Python
 
 All algorithm/pattern/OID detection rules belong in `rules/` as YAML data,
