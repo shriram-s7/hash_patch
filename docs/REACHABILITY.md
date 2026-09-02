@@ -154,6 +154,26 @@ table/`Map`, invoked via a runtime key lookup the call-graph builder cannot
 trace. It is production code, not test code, so — even though no resolved
 caller was found — it classifies `UNKNOWN`, never `INERT`.
 
+## Deep-nesting safety cap
+
+`pratyaksha/analyze/callgraph.py::_walk_py_calls` walks the tree-sitter AST
+of every Python function body to collect its call sites. This walk uses an
+explicit heap-allocated stack, not function-call recursion — a real-world
+file with deeply nested expressions/definitions (confirmed on
+`cryptography/hazmat/primitives/asymmetric/mldsa.py` from `pyca/cryptography`)
+can exceed the native C thread stack before Python's own `RecursionError`
+guard ever triggers, crashing the process with no catchable exception.
+Moving to an explicit stack bounds traversal depth by available heap memory
+instead.
+
+As defense in depth against tree-sitter AST shapes deeper than any real file
+should need, the walk also caps at `_MAX_WALK_DEPTH = 500`: a branch deeper
+than that is simply not descended further. This does not change the module's
+externally-visible fail-safe behavior — a call this cap prevents from being
+seen becomes an unresolved/missing call edge, which already yields
+`UNKNOWN` (never `INERT`) reachability per the rule above, exactly like any
+other call this simple name-based resolver cannot see.
+
 ## Corpus
 
 Four hand-authored scenarios per language, one per classification, live

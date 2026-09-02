@@ -126,14 +126,34 @@ def _collect_jca_calls(root_node: Any) -> list[dict[str, Any]]:
     return results
 
 
+# Uses an explicit heap-allocated stack instead of function-call recursion —
+# same rationale and pattern as
+# `pratyaksha/detect/python.py::_walk` /
+# `pratyaksha/analyze/callgraph.py::_walk_py_calls` /
+# `pratyaksha/detect/shelf_life/data_context.py::_walk_python_spans`: a
+# deeply nested real file can exceed the native C thread stack, and even a
+# clean RecursionError previously propagated uncaught through detect() and
+# aborted the whole scan over one pathological file. `_MAX_WALK_DEPTH` is
+# defense in depth — a branch deeper than that is simply not descended
+# further, the same fail-safe shape as any other call this detector cannot
+# resolve.
+_MAX_WALK_DEPTH = 500
+
+
 def _walk(node: Any, results: list[dict[str, Any]]) -> None:
-    """Recursive DFS walk that collects matching method_invocation nodes."""
-    if node.type == "method_invocation":
-        _try_collect(node, results)
-        # Still recurse into children — a method invocation can itself be an
-        # argument to another call (e.g. Cipher.getInstance(getAlgo())).
-    for child in node.children:
-        _walk(child, results)
+    """Iterative DFS walk that collects matching method_invocation nodes."""
+    stack: list[tuple[Any, int]] = [(node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if current.type == "method_invocation":
+            _try_collect(current, results)
+            # Still recurse into children — a method invocation can itself be
+            # an argument to another call (e.g. Cipher.getInstance(getAlgo())).
+        children = current.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
 
 
 def _try_collect(node: Any, results: list[dict[str, Any]]) -> None:

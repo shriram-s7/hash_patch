@@ -45,6 +45,10 @@ from pratyaksha.model.evidence import Evidence
 
 _RULES_PATH = Path(__file__).resolve().parents[3] / "rules" / "tls_source_intent.yaml"
 
+# See pratyaksha/detect/python.py::_walk's module comment for why both
+# tree walks below use an explicit stack, capped here, instead of recursion.
+_MAX_WALK_DEPTH = 500
+
 
 def _load_source_intent_rules() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if not _RULES_PATH.is_file():
@@ -67,6 +71,24 @@ def _detect_python_intent(file_path: Path, rules: list[dict[str, Any]]) -> list[
     lines = source_bytes.splitlines()
     findings: list[TlsConfigFinding] = []
     seen_keys: set[tuple[int, str]] = set()
+
+    def visit_all(root: Any) -> None:
+        # Explicit heap-allocated stack instead of function-call recursion —
+        # same rationale/pattern as `pratyaksha/detect/python.py::_walk`: a
+        # deeply nested real file can exceed the native C thread stack, and
+        # even a clean RecursionError previously propagated uncaught through
+        # this Pillar-4 detector and aborted the whole scan over one
+        # pathological file. `_MAX_WALK_DEPTH` is defense in depth — a
+        # branch deeper than that is simply not descended further.
+        stack: list[tuple[Any, int]] = [(root, 0)]
+        while stack:
+            node, depth = stack.pop()
+            if depth > _MAX_WALK_DEPTH:
+                continue
+            visit(node)
+            children = node.children
+            if children:
+                stack.extend((child, depth + 1) for child in reversed(children))
 
     def visit(node: Any) -> None:
         if node.type in ("attribute", "identifier", "dotted_name", "string"):
@@ -113,10 +135,8 @@ def _detect_python_intent(file_path: Path, rules: list[dict[str, Any]]) -> list[
                             )
                         )
                     break
-        for child in node.children:
-            visit(child)
 
-    visit(tree.root_node)
+    visit_all(tree.root_node)
     return findings
 
 
@@ -133,6 +153,18 @@ def _detect_java_intent(file_path: Path, rules: list[dict[str, Any]]) -> list[Tl
     lines = source_bytes.splitlines()
     findings: list[TlsConfigFinding] = []
     seen_keys: set[tuple[int, str]] = set()
+
+    def visit_all(root: Any) -> None:
+        # See _detect_python_intent's visit_all — same explicit-stack pattern.
+        stack: list[tuple[Any, int]] = [(root, 0)]
+        while stack:
+            node, depth = stack.pop()
+            if depth > _MAX_WALK_DEPTH:
+                continue
+            visit(node)
+            children = node.children
+            if children:
+                stack.extend((child, depth + 1) for child in reversed(children))
 
     def visit(node: Any) -> None:
         if node.type in ("string_literal", "identifier"):
@@ -179,10 +211,8 @@ def _detect_java_intent(file_path: Path, rules: list[dict[str, Any]]) -> list[Tl
                             )
                         )
                     break
-        for child in node.children:
-            visit(child)
 
-    visit(tree.root_node)
+    visit_all(tree.root_node)
     return findings
 
 

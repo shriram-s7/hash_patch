@@ -149,29 +149,50 @@ def _collect_python_spans(root_node: Any) -> list[_FuncSpan]:
     return out
 
 
+# Real-world files with deeply nested classes/functions/expressions can
+# exceed the native C thread stack before Python's own RecursionError guard
+# ever fires (a tree-sitter-node-visiting function calling itself is native
+# recursion, not bytecode-level recursion CPython can budget for) — an
+# unrecoverable process crash, not a catchable exception. `_walk_python_spans`
+# therefore uses an explicit heap-allocated stack instead of function-call
+# recursion (siblings with `pratyaksha/analyze/callgraph.py::_walk_py_calls`,
+# same pattern), so traversal depth is bounded by available heap memory
+# rather than native stack frames. `_MAX_WALK_DEPTH` is defense in depth
+# against tree-sitter AST shapes deeper than any real file should need — a
+# walk that hits it simply stops descending that branch, which surfaces as
+# this pillar's existing fail-safe "no signal found" behavior (see
+# docs/SHELF_LIFE.md): a call site past the cap gets no enclosing span, so
+# no ShelfLifeFinding is produced for it rather than a guess.
+_MAX_WALK_DEPTH = 500
+
+
 def _walk_python_spans(node: Any, class_name: str | None, out: list[_FuncSpan]) -> None:
-    if node.type == "class_definition":
-        cname = _first_identifier_text(node)
-        body = _first_child_of_type(node, "block")
-        if body is not None:
-            for c in body.children:
-                _walk_python_spans(c, cname, out)
-        return
-    if node.type == "function_definition":
-        fname = _first_identifier_text(node)
-        out.append((fname, class_name, node.start_point.row + 1, node.end_point.row + 1))
-        body = _first_child_of_type(node, "block")
-        if body is not None:
-            for c in body.children:
-                _walk_python_spans(c, class_name, out)  # nested defs, best-effort
-        return
-    if node.type == "decorated_definition":
-        for c in node.children:
-            if c.type in ("function_definition", "class_definition"):
-                _walk_python_spans(c, class_name, out)
-        return
-    for c in node.children:
-        _walk_python_spans(c, class_name, out)
+    stack: list[tuple[Any, str | None, int]] = [(node, class_name, 0)]
+    while stack:
+        current, cname_ctx, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if current.type == "class_definition":
+            cname = _first_identifier_text(current)
+            body = _first_child_of_type(current, "block")
+            if body is not None:
+                stack.extend((c, cname, depth + 1) for c in reversed(body.children))
+            continue
+        if current.type == "function_definition":
+            fname = _first_identifier_text(current)
+            out.append((fname, cname_ctx, current.start_point.row + 1, current.end_point.row + 1))
+            body = _first_child_of_type(current, "block")
+            if body is not None:
+                stack.extend((c, cname_ctx, depth + 1) for c in reversed(body.children))  # nested defs, best-effort
+            continue
+        if current.type == "decorated_definition":
+            stack.extend(
+                (c, cname_ctx, depth + 1)
+                for c in reversed(current.children)
+                if c.type in ("function_definition", "class_definition")
+            )
+            continue
+        stack.extend((c, cname_ctx, depth + 1) for c in reversed(current.children))
 
 
 def _collect_python_class_fields(root_node: Any) -> dict[str, list[_FieldEntry]]:

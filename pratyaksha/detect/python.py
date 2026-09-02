@@ -135,12 +135,34 @@ def _collect_calls(root_node: Any) -> list[dict[str, Any]]:
     return results
 
 
+# Real-world files with deeply nested expressions can exceed the native C
+# thread stack before Python's own RecursionError guard fires reliably —
+# and even when RecursionError does fire, it previously propagated
+# uncaught through detect() -> run_scan() -> the CLI, aborting the whole
+# scan over one pathological file (see docs/REACHABILITY.md's "Deep-nesting
+# safety cap" note; `pratyaksha/analyze/callgraph.py::_walk_py_calls` and
+# `pratyaksha/detect/shelf_life/data_context.py::_walk_python_spans` use the
+# same explicit-stack pattern for the same reason). `_walk` therefore uses
+# an explicit heap-allocated stack instead of function-call recursion, with
+# `_MAX_WALK_DEPTH` as defense in depth: a branch deeper than that is simply
+# not descended further, which surfaces as "fewer calls found" — the same
+# fail-safe shape as any other call this detector cannot resolve — rather
+# than crashing or losing evidence for the whole file.
+_MAX_WALK_DEPTH = 500
+
+
 def _walk(node: Any, results: list[dict[str, Any]]) -> None:
-    if node.type == "call":
-        _try_collect_call(node, results)
-        # Still recurse: calls can be nested (e.g. algorithm=hashes.SHA256())
-    for child in node.children:
-        _walk(child, results)
+    stack: list[tuple[Any, int]] = [(node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if current.type == "call":
+            _try_collect_call(current, results)
+            # Still recurse: calls can be nested (e.g. algorithm=hashes.SHA256())
+        children = current.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
 
 
 def _try_collect_call(call_node: Any, results: list[dict[str, Any]]) -> None:

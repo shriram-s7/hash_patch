@@ -311,11 +311,32 @@ def _py_call_shape(call_node: Any) -> tuple[str, str | None, str | None]:
     return ("dynamic", None, None)
 
 
+# Real-world files with deeply nested expressions/definitions can exceed the
+# native C thread stack before Python's own RecursionError guard ever fires
+# (a tree-sitter-node-visiting function calling itself is native recursion,
+# not bytecode-level recursion CPython can budget for) — an unrecoverable
+# process crash, not a catchable exception. `_walk_py_calls` therefore uses
+# an explicit heap-allocated stack instead of function-call recursion, so
+# traversal depth is bounded by available heap memory rather than native
+# stack frames. `_MAX_WALK_DEPTH` is defense in depth against tree-sitter
+# AST shapes deeper than any real file should need — a walk that hits it
+# simply stops descending that branch (fewer resolved calls -> more
+# `unresolved`), which is already this module's existing fail-safe behavior
+# for anything it cannot resolve (see docs/REACHABILITY.md).
+_MAX_WALK_DEPTH = 500
+
+
 def _walk_py_calls(node: Any, out: list[tuple[str, str | None, str | None]]) -> None:
-    if node.type == "call":
-        out.append(_py_call_shape(node))
-    for child in node.children:
-        _walk_py_calls(child, out)
+    stack: list[tuple[Any, int]] = [(node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if current.type == "call":
+            out.append(_py_call_shape(current))
+        children = current.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
 
 
 def _resolve_py_call(

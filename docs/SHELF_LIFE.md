@@ -174,6 +174,29 @@ distinct `CryptoAsset` — the same canonical algorithm called twice in one
 file would otherwise merge both call sites' evidence onto a single asset,
 which would defeat the point of keeping the three scenarios independent.
 
+## Deep-nesting safety cap
+
+`pratyaksha/detect/shelf_life/data_context.py::_walk_python_spans` walks the
+tree-sitter AST of a Python file to collect function/class spans. This walk
+uses an explicit heap-allocated stack, not function-call recursion — a
+real-world file with deeply nested classes/functions/expressions (confirmed
+on `cryptography/hazmat/primitives/serialization/pkcs7.py` from
+`pyca/cryptography`) can exceed the native C thread stack before Python's
+own `RecursionError` guard ever triggers, crashing the process with no
+catchable exception. Moving to an explicit stack (the same pattern
+`pratyaksha/analyze/callgraph.py::_walk_py_calls` uses) bounds traversal
+depth by available heap memory instead.
+
+As defense in depth against tree-sitter AST shapes deeper than any real
+file should need, the walk also caps at `_MAX_WALK_DEPTH = 500`: a branch
+deeper than that is simply not descended further. This does not change the
+module's externally-visible fail-safe behavior: a call site whose enclosing
+span lies past the cap is treated the same as any call site with no
+enclosing span at all — its `enclosing_function`/`enclosing_class`/
+`model_field` candidates are skipped (see "An asset with zero same-file,
+same-call-site `DataContextMatch` gets no `ShelfLifeFinding` at all" above)
+rather than a guess being produced.
+
 ## What this pillar cannot see
 
 This is name-pattern matching on nearby identifiers, not dataflow analysis,
