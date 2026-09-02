@@ -1,0 +1,209 @@
+# ontology/data_sensitivity.yaml
+#
+# Pillar 2 (Shelf-Life Inference) data-sensitivity ontology. Data only — no
+# Python logic hardcodes a category name, a name pattern, a shelf-life
+# figure, or a statutory citation anywhere else in the codebase; everything
+# reads this file, per CLAUDE.md's "detection rules live in YAML, not
+# Python".
+#
+# ===========================================================================
+# HONESTY DISCLAIMER — READ BEFORE TRUSTING shelf_life_years FOR ANYTHING
+# ===========================================================================
+# The `shelf_life_years` figures below are NOT derived from a legal
+# database, are NOT verified against the actual DPDP Act 2023 rules/
+# schedules (or any other statute), and have NOT been reviewed by counsel.
+# They are reasonable-effort, conservative, round-number DEFAULTS chosen for
+# a hackathon demonstration system, meant only to illustrate what the "X"
+# variable (data shelf-life) in Mosca's inequality looks like when it is
+# derived from something a static scanner can actually observe (nearby
+# identifier names) rather than invented outright.
+#
+# A real deployment MUST replace this file with organisation-specific,
+# legally-reviewed figures (ideally sourced from the organisation's own data
+# retention policy and counsel's reading of applicable law — DPDP Act 2023
+# and its as-yet-unfinalised rules, sectoral regulations such as RBI/IRDAI/
+# UIDAI circulars, contractual retention obligations, etc.), not ship this
+# demonstration file unmodified. See docs/SHELF_LIFE.md for the full
+# caveat, restated in front of anyone consuming a ShelfLifeFinding.
+#
+# `confidence` reflects how well-grounded the CATEGORY itself is as a
+# "clearly sensitive personal data" classification (all five named
+# categories below are explicitly the kind of data DPDP Act 2023 and
+# sectoral regulation single out for special handling) — it is NOT a claim
+# that the specific `shelf_life_years` NUMBER is verified. No entry in this
+# file has a verified-correct number; "high" vs "medium" only distinguishes
+# "this category is clearly sensitive personal data by any reasonable
+# reading of applicable law" (high) from "this is a catch-all / engineering
+# placeholder with much weaker categorical grounding" (medium).
+#
+# ===========================================================================
+# Matching (see pratyaksha/detect/shelf_life/ontology.py)
+# ===========================================================================
+# name_patterns are matched case-insensitively as a SUBSTRING against a
+# candidate identifier (a call argument, an enclosing function/method name,
+# an enclosing class name, or a same-class dataclass/pydantic field name /
+# Java field or getter name — see pratyaksha/detect/shelf_life/data_context.py
+# and docs/SHELF_LIFE.md). Patterns are deliberately listed in BOTH
+# snake_case and concatenated/no-separator form (e.g. "account_number" and
+# "accountnumber") where the underscore would otherwise prevent a match
+# against a camelCase Java identifier such as "accountNumber" — substring
+# matching is literal, not a tokenizer, so a single-word pattern like
+# "aadhaar" is convention-agnostic on its own, but multi-word patterns need
+# both spellings to catch both languages' naming conventions.
+categories:
+  aadhaar:
+    category_name: aadhaar
+    name_patterns:
+      - aadhaar
+      - aadhar
+      - uid_number
+      - uidnumber
+      - uidai
+    shelf_life_years: 27
+    statutory_basis: >-
+      DPDP Act 2023 - Aadhaar number is treated as sensitive personal data
+      requiring special handling under Indian data-protection practice
+      (linked to UIDAI-regulated identity infrastructure). No single statute
+      fixes a 27-year retention/secrecy period for Aadhaar-linked records;
+      this is a conservative reasonable-effort default for this
+      demonstration system, NOT a verified legal citation — see the file
+      header.
+    confidence: high
+
+  pan:
+    category_name: pan
+    name_patterns:
+      - pan_number
+      - pannumber
+      - pan_card
+      - pancard
+      - permanent_account_number
+    shelf_life_years: 10
+    statutory_basis: >-
+      Income Tax Act 1961 / IT Act 2000 - PAN is a financial/tax identifier
+      subject to record-retention norms in Indian tax practice (commonly
+      cited informally as ~6-8 years for tax records); rounded up to a
+      conservative 10-year default here. NOT a verified legal citation —
+      see the file header.
+    confidence: high
+
+  health_record:
+    category_name: health_record
+    name_patterns:
+      - diagnosis
+      - medical_record
+      - medicalrecord
+      - health_record
+      - healthrecord
+      - patient_history
+      - patienthistory
+      - prescription
+      - ailment
+    shelf_life_years: 20
+    statutory_basis: >-
+      DPDP Act 2023 - health data is explicitly listed as a category of
+      sensitive personal data; 20 years is a conservative default modeled
+      loosely on medical-record retention norms discussed in Indian
+      healthcare-data guidance, NOT a verified statutory figure — see the
+      file header.
+    confidence: high
+
+  financial_account:
+    category_name: financial_account
+    name_patterns:
+      - account_number
+      - accountnumber
+      - bank_account
+      - bankaccount
+      - iban
+      - ifsc
+      - card_number
+      - cardnumber
+      - credit_card
+      - creditcard
+      - debit_card
+      - debitcard
+      - cvv
+      - upi_id
+      - upiid
+    shelf_life_years: 10
+    statutory_basis: >-
+      RBI record-retention guidance / DPDP Act 2023 - financial account
+      data is sensitive personal data subject to banking-sector retention
+      norms (commonly discussed as ~8-10 years in RBI master
+      directions/circulars); 10 years is a conservative default, NOT
+      verified against a specific RBI circular — see the file header.
+    confidence: high
+
+  biometric:
+    category_name: biometric
+    name_patterns:
+      - fingerprint
+      - iris_scan
+      - irisscan
+      - biometric
+      - face_id
+      - faceid
+      - facial_template
+      - facialtemplate
+      - retina
+    shelf_life_years: 50
+    statutory_basis: >-
+      DPDP Act 2023 - biometric data is explicitly listed as sensitive
+      personal data. Treated here as near-permanent (a person's biometric
+      traits generally do not change across a lifetime, unlike a rotatable
+      credential), so this uses a deliberately long, conservative default
+      rather than a shorter one. NOT a verified legal citation — see the
+      file header.
+    confidence: high
+
+  generic_pii:
+    category_name: generic_pii
+    name_patterns:
+      - email
+      - phone_number
+      - phonenumber
+      - full_name
+      - fullname
+      - date_of_birth
+      - dateofbirth
+      - postal_address
+      - postaladdress
+      - home_address
+      - homeaddress
+    shelf_life_years: 5
+    statutory_basis: >-
+      DPDP Act 2023 - general personal data catch-all (not one of the more
+      specifically regulated categories above). Weaker categorical grounding
+      than the named categories: this is an engineering catch-all bucket for
+      "clearly personal but not otherwise classified" data, deliberately
+      given a SHORTER shelf life than the named categories above rather than
+      the longest one, per the ontology's own design intent — never treat
+      this as a safe universal default; see the file header and
+      docs/SHELF_LIFE.md.
+    confidence: medium
+
+  credentials:
+    category_name: credentials
+    name_patterns:
+      - password
+      - passwd
+      - api_key
+      - apikey
+      - secret_key
+      - secretkey
+      - access_token
+      - accesstoken
+      - auth_token
+      - authtoken
+      - client_secret
+      - clientsecret
+    shelf_life_years: 1
+    statutory_basis: >-
+      Not a data-retention-law concept at all — a credential's real
+      "shelf-life" is "until rotated", not a fixed calendar duration. 1 year
+      is a short, conservative engineering placeholder standing in for "this
+      should already be rotated well before any quantum-computing horizon
+      matters", not a legal citation of any kind — see the file header and
+      docs/SHELF_LIFE.md.
+    confidence: medium

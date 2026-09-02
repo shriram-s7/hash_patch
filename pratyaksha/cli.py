@@ -16,12 +16,14 @@ from pratyaksha.analyze.blast_radius import (
     run_blast_radius,
 )
 from pratyaksha.analyze.reachability import apply_reachability
+from pratyaksha.analyze.shelf_life import run_shelf_life
 from pratyaksha.detect import registry  # triggers side-effect detector registration
 from pratyaksha.detect.base import Detector
 from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
 from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
 from pratyaksha.model.blast_radius import BlastRadiusFinding
 from pratyaksha.model.findings import ScanResult
+from pratyaksha.model.shelf_life import ShelfLifeFinding
 
 app = typer.Typer(name="pratyaksha")
 
@@ -43,6 +45,50 @@ def _quantum_status_summary(result: ScanResult) -> str:
 def _blast_radius_summary(findings: list[BlastRadiusFinding]) -> str:
     total_days = sum(f.estimated_effort_days for f in findings)
     return f"{len(findings)} blast-radius findings, estimated {total_days:g} engineer-days"
+
+
+def _shelf_life_summary(findings: list[ShelfLifeFinding]) -> str:
+    if not findings:
+        return "0 shelf-life findings"
+    longest = max(findings, key=lambda f: (f.shelf_life_years, f.category))
+    return f"{len(findings)} shelf-life findings (longest: {longest.shelf_life_years} years, {longest.category})"
+
+
+def _shelf_life_property(finding: ShelfLifeFinding) -> tuple[str, str]:
+    ev = finding.evidence[0]
+    key = f"shelfLife.{finding.category}"
+    value = json.dumps(
+        {
+            "shelfLifeYears": finding.shelf_life_years,
+            "statutoryBasis": finding.statutory_basis,
+            "confidence": finding.confidence,
+            "moscaNote": finding.mosca_note,
+            "locator": ev.locator,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return key, value
+
+
+def _attach_shelf_life_properties(result: ScanResult) -> None:
+    """Mirror each shelf-life finding onto its correlated CBOM component's
+    `properties` bag — the same `pratyaksha:property.<key>` namespacing
+    CLAUDE.md documents (see pratyaksha/emit/cyclonedx.py's field mapping)
+    and `_attach_blast_radius_properties` already uses.
+
+    Unlike blast radius, every ShelfLifeFinding always has a real,
+    already-present CryptoAsset (pratyaksha/analyze/shelf_life.py only ever
+    emits a finding for an asset it was given) — there is no synthetic-
+    component fallback path here.
+    """
+    by_id = {asset.id: asset for asset in result.assets}
+    for finding in result.shelf_life_findings:
+        asset = by_id.get(finding.asset_id)
+        if asset is None:
+            continue  # should never happen -- compute_shelf_life only emits findings for real, given assets
+        key, value = _shelf_life_property(finding)
+        asset.properties[key] = value
 
 
 def _blast_radius_property(finding: BlastRadiusFinding) -> tuple[str, str]:
@@ -176,6 +222,13 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     result.blast_radius_findings = run_blast_radius(result.assets, scanned_files)
     _attach_blast_radius_properties(result)
 
+    # Pillar 2 (Shelf-Life Inference), Python/Java only — see
+    # pratyaksha/analyze/shelf_life.py. scan_started_at.date() is the one
+    # wall-clock read CLAUDE.md permits (ScanResult.scan_started_at itself);
+    # run_shelf_life/compute_shelf_life never read the clock themselves.
+    result.shelf_life_findings = run_shelf_life(result.assets, result.scan_started_at.date())
+    _attach_shelf_life_properties(result)
+
     return result
 
 
@@ -212,12 +265,14 @@ def scan(
 
     summary = _quantum_status_summary(result)
     blast_radius_summary = _blast_radius_summary(result.blast_radius_findings)
+    shelf_life_summary = _shelf_life_summary(result.shelf_life_findings)
     if output is not None:
         output.write_text(render_cbom_json(doc), encoding="utf-8")
         typer.echo(f"wrote CBOM to {output}; {summary}")
     else:
         typer.echo(summary)
     typer.echo(blast_radius_summary)
+    typer.echo(shelf_life_summary)
 
 
 if __name__ == "__main__":

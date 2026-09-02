@@ -1,0 +1,43 @@
+{
+  "_comment": "MANIFEST-style expected-category fixture for the Pillar 2 (Shelf-Life Inference) corpus under testdata/python/shelf_life_examples.py and testdata/java/ShelfLifeExamples.java (see docs/SHELF_LIFE.md). Consumed by tests/golden/test_shelf_life_golden.py. expected_category: null means NO ShelfLifeFinding must be produced at all (genuinely no signal, never a silent generic_pii guess).",
+  "python": [
+    {
+      "algorithm": "SHA-256",
+      "locator_suffix": "shelf_life_examples.py",
+      "expected_category": "aadhaar",
+      "scenario": "SHA256.new(aadhaar_bytes) -- the call argument itself names the aadhaar category (call_argument candidate kind)"
+    },
+    {
+      "algorithm": "SHA-512",
+      "locator_suffix": "shelf_life_examples.py",
+      "expected_category": null,
+      "scenario": "SHA512.new(temp_cache_value) inside cache_temp_value() -- no candidate anywhere matches any category -- no finding at all"
+    },
+    {
+      "algorithm": "SHA3-256",
+      "locator_suffix": "shelf_life_examples.py",
+      "expected_category": "aadhaar",
+      "scenario": "SHA3_256.new(record_bytes) inside CustomerRecord.hash_record() -- resolved via same-class dataclass fields aadhaar_number + account_number (model_field candidate kind); aadhaar wins the longest-shelf-life-wins tie-break over financial_account"
+    }
+  ],
+  "java": [
+    {
+      "algorithm": "SHA-256",
+      "locator_suffix": "ShelfLifeExamples.java",
+      "expected_category": "aadhaar",
+      "scenario": "MessageDigest.getInstance(\"SHA-256\") inside hashAadhaarNumber() -- the enclosing method name names the aadhaar category (enclosing_function candidate kind)"
+    },
+    {
+      "algorithm": "SHA-512",
+      "locator_suffix": "ShelfLifeExamples.java",
+      "expected_category": null,
+      "scenario": "MessageDigest.getInstance(\"SHA-512\") inside cacheTempValue() -- no candidate anywhere matches any category -- no finding at all"
+    },
+    {
+      "algorithm": "SHA3-256",
+      "locator_suffix": "ShelfLifeExamples.java",
+      "expected_category": "aadhaar",
+      "scenario": "MessageDigest.getInstance(\"SHA3-256\") inside CustomerRecord.hashRecord() -- resolved via same-class fields aadhaarNumber + accountNumber (model_field candidate kind); aadhaar wins the longest-shelf-life-wins tie-break over financial_account"
+    }
+  ]
+}

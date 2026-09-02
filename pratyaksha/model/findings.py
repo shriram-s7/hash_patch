@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from pratyaksha.model.assets import CryptoAsset
 from pratyaksha.model.blast_radius import BlastRadiusFinding
+from pratyaksha.model.shelf_life import ShelfLifeFinding
 
 
 class ScanResult(BaseModel):
@@ -21,6 +22,11 @@ class ScanResult(BaseModel):
     # (pratyaksha.cli.run_scan), the same way reachability is. This list is
     # what the CLI summary line and any future report consumer read from.
     blast_radius_findings: list[BlastRadiusFinding] = Field(default_factory=list)
+    # Pillar 2 (Shelf-Life Inference) findings — see
+    # pratyaksha/analyze/shelf_life.py and docs/SHELF_LIFE.md. Every finding
+    # here always has a real correlated CryptoAsset (unlike blast radius's
+    # db_column fallback) and is mirrored onto that asset's `properties`.
+    shelf_life_findings: list[ShelfLifeFinding] = Field(default_factory=list)
 
     def add_asset(self, asset: CryptoAsset) -> None:
         """Add an asset, merging into an existing one with the same id.

@@ -221,6 +221,25 @@ hardcoded in `analyze/`. See `docs/REACHABILITY.md` for the full pipeline,
 the exact entry-point and test-file definitions, and why "not reachable
 from anything" defaults to `UNKNOWN` rather than `INERT` for non-test code.
 
+## Shelf-Life Inference
+
+Pillar 2: `pratyaksha/analyze/shelf_life.py` (detection in
+`pratyaksha/detect/shelf_life/`) derives how long the data protected by a
+Python or Java `CryptoAsset` must plausibly remain confidential — the "X"
+variable in Mosca's inequality — from name-pattern signal
+(`ontology/data_sensitivity.yaml`) found near the crypto call site (a call
+argument, the enclosing function/class name, or a same-class dataclass/
+pydantic field or Java field/getter name). Source-code name-pattern
+matching only, Python/Java only, same-file-and-same-call-site correlation
+only (never cross-file), longest-shelf-life-wins on ambiguity. The
+ontology's `shelf_life_years` figures are explicitly documented as
+reasonable-effort demonstration defaults, NOT verified legal citations —
+see `ontology/data_sensitivity.yaml`'s own header and docs/SHELF_LIFE.md
+before using a `ShelfLifeFinding` for anything beyond a rough sense of
+scale. `mosca_note` is descriptive only; the full Mosca-inequality
+comparison against a quantum-arrival estimate is Pillar 5's Monte Carlo
+work, not implemented here. See docs/SHELF_LIFE.md for the full method.
+
 ## Blast Radius
 
 Pillar 3: `pratyaksha/analyze/blast_radius.py` predicts whether migrating a
