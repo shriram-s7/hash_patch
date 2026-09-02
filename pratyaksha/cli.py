@@ -348,5 +348,77 @@ def optimize(
         typer.echo(scenario_result.headline_message)
 
 
+@app.command()
+def keygen(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", "-d", help="Directory to save generated keypair files."),
+    ] = Path("."),
+) -> None:
+    """Generate a new ML-DSA-65 (FIPS 204) post-quantum keypair for signing CBOM files."""
+    from pratyaksha.sign import ALGORITHM_NAME, generate_keypair
+
+    priv_path, pub_path = generate_keypair(output_dir)
+    typer.echo(f"generated {ALGORITHM_NAME} keypair:")
+    typer.echo(f"  private key: {priv_path}")
+    typer.echo(f"  public key:  {pub_path}")
+
+
+@app.command()
+def sign(
+    input: Annotated[
+        Path,
+        typer.Argument(help="Path to the CBOM JSON file to sign."),
+    ],
+    key: Annotated[
+        Path,
+        typer.Option("--key", "-k", help="Path to ML-DSA-65 private key file (.key)."),
+    ],
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Path to write the detached signature (.sig) file."),
+    ] = None,
+) -> None:
+    """Sign an already-emitted CBOM file using an ML-DSA-65 post-quantum private key."""
+    from pratyaksha.sign import ALGORITHM_NAME, sign_cbom_file
+
+    try:
+        sig_path = sign_cbom_file(input, key, output)
+    except (ValueError, TypeError, OSError) as exc:
+        typer.echo(f"signing error: {exc}", err=True)
+        raise typer.Exit(code=1)
+    typer.echo(f"signed CBOM {input} with {ALGORITHM_NAME}; wrote detached signature to {sig_path}")
+
+
+@app.command()
+def verify(
+    input: Annotated[
+        Path,
+        typer.Argument(help="Path to the CBOM JSON file to verify."),
+    ],
+    sig: Annotated[
+        Path,
+        typer.Option("--sig", "-s", help="Path to detached signature file (.sig)."),
+    ],
+    key: Annotated[
+        Path,
+        typer.Option("--key", "-k", help="Path to ML-DSA-65 public key file (.pub)."),
+    ],
+) -> None:
+    """Verify an already-emitted CBOM file against a detached ML-DSA-65 signature."""
+    from pratyaksha.sign import VerificationStatus, verify_cbom_file
+
+    result = verify_cbom_file(input, sig, key)
+    if result.status == VerificationStatus.VALID:
+        typer.echo(f"VALID: {result.message}")
+    elif result.status == VerificationStatus.INVALID:
+        typer.echo(f"INVALID: {result.message}", err=True)
+        raise typer.Exit(code=1)
+    else:
+        typer.echo(f"ERROR: {result.message}", err=True)
+        raise typer.Exit(code=2)
+
+
 if __name__ == "__main__":
     app()
+

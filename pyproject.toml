@@ -13,6 +13,7 @@ dependencies = [
     "pyyaml",
     "rich",
     "cyclonedx-python-lib",
+    "cryptography>=50.0.0",
     "jsonschema",
     "tree-sitter>=0.26",
     "tree-sitter-java",

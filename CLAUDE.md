@@ -297,6 +297,32 @@ The quantum-arrival scenario figures are explicitly illustrative, not
 sourced from a verified survey — see `ontology/quantum_arrival.yaml`'s own
 header and docs/OPTIMISER.md for the full method and every honesty caveat.
 
+## Signing (Pillar 6)
+
+Pillar 6: `pratyaksha keygen --output-dir DIR`, `pratyaksha sign INPUT.cbom.json
+--key KEYFILE [--output SIGFILE]`, and `pratyaksha verify INPUT.cbom.json --sig
+SIGFILE --key PUBKEYFILE` — CLI subcommands operating on files, providing
+post-quantum tamper-evident signing for emitted CBOM reports using **ML-DSA-65
+(FIPS 204)**.
+
+**Live Backend:** Native ML-DSA-65 (FIPS 204) implemented via
+`pyca/cryptography.hazmat.primitives.asymmetric.mldsa` (`MLDSA65PrivateKey` /
+`MLDSA65PublicKey`). Evaluated `liboqs-python` first, but rejected it because
+it triggers runtime source-compilation via CMake/C compiler into `_oqs`,
+violating offline scan-time requirements. `pyca/cryptography>=50.0.0` provides
+statically packaged Windows/Linux wheels with full FIPS 204 support out of the box.
+
+**Key management caveat:** The local key generation scheme (`pratyaksha keygen`)
+is for **demonstration and local offline development only** (unencrypted local
+PEM files, no HSM, no key rotation, no access control). Production deployments
+require accredited HSM or secure cloud KMS backing.
+
+**Detached signature:** Signing operates on the **literal file bytes on disk**
+(not an in-memory re-serialization), emitting a schema-versioned detached JSON
+signature containing the SHA-256 pre-check hash, public key fingerprint/PEM,
+and base64-encoded ML-DSA-65 signature bytes. See `docs/SIGNING.md` for full
+technical details, the detached signature format, and tamper-detection guarantees.
+
 ## Detection rules live in YAML, not Python
 
 All algorithm/pattern/OID detection rules belong in `rules/` as YAML data,

@@ -28,3 +28,11 @@ htmlcov/
 
 plan.json
 *.optimize.json
+
+# Signing keys and demo artifacts
+keys/*.key
+*.sig
+
+# Signing keys and demo artifacts
+keys/*.key
+*.sig
