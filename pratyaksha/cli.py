@@ -15,6 +15,8 @@ from pratyaksha.analyze.blast_radius import (
     primitive_for_replacement,
     run_blast_radius,
 )
+from pratyaksha.analyze.cbom_reader import read_candidates, read_reference_year
+from pratyaksha.analyze.optimizer import run_optimizer
 from pratyaksha.analyze.reachability import apply_reachability
 from pratyaksha.analyze.shelf_life import run_shelf_life
 from pratyaksha.detect import registry  # triggers side-effect detector registration
@@ -23,6 +25,7 @@ from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
 from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
 from pratyaksha.model.blast_radius import BlastRadiusFinding
 from pratyaksha.model.findings import ScanResult
+from pratyaksha.model.optimizer import OptimizationReport
 from pratyaksha.model.shelf_life import ShelfLifeFinding
 
 app = typer.Typer(name="pratyaksha")
@@ -273,6 +276,76 @@ def scan(
         typer.echo(summary)
     typer.echo(blast_radius_summary)
     typer.echo(shelf_life_summary)
+
+
+def _optimize_summary(report: OptimizationReport) -> str:
+    return (
+        f"{report.candidate_count} migration candidates "
+        f"({report.excluded_count} excluded -- not broken-by-shor)"
+    )
+
+
+def run_optimize(input_path: Path, budget_days: float, parallelism: int) -> OptimizationReport:
+    """Core `pratyaksha optimize` logic, separated from the CLI surface for
+    testability -- mirrors run_scan()'s split for the `scan` command.
+
+    Reads an ALREADY-EMITTED CBOM (pratyaksha/analyze/cbom_reader.py) --
+    this command never re-scans source code itself, per Pillar 5's scope
+    (docs/OPTIMISER.md): it operates purely on P1/P2/P3 data already
+    attached to CryptoAsset findings by a prior `pratyaksha scan`.
+    """
+    doc = json.loads(input_path.read_text(encoding="utf-8"))
+    candidates, excluded_count = read_candidates(doc)
+    reference_year = read_reference_year(doc)
+    return run_optimizer(
+        candidates,
+        budget_days=budget_days,
+        parallelism=parallelism,
+        reference_year=reference_year,
+        excluded_count=excluded_count,
+    )
+
+
+@app.command()
+def optimize(
+    input: Annotated[
+        Path, typer.Argument(help="Path to an already-emitted CBOM JSON file (from `pratyaksha scan`).")
+    ],
+    budget_days: Annotated[
+        float, typer.Option("--budget-days", help="Migration budget, in engineer-days.")
+    ],
+    parallelism: Annotated[
+        int, typer.Option("--parallelism", help="Number of findings that can be worked on in parallel.")
+    ],
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Write the optimisation report as JSON to this path."),
+    ] = None,
+) -> None:
+    """Read an already-emitted CBOM and produce a Pillar 5 migration plan.
+
+    NOT part of `pratyaksha scan` -- this is a separate pipeline stage that
+    operates on a CBOM already carrying P1 (reachability), P2 (shelf-life),
+    and P3 (blast-radius) data. See docs/OPTIMISER.md for the risk-score
+    formula, the greedy-vs-naive comparison, and the quantum-arrival
+    scenario honesty disclaimer.
+    """
+    if budget_days <= 0:
+        raise typer.BadParameter("--budget-days must be > 0")
+    if parallelism < 1:
+        raise typer.BadParameter("--parallelism must be >= 1")
+
+    report = run_optimize(input, budget_days, parallelism)
+
+    doc = json.dumps(report.model_dump(mode="json"), sort_keys=True, indent=2, ensure_ascii=False) + "\n"
+    summary = _optimize_summary(report)
+    if output is not None:
+        output.write_text(doc, encoding="utf-8")
+        typer.echo(f"wrote optimisation report to {output}; {summary}")
+    else:
+        typer.echo(summary)
+    for scenario_result in report.scenarios:
+        typer.echo(scenario_result.headline_message)
 
 
 if __name__ == "__main__":

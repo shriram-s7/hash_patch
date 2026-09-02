@@ -25,8 +25,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from pratyaksha.cli import _iter_targets, run_scan
 from pratyaksha.model.assets import QuantumStatus
 

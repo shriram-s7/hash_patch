@@ -20,7 +20,7 @@ from typing import Any
 import pytest
 import yaml
 
-from pratyaksha.detect.java import JavaJcaDetector, _lookup_algo, _build_algo_index
+from pratyaksha.detect.java import JavaJcaDetector, _build_algo_index, _lookup_algo
 from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
 from pratyaksha.model.evidence import Evidence
 
@@ -312,6 +312,50 @@ def test_lookup_algo_with_stripping() -> None:
     result = _lookup_algo("SHA256withECDSA", index)
     # We don't assert the exact canonical name — just that it resolves to something
     assert result is not None
+
+
+def test_lookup_algo_rsa_encryption_suffix_resolves_to_rsa() -> None:
+    """Regression test for the ENCRYPTION/SIGNATURE suffix-stripping bug:
+    _lookup_algo's right-of-"With" branch used to build its second
+    candidate via `right.rstrip("ENCRYPTION").rstrip("SIGNATURE")`, which
+    strips any trailing characters found in those strings' character SETS
+    rather than the literal suffixes. On "RSAENCRYPTION" specifically, that
+    chain strips all the way down to "" (empty string) -- verified
+    explicitly below -- so "SHA256WithRSAEncryption" (a real-shaped JCA
+    algorithm string) failed to resolve to "RSA" at all under the old code.
+    The fix uses str.removesuffix, which only removes the literal suffix.
+    """
+    index = _algo_index()
+    result = _lookup_algo("SHA256WithRSAEncryption", index)
+    assert result is not None, (
+        '"SHA256WithRSAEncryption" failed to resolve to any algorithm -- '
+        "the ENCRYPTION-suffix-stripping fix has regressed"
+    )
+    canonical, _ = result
+    assert canonical.upper() == "RSA"
+
+
+def test_rstrip_suffix_bug_did_not_coincidentally_work_for_rsa_encryption() -> None:
+    """Explicit proof (not an assumption) that the pre-fix `.rstrip(...)`
+    chain was actually broken for the exact "RSAENCRYPTION" case the
+    surrounding code comment uses as its own motivating example -- it
+    strips character-by-character until it hits a character not in either
+    removal set, which for "RSAENCRYPTION" happens to consume the entire
+    string. `str.removesuffix` (the fix) correctly leaves "RSA".
+    """
+    right = "RSAENCRYPTION"
+    # Deliberately reproducing the pre-fix buggy call to prove what it
+    # actually did -- not a real use of rstrip.
+    old_buggy_result = right.rstrip("ENCRYPTION").rstrip("SIGNATURE")  # noqa: B005, PLE1310
+    assert old_buggy_result == "", (
+        "expected the old rstrip-chain bug to reduce 'RSAENCRYPTION' to an empty "
+        f"string, got {old_buggy_result!r} -- the bug's premise assumed by this "
+        "test no longer holds, re-verify test_lookup_algo_rsa_encryption_suffix_resolves_to_rsa "
+        "still exercises a real fix"
+    )
+
+    fixed_result = right.removesuffix("ENCRYPTION").removesuffix("SIGNATURE")
+    assert fixed_result == "RSA"
 
 
 def test_lookup_algo_unknown_returns_none() -> None:

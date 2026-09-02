@@ -21,13 +21,13 @@ from typing import Any
 import yaml
 
 try:
-    from tree_sitter import Language, Parser, Query, QueryCursor
     import tree_sitter_java as _ts_java
+    from tree_sitter import Language, Parser
 
     _LANG = Language(_ts_java.language())
     _PARSER = Parser(_LANG)
     _TREE_SITTER_AVAILABLE = True
-except Exception:  # pragma: no cover
+except Exception:  # noqa: BLE001 -- graceful degradation if the native parser fails to load  # pragma: no cover
     _TREE_SITTER_AVAILABLE = False
     _LANG = None  # type: ignore[assignment]
     _PARSER = None  # type: ignore[assignment]
@@ -212,7 +212,7 @@ def _lookup_algo(algo_raw: str, index: dict[str, dict[str, Any]]) -> tuple[str, 
         # Try the right-hand side (the crypto primitive, e.g. "RSA")
         # Strip common suffixes that are part of OID / full name but not
         # the simple canonical form  (e.g. "RSAENCRYPTION" → "RSA").
-        for candidate in (right, right.rstrip("ENCRYPTION").rstrip("SIGNATURE")):
+        for candidate in (right, right.removesuffix("ENCRYPTION").removesuffix("SIGNATURE")):
             if candidate in index:
                 return candidate, index[candidate]
         # Try left-hand side (the hash, e.g. "SHA256" → not in index? try "SHA-256")

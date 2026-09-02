@@ -272,6 +272,31 @@ documented **heuristic placeholder, not derived from real migration data**
 — see docs/BLAST_RADIUS.md before using it for anything beyond a rough
 sense of scale.
 
+## Optimiser
+
+Pillar 5: `pratyaksha optimize INPUT.cbom.json --budget-days N --parallelism
+P [--output PLAN.json]` — a SEPARATE CLI subcommand (not part of `pratyaksha
+scan`) that reads an already-emitted CBOM
+(`pratyaksha/analyze/cbom_reader.py`, never re-scanning source) and
+produces a recommended migration order, a residual-risk-over-time curve,
+and a comparison against a naive (risk-only, cost-blind) baseline, for
+each of 3 named quantum-arrival scenarios
+(`ontology/quantum_arrival.yaml`). Only `BROKEN_BY_SHOR` findings are
+candidates (`pratyaksha/analyze/risk_score.py`); risk score is the plain
+product `shelf_life_magnitude * reachability_multiplier`; migration cost
+is the real Pillar-3 blast-radius effort-days sum when present, else a
+documented flat default. The greedy scheduler
+(`pratyaksha/analyze/optimizer.py`) is a hybrid of risk-density and
+raw-risk ordering — a real failure mode of pure density-greedy was found
+on this project's own corpus and fixed by always taking whichever ordering
+eliminates more risk, so the optimiser is guaranteed to never do worse
+than the naive baseline it's compared against.
+`pratyaksha/analyze/optimizer_bruteforce.py` is a small-instance
+(≤15-candidate) exact validation tool, not part of the normal CLI path.
+The quantum-arrival scenario figures are explicitly illustrative, not
+sourced from a verified survey — see `ontology/quantum_arrival.yaml`'s own
+header and docs/OPTIMISER.md for the full method and every honesty caveat.
+
 ## Detection rules live in YAML, not Python
 
 All algorithm/pattern/OID detection rules belong in `rules/` as YAML data,

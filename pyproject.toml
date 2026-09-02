@@ -37,6 +37,7 @@ packages = ["pratyaksha"]
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["testdata"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

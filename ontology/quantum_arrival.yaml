@@ -1,0 +1,60 @@
+# ontology/quantum_arrival.yaml
+#
+# Pillar 5 (Migration Optimiser) quantum-arrival scenarios. Data only — no
+# Python logic hardcodes a scenario name, an estimated year, or a
+# probability weight anywhere else in the codebase; everything reads this
+# file, per CLAUDE.md's "detection rules live in YAML, not Python".
+#
+# ===========================================================================
+# HONESTY DISCLAIMER — READ BEFORE TRUSTING THESE NUMBERS FOR ANYTHING
+# ===========================================================================
+# This file is NOT a real statistical model of quantum-computing timelines.
+# It defines exactly 3 named scenarios used to demonstrate how SENSITIVE a
+# migration plan is to timeline uncertainty (i.e. "if the CRQC — a
+# Cryptographically-Relevant Quantum Computer — arrives sooner rather than
+# later, does the plan's priority order still make sense?"), nothing more.
+#
+# The kind of input a real deployment should use here is a properly sourced
+# expert-elicitation survey — the Global Risk Institute (GRI) publishes an
+# annual "Quantum Threat Timeline Report" that surveys quantum-computing
+# experts for their probability estimates of a CRQC existing by various
+# future years, and is the standard citeable source this community uses for
+# exactly this kind of input.
+#
+# The `estimated_year` / `probability_weight` figures actually recorded
+# below are round, illustrative numbers chosen for this demonstration
+# system. They are LOOSELY INSPIRED BY the general shape of publicly
+# discussed CRQC-timeline estimates (a "sooner" case in the early-to-mid
+# 2030s discussed as a real possibility, a "later" case pushed out toward
+# 2040+, and probability mass concentrated on a middle case) — they are
+# explicitly NOT sourced from any specific GRI report or other named survey,
+# and must not be cited as if they were. A real deployment should replace
+# this file with either the organisation's own risk-tolerance inputs or
+# figures read directly off a current, properly cited survey such as GRI's.
+#
+# `probability_weight` values are illustrative relative weights, not a
+# claim of a verified probability distribution; they sum to 1.0 purely so a
+# probability-weighted average is easy to compute, not because that sum was
+# derived from anything.
+scenarios:
+  optimistic:
+    scenario_name: optimistic
+    estimated_year: 2040
+    probability_weight: 0.25
+    description: >-
+      A CRQC (cryptographically-relevant quantum computer) does not arrive
+      until well into the 2040s — illustrative "more time to migrate" case.
+  moderate:
+    scenario_name: moderate
+    estimated_year: 2033
+    probability_weight: 0.5
+    description: >-
+      A CRQC arrives in the early-to-mid 2030s — the illustrative central
+      case, given the most probability weight of the three.
+  conservative:
+    scenario_name: conservative
+    estimated_year: 2028
+    probability_weight: 0.25
+    description: >-
+      A CRQC arrives before the end of this decade — illustrative "assume
+      the worst, plan defensively" case.

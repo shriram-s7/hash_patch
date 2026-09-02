@@ -378,8 +378,8 @@ def test_all_rules_entries_have_required_fields() -> None:
 
 def test_collect_calls_finds_attribute_calls() -> None:
     """_collect_calls must find attribute-based calls like hashes.SHA256()."""
-    from tree_sitter import Language, Parser
     import tree_sitter_python as _tspy
+    from tree_sitter import Language, Parser
 
     lang = Language(_tspy.language())
     parser = Parser(lang)
@@ -397,8 +397,8 @@ def test_collect_calls_finds_attribute_calls() -> None:
 
 def test_collect_calls_ignores_plain_function_calls() -> None:
     """_collect_calls must ignore plain function calls (no attribute receiver)."""
-    from tree_sitter import Language, Parser
     import tree_sitter_python as _tspy
+    from tree_sitter import Language, Parser
 
     lang = Language(_tspy.language())
     parser = Parser(lang)

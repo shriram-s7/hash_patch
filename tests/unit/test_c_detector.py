@@ -336,8 +336,8 @@ def test_rules_have_required_fields() -> None:
 
 
 def test_collect_matches_finds_openssl_calls() -> None:
-    from tree_sitter import Language, Parser
     import tree_sitter_c as _tsc
+    from tree_sitter import Language, Parser
 
     lang = Language(_tsc.language())
     parser = Parser(lang)
@@ -359,8 +359,8 @@ def test_collect_matches_finds_openssl_calls() -> None:
 
 
 def test_collect_matches_ignores_non_crypto_calls() -> None:
-    from tree_sitter import Language, Parser
     import tree_sitter_c as _tsc
+    from tree_sitter import Language, Parser
 
     lang = Language(_tsc.language())
     parser = Parser(lang)

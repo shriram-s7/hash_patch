@@ -48,5 +48,6 @@ configure_algo("MD5")
 # attribute itself is not an algorithm (e.g. hashes.HashAlgorithm is a
 # base class, not a concrete hash — and in any case this just assigns it).
 import hashlib  # standard library — not in our rules
+
 md5_obj = hashlib.md5(b"hello")   # hashlib.md5 — "hashlib" is not a PyCA namespace
 sha1_obj = hashlib.sha1(b"hello") # same — not detected

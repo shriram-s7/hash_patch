@@ -21,13 +21,13 @@ from typing import Any
 import yaml
 
 try:
-    from tree_sitter import Language, Parser
     import tree_sitter_go as _tsgo
+    from tree_sitter import Language, Parser
 
     _LANG = Language(_tsgo.language())
     _PARSER = Parser(_LANG)
     _TREE_SITTER_AVAILABLE = True
-except Exception:  # pragma: no cover
+except Exception:  # noqa: BLE001 -- graceful degradation if the native parser fails to load  # pragma: no cover
     _TREE_SITTER_AVAILABLE = False
     _LANG = None  # type: ignore[assignment]
     _PARSER = None  # type: ignore[assignment]

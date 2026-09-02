@@ -320,8 +320,8 @@ def test_rules_have_required_fields() -> None:
 
 
 def test_collect_calls_finds_selector_calls() -> None:
-    from tree_sitter import Language, Parser
     import tree_sitter_go as _tsgo
+    from tree_sitter import Language, Parser
 
     lang = Language(_tsgo.language())
     parser = Parser(lang)
@@ -335,8 +335,8 @@ def test_collect_calls_finds_selector_calls() -> None:
 
 
 def test_collect_calls_ignores_plain_function_calls() -> None:
-    from tree_sitter import Language, Parser
     import tree_sitter_go as _tsgo
+    from tree_sitter import Language, Parser
 
     lang = Language(_tsgo.language())
     parser = Parser(lang)

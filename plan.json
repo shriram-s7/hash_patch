@@ -1,0 +1,1029 @@
+{
+  "budget_days": 10.0,
+  "candidate_count": 9,
+  "excluded_count": 7,
+  "parallelism": 2,
+  "reference_year": 2026,
+  "scenarios": [
+    {
+      "estimated_year": 2028,
+      "headline_message": "Scenario 'conservative' (~2028): optimiser eliminates 100.00% risk vs 100.00% naive at same budget.",
+      "naive_plan": {
+        "eliminated_risk": 81.55,
+        "ordering": "naive_risk_only",
+        "residual_risk_curve": [
+          {
+            "day": 0.0,
+            "residual_risk": 81.55
+          },
+          {
+            "day": 0.5,
+            "residual_risk": 4.549999999999997
+          },
+          {
+            "day": 1.0,
+            "residual_risk": 1.5499999999999972
+          },
+          {
+            "day": 1.5,
+            "residual_risk": 0.8499999999999943
+          },
+          {
+            "day": 2.0,
+            "residual_risk": 0.25
+          },
+          {
+            "day": 2.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 10.0,
+            "residual_risk": 0.0
+          }
+        ],
+        "risk_eliminated_pct": 100.0,
+        "schedule": [
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:b51a6578a57c56a2c6a54e012b69726d",
+            "name": "X448",
+            "scenario_risk_score": 50.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+            "name": "RSA",
+            "scenario_risk_score": 27.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:da0ea15be9f63a597830b2141f2f9d74",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7495455f4b55976f6cc9274640f9ce0d",
+            "name": "DSA",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7d57e2043822a305f8357be8fa1e756f",
+            "name": "Ed448",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:c76b1fae5db7a939ad244178b109b600",
+            "name": "DH",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+            "name": "X25519",
+            "scenario_risk_score": 0.25,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.5,
+            "finding_id": "crypto-asset:80abd028190c5b2c55efc39eabab202e",
+            "name": "ElGamal",
+            "scenario_risk_score": 0.25,
+            "start_day": 2.0
+          }
+        ],
+        "total_risk": 81.55,
+        "unmigrated_finding_ids": []
+      },
+      "optimizer_plan": {
+        "eliminated_risk": 81.55,
+        "ordering": "greedy_risk_density",
+        "residual_risk_curve": [
+          {
+            "day": 0.0,
+            "residual_risk": 81.55
+          },
+          {
+            "day": 0.5,
+            "residual_risk": 4.549999999999997
+          },
+          {
+            "day": 1.0,
+            "residual_risk": 1.5499999999999972
+          },
+          {
+            "day": 1.5,
+            "residual_risk": 0.8499999999999943
+          },
+          {
+            "day": 2.0,
+            "residual_risk": 0.25
+          },
+          {
+            "day": 2.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 10.0,
+            "residual_risk": 0.0
+          }
+        ],
+        "risk_eliminated_pct": 100.0,
+        "schedule": [
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:b51a6578a57c56a2c6a54e012b69726d",
+            "name": "X448",
+            "scenario_risk_score": 50.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+            "name": "RSA",
+            "scenario_risk_score": 27.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:da0ea15be9f63a597830b2141f2f9d74",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7495455f4b55976f6cc9274640f9ce0d",
+            "name": "DSA",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7d57e2043822a305f8357be8fa1e756f",
+            "name": "Ed448",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:c76b1fae5db7a939ad244178b109b600",
+            "name": "DH",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+            "name": "X25519",
+            "scenario_risk_score": 0.25,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.5,
+            "finding_id": "crypto-asset:80abd028190c5b2c55efc39eabab202e",
+            "name": "ElGamal",
+            "scenario_risk_score": 0.25,
+            "start_day": 2.0
+          }
+        ],
+        "total_risk": 81.55,
+        "unmigrated_finding_ids": []
+      },
+      "probability_weight": 0.25,
+      "scenario_name": "conservative"
+    },
+    {
+      "estimated_year": 2033,
+      "headline_message": "Scenario 'moderate' (~2033): optimiser eliminates 100.00% risk vs 100.00% naive at same budget.",
+      "naive_plan": {
+        "eliminated_risk": 81.55,
+        "ordering": "naive_risk_only",
+        "residual_risk_curve": [
+          {
+            "day": 0.0,
+            "residual_risk": 81.55
+          },
+          {
+            "day": 0.5,
+            "residual_risk": 4.549999999999997
+          },
+          {
+            "day": 1.0,
+            "residual_risk": 1.5499999999999972
+          },
+          {
+            "day": 1.5,
+            "residual_risk": 0.8499999999999943
+          },
+          {
+            "day": 2.0,
+            "residual_risk": 0.25
+          },
+          {
+            "day": 2.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 10.0,
+            "residual_risk": 0.0
+          }
+        ],
+        "risk_eliminated_pct": 100.0,
+        "schedule": [
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:b51a6578a57c56a2c6a54e012b69726d",
+            "name": "X448",
+            "scenario_risk_score": 50.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+            "name": "RSA",
+            "scenario_risk_score": 27.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:da0ea15be9f63a597830b2141f2f9d74",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7495455f4b55976f6cc9274640f9ce0d",
+            "name": "DSA",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7d57e2043822a305f8357be8fa1e756f",
+            "name": "Ed448",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:c76b1fae5db7a939ad244178b109b600",
+            "name": "DH",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+            "name": "X25519",
+            "scenario_risk_score": 0.25,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.5,
+            "finding_id": "crypto-asset:80abd028190c5b2c55efc39eabab202e",
+            "name": "ElGamal",
+            "scenario_risk_score": 0.25,
+            "start_day": 2.0
+          }
+        ],
+        "total_risk": 81.55,
+        "unmigrated_finding_ids": []
+      },
+      "optimizer_plan": {
+        "eliminated_risk": 81.55,
+        "ordering": "greedy_risk_density",
+        "residual_risk_curve": [
+          {
+            "day": 0.0,
+            "residual_risk": 81.55
+          },
+          {
+            "day": 0.5,
+            "residual_risk": 4.549999999999997
+          },
+          {
+            "day": 1.0,
+            "residual_risk": 1.5499999999999972
+          },
+          {
+            "day": 1.5,
+            "residual_risk": 0.8499999999999943
+          },
+          {
+            "day": 2.0,
+            "residual_risk": 0.25
+          },
+          {
+            "day": 2.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 10.0,
+            "residual_risk": 0.0
+          }
+        ],
+        "risk_eliminated_pct": 100.0,
+        "schedule": [
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:b51a6578a57c56a2c6a54e012b69726d",
+            "name": "X448",
+            "scenario_risk_score": 50.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+            "name": "RSA",
+            "scenario_risk_score": 27.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:da0ea15be9f63a597830b2141f2f9d74",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7495455f4b55976f6cc9274640f9ce0d",
+            "name": "DSA",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7d57e2043822a305f8357be8fa1e756f",
+            "name": "Ed448",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:c76b1fae5db7a939ad244178b109b600",
+            "name": "DH",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+            "name": "X25519",
+            "scenario_risk_score": 0.25,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.5,
+            "finding_id": "crypto-asset:80abd028190c5b2c55efc39eabab202e",
+            "name": "ElGamal",
+            "scenario_risk_score": 0.25,
+            "start_day": 2.0
+          }
+        ],
+        "total_risk": 81.55,
+        "unmigrated_finding_ids": []
+      },
+      "probability_weight": 0.5,
+      "scenario_name": "moderate"
+    },
+    {
+      "estimated_year": 2040,
+      "headline_message": "Scenario 'optimistic' (~2040): optimiser eliminates 100.00% risk vs 100.00% naive at same budget.",
+      "naive_plan": {
+        "eliminated_risk": 81.55,
+        "ordering": "naive_risk_only",
+        "residual_risk_curve": [
+          {
+            "day": 0.0,
+            "residual_risk": 81.55
+          },
+          {
+            "day": 0.5,
+            "residual_risk": 4.549999999999997
+          },
+          {
+            "day": 1.0,
+            "residual_risk": 1.5499999999999972
+          },
+          {
+            "day": 1.5,
+            "residual_risk": 0.8499999999999943
+          },
+          {
+            "day": 2.0,
+            "residual_risk": 0.25
+          },
+          {
+            "day": 2.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 10.0,
+            "residual_risk": 0.0
+          }
+        ],
+        "risk_eliminated_pct": 100.0,
+        "schedule": [
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:b51a6578a57c56a2c6a54e012b69726d",
+            "name": "X448",
+            "scenario_risk_score": 50.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+            "name": "RSA",
+            "scenario_risk_score": 27.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:da0ea15be9f63a597830b2141f2f9d74",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7495455f4b55976f6cc9274640f9ce0d",
+            "name": "DSA",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7d57e2043822a305f8357be8fa1e756f",
+            "name": "Ed448",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:c76b1fae5db7a939ad244178b109b600",
+            "name": "DH",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+            "name": "X25519",
+            "scenario_risk_score": 0.25,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.5,
+            "finding_id": "crypto-asset:80abd028190c5b2c55efc39eabab202e",
+            "name": "ElGamal",
+            "scenario_risk_score": 0.25,
+            "start_day": 2.0
+          }
+        ],
+        "total_risk": 81.55,
+        "unmigrated_finding_ids": []
+      },
+      "optimizer_plan": {
+        "eliminated_risk": 81.55,
+        "ordering": "greedy_risk_density",
+        "residual_risk_curve": [
+          {
+            "day": 0.0,
+            "residual_risk": 81.55
+          },
+          {
+            "day": 0.5,
+            "residual_risk": 4.549999999999997
+          },
+          {
+            "day": 1.0,
+            "residual_risk": 1.5499999999999972
+          },
+          {
+            "day": 1.5,
+            "residual_risk": 0.8499999999999943
+          },
+          {
+            "day": 2.0,
+            "residual_risk": 0.25
+          },
+          {
+            "day": 2.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 3.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 4.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 5.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 6.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 7.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 8.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.0,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 9.5,
+            "residual_risk": 0.0
+          },
+          {
+            "day": 10.0,
+            "residual_risk": 0.0
+          }
+        ],
+        "risk_eliminated_pct": 100.0,
+        "schedule": [
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:b51a6578a57c56a2c6a54e012b69726d",
+            "name": "X448",
+            "scenario_risk_score": 50.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 0.5,
+            "finding_id": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+            "name": "RSA",
+            "scenario_risk_score": 27.0,
+            "start_day": 0.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:da0ea15be9f63a597830b2141f2f9d74",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.0,
+            "finding_id": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+            "name": "ECDSA",
+            "scenario_risk_score": 1.5,
+            "start_day": 0.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7495455f4b55976f6cc9274640f9ce0d",
+            "name": "DSA",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 1.5,
+            "finding_id": "crypto-asset:7d57e2043822a305f8357be8fa1e756f",
+            "name": "Ed448",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.0
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:c76b1fae5db7a939ad244178b109b600",
+            "name": "DH",
+            "scenario_risk_score": 0.35,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.0,
+            "finding_id": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+            "name": "X25519",
+            "scenario_risk_score": 0.25,
+            "start_day": 1.5
+          },
+          {
+            "cost_days": 0.5,
+            "end_day": 2.5,
+            "finding_id": "crypto-asset:80abd028190c5b2c55efc39eabab202e",
+            "name": "ElGamal",
+            "scenario_risk_score": 0.25,
+            "start_day": 2.0
+          }
+        ],
+        "total_risk": 81.55,
+        "unmigrated_finding_ids": []
+      },
+      "probability_weight": 0.25,
+      "scenario_name": "optimistic"
+    }
+  ]
+}
