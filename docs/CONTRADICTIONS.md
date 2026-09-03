@@ -1,6 +1,6 @@
 # Cross-Layer Contradiction Detection (Pillar 4)
 
-PRATYAKSHA's fourth pillar introduces a second, independent detection layer:
+Hash Patch's fourth pillar introduces a second, independent detection layer:
 **static deployed TLS/SSL configuration files** (`nginx.conf`, Apache `httpd.conf`,
 Java `java.security` and `.properties` files) and analyzes them alongside
 **source-code TLS declarations** (Python and Java source intent).
@@ -28,7 +28,7 @@ are hardcoded in Python.
 | **Source Intent** | **Java** | `SSLContext.getInstance("TLSv1.3")`, `SSLContext.getInstance("TLSv1.2")`, etc. | `source-code-intent` |
 
 If a configuration file does not contain any recognised directives or matches an unknown
-format, it is silently ignored rather than guessed (consistent with PRATYAKSHA's
+format, it is silently ignored rather than guessed (consistent with Hash Patch's
 evidence-or-refuse discipline).
 
 ---
@@ -74,7 +74,7 @@ files that reside **within the same scan target and the same subproject scope**:
 
 ## 4. CycloneDX 1.6 Architectural Decision: Properties vs Vulnerabilities
 
-Cross-layer contradiction findings are emitted as structured `pratyaksha:contradiction.*` properties on the BOM's `metadata.properties` rather than using CycloneDX 1.6's `vulnerabilities` array because a contradiction is a cross-layer policy divergence between co-located artifacts, not a component-level software flaw. The CycloneDX standard defines `vulnerabilities` specifically for security advisories and CVEs affecting identified components or services via CPEs/PURLs; forcing a configuration-versus-code policy mismatch into this array would require fabricating synthetic CVE identifiers and distorting the `affects` relationship to link two disparate files across layers. In contrast, namespacing contradictions under `metadata.properties` preserves strict semantic integrity, keeps CycloneDX components unpolluted, maintains full schema validity against the official CycloneDX 1.6 specification, and follows the exact `pratyaksha:` property convention already established across all other detection pillars.
+Cross-layer contradiction findings are emitted as structured `hash_patch:contradiction.*` properties on the BOM's `metadata.properties` rather than using CycloneDX 1.6's `vulnerabilities` array because a contradiction is a cross-layer policy divergence between co-located artifacts, not a component-level software flaw. The CycloneDX standard defines `vulnerabilities` specifically for security advisories and CVEs affecting identified components or services via CPEs/PURLs; forcing a configuration-versus-code policy mismatch into this array would require fabricating synthetic CVE identifiers and distorting the `affects` relationship to link two disparate files across layers. In contrast, namespacing contradictions under `metadata.properties` preserves strict semantic integrity, keeps CycloneDX components unpolluted, maintains full schema validity against the official CycloneDX 1.6 specification, and follows the exact `hash_patch:` property convention already established across all other detection pillars.
 
 ### Detailed Justification:
 - **Semantic fit**: CycloneDX's standard `vulnerabilities` array is explicitly defined as
@@ -83,11 +83,11 @@ Cross-layer contradiction findings are emitted as structured `pratyaksha:contrad
   intent and a reverse proxy configuration is **not** a software flaw in a third-party library.
   Forcing it into `vulnerabilities` would require inventing synthetic CVE-like identifiers and
   abusing the `affects` relationship.
-- **Namespace hygiene**: In PRATYAKSHA, all non-standard and multi-layer findings are
-  consistently namespaced under `pratyaksha:` (e.g. `pratyaksha:reachability`,
-  `pratyaksha:property.shelfLife.*`, `pratyaksha:property.blastRadius.*`).
+- **Namespace hygiene**: In Hash Patch, all non-standard and multi-layer findings are
+  consistently namespaced under `hash_patch:` (e.g. `hash_patch:reachability`,
+  `hash_patch:property.shelfLife.*`, `hash_patch:property.blastRadius.*`).
 - **Standard validity**: Emitting each contradiction as a structured JSON record under
-  `metadata.properties` (with name `pratyaksha:contradiction.<id>`) validates 100% cleanly
+  `metadata.properties` (with name `hash_patch:contradiction.<id>`) validates 100% cleanly
   against the official vendored CycloneDX 1.6 schema without network lookups or schema hacks.
 
 ---
@@ -98,7 +98,7 @@ Cross-layer contradiction findings are emitted as structured `pratyaksha:contrad
 > **Static Repository Analysis Only — Not Live Network Probing**
 >
 > Pillar 4 inspects configuration files and source code statically co-located within the
-> target path supplied to `pratyaksha scan`.
+> target path supplied to `hash-patch scan`.
 >
 > It does **NOT**:
 > - Make network connections or probe live IP/DNS endpoints.

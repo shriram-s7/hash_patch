@@ -1,6 +1,6 @@
 """tests/unit/test_java_detector.py
 
-Unit tests for pratyaksha.detect.java.JavaJcaDetector.
+Unit tests for hash_patch.detect.java.JavaJcaDetector.
 
 Design notes:
   - No algorithm names are hardcoded in this test file (CLAUDE.md constraint).
@@ -20,9 +20,9 @@ from typing import Any
 import pytest
 import yaml
 
-from pratyaksha.detect.java import JavaJcaDetector, _build_algo_index, _lookup_algo
-from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
-from pratyaksha.model.evidence import Evidence
+from hash_patch.detect.java import JavaJcaDetector, _build_algo_index, _lookup_algo
+from hash_patch.model.assets import AssetType, CryptoAsset, QuantumStatus
+from hash_patch.model.evidence import Evidence
 
 # ---------------------------------------------------------------------------
 # Path helpers

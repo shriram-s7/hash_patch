@@ -1,6 +1,6 @@
 # Migration Optimiser (Pillar 5)
 
-PRATYAKSHA's fifth pillar takes an already-emitted CBOM (from `pratyaksha
+Hash Patch's fifth pillar takes an already-emitted CBOM (from `hash-patch
 scan`, already carrying whatever P1 reachability, P2 shelf-life, and P3
 blast-radius data those pillars could find), a migration BUDGET in
 engineer-days, and a PARALLELISM (how many findings can be worked on at
@@ -8,21 +8,21 @@ once), and produces a recommended MIGRATION ORDER, a residual-risk-over-time
 curve, and a comparison against a naive baseline that demonstrates the
 optimiser's value.
 
-**This is a separate CLI subcommand, not part of `pratyaksha scan`:**
+**This is a separate CLI subcommand, not part of `hash-patch scan`:**
 
 ```
-pratyaksha optimize INPUT.cbom.json --budget-days N --parallelism P --output PLAN.json
+hash-patch optimize INPUT.cbom.json --budget-days N --parallelism P --output PLAN.json
 ```
 
 It never re-scans source code. Every input value it uses (quantum status,
 reachability, shelf-life years, blast-radius effort-days) is read back out
-of `pratyaksha:` properties an earlier `pratyaksha scan` already attached —
-see `pratyaksha/analyze/cbom_reader.py`. Nothing here is invented.
+of `hash_patch:` properties an earlier `hash-patch scan` already attached —
+see `hash_patch/analyze/cbom_reader.py`. Nothing here is invented.
 
 ## Which findings are migration candidates
 
-Only `CryptoAsset`s whose `pratyaksha:quantumStatus` is `broken-by-shor`
-(`pratyaksha/analyze/risk_score.py::is_migration_candidate`). This is
+Only `CryptoAsset`s whose `hash_patch:quantumStatus` is `broken-by-shor`
+(`hash_patch/analyze/risk_score.py::is_migration_candidate`). This is
 deliberate:
 
 - **`broken-classically`** algorithms (MD5, DES, RC4, ...) are already
@@ -33,7 +33,7 @@ deliberate:
   a KEY-SIZE DOUBLING within the same primitive family (e.g. AES-128 →
   AES-256), not a migration to a different PQC algorithm family. Pillar
   3's PQC-replacement-family / cost logic
-  (`pratyaksha/analyze/blast_radius.py`) is built entirely around
+  (`hash_patch/analyze/blast_radius.py`) is built entirely around
   `broken-by-shor` assets; there is no equivalent "PQC replacement size"
   for a Grover-weakened primitive for this pillar's cost model to reuse.
 
@@ -43,7 +43,7 @@ problem this pillar schedules.
 
 ## The risk-score formula
 
-Stated in full, plainly, in `pratyaksha/analyze/risk_score.py::compute_risk_score`:
+Stated in full, plainly, in `hash_patch/analyze/risk_score.py::compute_risk_score`:
 
 ```
 risk_score = shelf_life_magnitude * reachability_multiplier
@@ -81,7 +81,7 @@ This is a plain weighted PRODUCT (not a sum — reachability genuinely acts
 as a *multiplier* on the underlying exposure, per the task's own framing),
 deliberately simple and fully inspectable in code, not a black box. It is
 **not calibrated against real incident data**, the same honesty caveat
-`pratyaksha/analyze/blast_radius.py`'s severity bands carry.
+`hash_patch/analyze/blast_radius.py`'s severity bands carry.
 
 `OptimizerCandidate.shelf_life_is_default` records whether the default was
 used, so a report reader can always tell a real Pillar-2 figure from a
@@ -89,7 +89,7 @@ fallback.
 
 ## Cost estimation
 
-`pratyaksha/analyze/risk_score.py::estimate_cost_days`:
+`hash_patch/analyze/risk_score.py::estimate_cost_days`:
 
 ```
 cost_days = sum(blast-radius estimatedEffortDays across every BlastRadiusFinding
@@ -99,8 +99,8 @@ cost_days = sum(blast-radius estimatedEffortDays across every BlastRadiusFinding
 
 An asset can have more than one size-constraint overflow to fix (e.g. two
 different undersized buffers protecting the same algorithm), so the real
-figure sums across all of them (`pratyaksha/analyze/cbom_reader.py::_blast_radius_effort_days`).
-`0.5` matches `pratyaksha/analyze/blast_radius.py`'s own base per-finding
+figure sums across all of them (`hash_patch/analyze/cbom_reader.py::_blast_radius_effort_days`).
+`0.5` matches `hash_patch/analyze/blast_radius.py`'s own base per-finding
 estimate, for consistency across pillars. `OptimizerCandidate.cost_source`
 (`"blast_radius"` or `"default"`) makes the two cases distinguishable in
 the output, never blurred together — the same honesty convention
@@ -115,7 +115,7 @@ detected purely in a C file (like `testdata/c/optimizer_expensive.c`'s
 ECDSA finding) always has `reachability = unknown` and
 `shelf_life_is_default = True`, no matter how expensive its blast-radius
 cost is. (A single CryptoAsset id CAN in principle span languages, since
-identity — `pratyaksha/model/assets.py::derive_asset_id` — is purely
+identity — `hash_patch/model/assets.py::derive_asset_id` — is purely
 `(type, name, parameter_set, mode)`, independent of language; this
 corpus's fixtures deliberately keep the "expensive" finding C-only and
 the "high-risk" findings Python-only precisely to make this structural
@@ -124,7 +124,7 @@ follow — see the worked example below.)
 
 ## The scheduler
 
-`pratyaksha/analyze/optimizer.py`. Both the greedy optimiser and the naive
+`hash_patch/analyze/optimizer.py`. Both the greedy optimiser and the naive
 baseline solve the SAME problem — the classic MULTIPLE KNAPSACK problem:
 choose a subset of candidates and partition it across `parallelism`
 identical-capacity (`budget_days`) work-slots, maximizing total risk
@@ -214,9 +214,9 @@ scan date) — never the system clock (see "Determinism" below).
 heuristic estimate (docs/SHELF_LIFE.md), not a certainty, so "probably
 already safe" is discounted, never eliminated.
 
-## Optimality-gap validation: `pratyaksha/analyze/optimizer_bruteforce.py`
+## Optimality-gap validation: `hash_patch/analyze/optimizer_bruteforce.py`
 
-A TESTING/VALIDATION TOOL, not part of the normal `pratyaksha optimize`
+A TESTING/VALIDATION TOOL, not part of the normal `hash-patch optimize`
 CLI path. `brute_force_optimal` explores every way of choosing a subset of
 candidates and partitioning it across `parallelism` bins via
 branch-and-bound recursion (two pruning rules — an admissible upper-bound
@@ -240,9 +240,9 @@ engineer-days, parallelism 1), the hybrid greedy reaches the TRUE OPTIMUM
 
 ## CLI output
 
-`pratyaksha optimize INPUT.cbom.json --budget-days N --parallelism P
+`hash-patch optimize INPUT.cbom.json --budget-days N --parallelism P
 [--output PLAN.json]` writes an `OptimizationReport`
-(`pratyaksha/model/optimizer.py`) as JSON: the 3 scenario plans (each with
+(`hash_patch/model/optimizer.py`) as JSON: the 3 scenario plans (each with
 its own optimiser plan, naive plan, and residual-risk curve), and prints
 one summary line per scenario:
 
@@ -251,7 +251,7 @@ Scenario 'moderate' (~2033): optimiser eliminates 98.23% risk vs 98.17% naive at
 ```
 
 (2 decimal places, not 1 — see the format string's own comment in
-`pratyaksha/analyze/optimizer.py::_headline_message`: on this pillar's
+`hash_patch/analyze/optimizer.py::_headline_message`: on this pillar's
 discrete inputs, the real gap at a given checkpoint can be small enough
 that 1 decimal place rounds two genuinely different percentages to the
 same displayed value.)
@@ -263,8 +263,8 @@ identical input (CLAUDE.md hard constraint #2). `compute_risk_score`,
 `estimate_cost_days`, `_schedule`, and `run_optimizer` never read the
 system clock — the ONE date this pillar needs (`reference_year`) is read
 from the input CBOM's own `metadata.timestamp`
-(`pratyaksha/analyze/cbom_reader.py::read_reference_year`), the same
-timestamp `pratyaksha scan` already stamped using its own one permitted
+(`hash_patch/analyze/cbom_reader.py::read_reference_year`), the same
+timestamp `hash-patch scan` already stamped using its own one permitted
 wall-clock read. All ordering ties (equal risk-density, equal raw risk) are
 broken by `finding_id`, never left to incidental iteration order.
 
@@ -302,7 +302,7 @@ findings, 1.0 risk each = 3.0 combined) instead, eliminating 85.00
 (98.27%) — the true optimum for this budget, confirmed by
 `optimizer_bruteforce.py` (0% gap). This is the single, concrete,
 real divergence the plain (schedule_greedy vs schedule_naive) comparison
-demonstrates. The SCENARIO-ADJUSTED comparison `pratyaksha optimize`
+demonstrates. The SCENARIO-ADJUSTED comparison `hash-patch optimize`
 actually prints shows the same mechanism at a smaller magnitude (98.23%
 vs 98.17%) because the `credentials` findings' shelf-life is discounted
 under every scenario (a rotatable secret's 1-year real shelf-life has

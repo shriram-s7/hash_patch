@@ -1,6 +1,6 @@
 """tests/unit/test_reachability.py
 
-Unit tests for pratyaksha/analyze/{callgraph,entrypoints,reachability}.py.
+Unit tests for hash_patch/analyze/{callgraph,entrypoints,reachability}.py.
 
 Section 1 exercises the four reachability corpus fixtures under
 testdata/python/ and testdata/java/ (see docs/REACHABILITY.md), each with
@@ -18,9 +18,9 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from pratyaksha.analyze.reachability import is_java_test_file, is_python_test_file
-from pratyaksha.cli import run_scan
-from pratyaksha.model.assets import Reachability
+from hash_patch.analyze.reachability import is_java_test_file, is_python_test_file
+from hash_patch.cli import run_scan
+from hash_patch.model.assets import Reachability
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTDATA_PY_DIR = REPO_ROOT / "testdata" / "python"

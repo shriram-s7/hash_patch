@@ -1,10 +1,10 @@
 # Post-Quantum Cryptography Benchmarking & Recommendations
 
-PRATYAKSHA includes a dedicated performance and byte-size measurement harness
-(`pratyaksha/benchmark/pqc_bench.py`) and a grounded recommendation engine
-(`pratyaksha/recommend/engine.py`).
+Hash Patch includes a dedicated performance and byte-size measurement harness
+(`hash_patch/benchmark/pqc_bench.py`) and a grounded recommendation engine
+(`hash_patch/recommend/engine.py`).
 
-Rather than relying purely on static lookups, PRATYAKSHA can measure real latencies
+Rather than relying purely on static lookups, Hash Patch can measure real latencies
 and exact byte sizes on the host system to produce migration recommendations cited
 with actual measured numbers.
 
@@ -28,7 +28,7 @@ using `pyca/cryptography` (FIPS 203 ML-KEM and FIPS 204 ML-DSA):
   - `ECDSA-P256` (ANSI X9.62, SECP256R1, SHA-256)
 
 ### Measurement Discipline
-- **Representative Payload**: A fixed 32-byte byte payload (`PRATYAKSHA_BENCHMARK_DIGEST_32B`),
+- **Representative Payload**: A fixed 32-byte byte payload (`Hash Patch_BENCHMARK_DIGEST_32B`),
   mirroring the realistic SHA-256 digest passed to signature and KEM primitives in real protocols.
 - **Warmup Phase**: Discards a documented number of initial iterations (default: 5 warmup runs)
   to ensure memory caches, OS page tables, and Python imports are fully primed before timing begins.
@@ -47,14 +47,14 @@ using `pyca/cryptography` (FIPS 203 ML-KEM and FIPS 204 ML-DSA):
 > [!WARNING]
 > **Development Environment Measurement — Not a Multi-Platform SLA**
 >
-> All measurements captured by `pratyaksha benchmark` represent single-machine, single-run-context
+> All measurements captured by `hash-patch benchmark` represent single-machine, single-run-context
 > samples gathered on local development hardware.
 >
 > These figures characterize **relative performance scaling and comparative overheads** (e.g.,
 > ML-DSA keygen being substantially faster than RSA-2048 keygen, but signatures being ~13x larger),
 > not an absolute performance SLA.
 >
-> Production migration planning should execute `pratyaksha benchmark` directly on target deployment
+> Production migration planning should execute `hash-patch benchmark` directly on target deployment
 > hardware (e.g. cloud instances, edge gateways, or container runtimes) to observe host-specific
 > throughput and memory characteristics.
 
@@ -62,7 +62,7 @@ using `pyca/cryptography` (FIPS 203 ML-KEM and FIPS 204 ML-DSA):
 
 ## 3. Documented Library Gaps
 
-PRATYAKSHA explicitly documents two gaps in the underlying cryptographic backend:
+Hash Patch explicitly documents two gaps in the underlying cryptographic backend:
 
 1. **`SLH-DSA` (FIPS 205, Stateless Hash-Based Signatures)**:
    - **Status**: Not available in `pyca/cryptography 50.0.1`.
@@ -80,7 +80,7 @@ PRATYAKSHA explicitly documents two gaps in the underlying cryptographic backend
 
 ## 4. Recommendation Engine & Confidence Distinction
 
-The recommendation engine (`pratyaksha/recommend/`) translates inventory findings into actionable
+The recommendation engine (`hash_patch/recommend/`) translates inventory findings into actionable
 PQC migration advice.
 
 The engine provides **two visibly distinguishable confidence levels**:
@@ -97,14 +97,14 @@ The engine provides **two visibly distinguishable confidence levels**:
 ### Running the Benchmark
 ```bash
 # Run benchmark and write report JSON
-pratyaksha benchmark --iterations 50 --warmup 5 --output bench.json
+hash-patch benchmark --iterations 50 --warmup 5 --output bench.json
 ```
 
 ### Attaching Recommendations to a CBOM Scan
 ```bash
 # Scan repository and attach measured PQC recommendations
-pratyaksha scan /path/to/project --benchmark-report bench.json --output cbom.json
+hash-patch scan /path/to/project --benchmark-report bench.json --output cbom.json
 ```
 
 In the emitted CycloneDX 1.6 CBOM, recommendations are attached to each vulnerable component's
-`properties` bag under `pratyaksha:property.recommendation.<target_algo>`.
+`properties` bag under `hash_patch:property.recommendation.<target_algo>`.

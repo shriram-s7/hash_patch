@@ -1,6 +1,6 @@
 # Blast Radius (Pillar 3)
 
-PRATYAKSHA's third detection pillar looks for places in the codebase that
+Hash Patch's third detection pillar looks for places in the codebase that
 statically assume a cryptographic artefact — a key, a signature, a
 ciphertext — is small, and predicts whether migrating the algorithm that
 produces it to its PQC replacement will overflow that assumption.
@@ -42,8 +42,8 @@ blast-radius computation — only `ml_kem_768` and `ml_dsa_65` are.
 
 ## Detectors
 
-**`pratyaksha/detect/blast_radius/c_buffers.py`** — tree-sitter C parsing
-(the exact parser instance `pratyaksha.detect.c` already constructs, not a
+**`hash_patch/detect/blast_radius/c_buffers.py`** — tree-sitter C parsing
+(the exact parser instance `hash_patch.detect.c` already constructs, not a
 second one). Finds:
 - stack buffers: `char`/`uint8_t`/`unsigned char`/`int8_t`/`byte NAME[N];`
 - heap allocations: `malloc(N)` or `calloc(count, size)` assigned to such a
@@ -56,7 +56,7 @@ resolution within the same file. Anything else — a plain variable, a
 unresolved, and **no `SizeConstraint` is emitted for it at all.** Guessing
 a size would be worse than reporting nothing.
 
-**`pratyaksha/detect/blast_radius/sql_ddl.py`** — a **regex-based**
+**`hash_patch/detect/blast_radius/sql_ddl.py`** — a **regex-based**
 lightweight parser, not a full SQL grammar (there is no tree-sitter-sql
 dependency in this project, and `CREATE TABLE` column lists are regular
 enough that a targeted regex is sufficient and easy to audit). It only
@@ -78,7 +78,7 @@ already byte counts, no charset assumption needed.
 
 Both detectors match the buffer/column identifier (substring,
 case-insensitive) against `rules/blast_radius_names.yaml` — one shared
-pattern list, loaded once via `pratyaksha/detect/blast_radius/names.py`,
+pattern list, loaded once via `hash_patch/detect/blast_radius/names.py`,
 never duplicated between the two detectors. Longest pattern first, so e.g.
 `rsa_private_key_buf` matches `private_key` (no PQC field — see below)
 rather than the shorter `key` it also contains.
@@ -88,7 +88,7 @@ Each pattern carries a `field`: `signature`, `pubkey`, `ciphertext`, or
 `digest`, `hash`) means the name is clearly crypto-suggestive but there is
 no single PQC field to compare it against — such a `SizeConstraint` is
 still emitted (it's real, directly-observed evidence of a size limit), but
-`pratyaksha/analyze/blast_radius.py` never produces a `BlastRadiusFinding`
+`hash_patch/analyze/blast_radius.py` never produces a `BlastRadiusFinding`
 for it. **Known false-negative risk:** if crypto material is stored under a
 generic name this pattern list doesn't recognise at all (`buf`, `data`,
 `payload`, a language-specific idiom), it is invisible to this pillar
@@ -98,7 +98,7 @@ conventions rather than trying to anticipate every name.
 
 ## The correlation heuristic — and its limits
 
-`pratyaksha/analyze/blast_radius.py::compute_blast_radius` takes every
+`hash_patch/analyze/blast_radius.py::compute_blast_radius` takes every
 `CryptoAsset` whose `quantum_status` is `BROKEN_BY_SHOR` (the algorithms a
 PQC migration actually replaces) and every `SizeConstraint`, and produces a
 `BlastRadiusFinding` when:
@@ -112,7 +112,7 @@ PQC migration actually replaces) and every `SizeConstraint`, and produces a
    scan target. See `tests/unit/test_blast_radius.py`'s
    `test_cross_file_correlation_never_happens*` tests.
 
-   Within a file, `_pick_correlated_asset` (`pratyaksha/analyze/
+   Within a file, `_pick_correlated_asset` (`hash_patch/analyze/
    blast_radius.py`) picks, for EACH constraint, only the single closest
    same-file candidate asset by line distance — never every same-file
    asset independently. This is what stops a single file that legitimately
@@ -171,13 +171,13 @@ its own name pattern (`signature -> ML-DSA-65`, `ciphertext -> ML-KEM-768`,
 
 This is deliberately weaker evidence than a real correlation. Rather than
 being silently dropped from the CBOM (there is no real, pre-existing
-`CryptoAsset` component to mirror it onto), `pratyaksha/cli.py::
+`CryptoAsset` component to mirror it onto), `hash_patch/cli.py::
 _attach_blast_radius_properties` builds a SYNTHETIC `CryptoAsset` for it
 (`_synthetic_asset_for_inferred_finding`) — named after the inferred PQC
 family (e.g. `"ML-DSA-65 (inferred)"`), typed `cryptographic-asset` like
 every other component, carrying the `SizeConstraint`'s own evidence (so
 CLAUDE.md hard constraint #3 is still satisfied: it points at the real
-`.sql` file/line), and with `pratyaksha:confidence = "inferred"` rather
+`.sql` file/line), and with `hash_patch:confidence = "inferred"` rather
 than `"confirmed"` — never merged into the confirmed inventory as if it
 were an equivalent, direct observation (CLAUDE.md's "Name" section). This
 makes the finding visible in the actual written CBOM, not just the CLI
@@ -191,30 +191,30 @@ test_sql_inferred_finding_is_emitted_as_a_synthetic_cbom_component`.
 coarse, arbitrarily-chosen bands (not calibrated against real incident
 data): `< 256 -> low`, `256-1023 -> medium`, `1024-4095 -> high`,
 `>= 4096 -> critical`. See
-`pratyaksha/analyze/blast_radius.py::_severity_for_overflow`.
+`hash_patch/analyze/blast_radius.py::_severity_for_overflow`.
 
 **`estimated_effort_days` is a heuristic placeholder, NOT derived from
 real migration data.** Base 0.5 engineer-days per finding; +0.5 if the
 constraint is a `db_column` (schema migrations — `ALTER TABLE`, backfills,
 downstream consumers — cost more than resizing a buffer). See
-`pratyaksha/analyze/blast_radius.py::_estimate_effort_days`. Do not present
+`hash_patch/analyze/blast_radius.py::_estimate_effort_days`. Do not present
 this number to a stakeholder as a real estimate; it exists to give a
 scan's overall summary line a rough sense of scale, nothing more.
 
 ## CLI wiring
 
-`pratyaksha scan PATH --output FILE` runs this pillar automatically
+`hash-patch scan PATH --output FILE` runs this pillar automatically
 whenever the scanned file set contains `.c`/`.h`/`.cpp`/`.cc`/`.cxx`/
 `.hpp`/`.hh` and/or `.sql` files. Findings with a real correlated
 `CryptoAsset` are mirrored onto that asset's CBOM component as
-`pratyaksha:property.blastRadius.<kind>.<name>.<line>` properties (JSON
+`hash_patch:property.blastRadius.<kind>.<name>.<line>` properties (JSON
 value: `declaredBytes`, `classicalBytes`, `pqcBytes`, `overflowBytes`,
 `pqcReplacement`, `severity`, `estimatedEffortDays`, `locator`) — the same
-free-form `properties` bag / `pratyaksha:property.<key>` namespacing
+free-form `properties` bag / `hash_patch:property.<key>` namespacing
 CLAUDE.md already documents, not a new top-level CBOM section. A finding
 with no real correlated `CryptoAsset` (the `db_column` name-pattern-only
 fallback — see above) gets a SYNTHETIC component of its own instead, with
-the same `blastRadius.*` property and `pratyaksha:confidence = "inferred"`.
+the same `blastRadius.*` property and `hash_patch:confidence = "inferred"`.
 Every scan prints a summary line: `N blast-radius findings, estimated M
 engineer-days`.
 

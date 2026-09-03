@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from pratyaksha.cli import run_scan
+from hash_patch.cli import run_scan
 
 _MANIFEST_PATH = Path(__file__).parent / "contradictions_manifest.json"
 _BASE_DIR = Path(__file__).resolve().parents[2]

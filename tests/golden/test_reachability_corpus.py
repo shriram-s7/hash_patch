@@ -2,7 +2,7 @@
 
 Regression test for the reachability corpus additions under testdata/python/
 and testdata/java/ (see docs/REACHABILITY.md and the "Reachability" section
-of CLAUDE.md). Runs the real CLI scan path (pratyaksha.cli.run_scan) — the
+of CLAUDE.md). Runs the real CLI scan path (hash_patch.cli.run_scan) — the
 same one `pratyaksha scan` uses — over each language's testdata directory
 and checks every entry in tests/golden/reachability_manifest.json against
 the resulting CryptoAsset.reachability, so each of the four classifications
@@ -15,8 +15,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pratyaksha.cli import run_scan
-from pratyaksha.model.assets import CryptoAsset
+from hash_patch.cli import run_scan
+from hash_patch.model.assets import CryptoAsset
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_FILE = REPO_ROOT / "tests" / "golden" / "reachability_manifest.json"

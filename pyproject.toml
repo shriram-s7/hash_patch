@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pratyaksha"
+name = "hash-patch"
 version = "0.1.0"
-description = "PRATYAKSHA — offline cryptographic discovery and post-quantum risk analysis tool producing CycloneDX 1.6 CBOM output."
+description = "Hash Patch — offline cryptographic discovery and post-quantum risk analysis tool producing CycloneDX 1.6 CBOM output."
 requires-python = ">=3.11"
 dependencies = [
     "typer",
@@ -28,13 +28,22 @@ dev = [
     "pytest-cov",
     "ruff",
     "mypy",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
+service = [
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.scripts]
-pratyaksha = "pratyaksha.cli:app"
+hash-patch = "hash_patch.cli:app"
+hashpatch = "hash_patch.cli:app"
+pratyaksha = "hash_patch.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["pratyaksha"]
+packages = ["hash_patch"]
 
 [tool.ruff]
 line-length = 100

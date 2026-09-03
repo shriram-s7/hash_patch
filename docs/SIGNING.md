@@ -1,6 +1,6 @@
 # Post-Quantum Report Signing (Pillar 6)
 
-PRATYAKSHA's sixth pillar provides **tamper-evident post-quantum signing**
+Hash Patch's sixth pillar provides **tamper-evident post-quantum signing**
 for emitted Cryptography Bill of Materials (CBOM) reports using **ML-DSA-65
 (FIPS 204)**.
 
@@ -30,7 +30,7 @@ wheel downloads from PyPI, `import oqs` triggers an automatic runtime build scri
 that attempts to clone the upstream `liboqs` C repository from GitHub and build
 it using CMake and a C compiler toolchain in `C:\Users\<user>\_oqs`.
 
-This violated PRATYAKSHA's non-negotiable constraints:
+This violated Hash Patch's non-negotiable constraints:
 1. **Offline execution**: No network calls at scan or execution time.
 2. **Deterministic, dependency-free environment**: Dev and CI environments on Windows
    should not require external C build toolchains for Python CLI usage.
@@ -45,8 +45,8 @@ completely offline, requires no compilation, and conforms strictly to the NIST s
 ## 2. Key Management & Custody Caveat
 
 ### Honesty Disclaimer: Demonstration Key Scheme
-`pratyaksha keygen` generates local, unencrypted PEM files (`pratyaksha_signing.key`
-and `pratyaksha_signing.pub`) on the local filesystem.
+`hash-patch keygen` generates local, unencrypted PEM files (`hash-patch_signing.key`
+and `hash-patch_signing.pub`) on the local filesystem.
 
 > [!WARNING]
 > **This is a DEMONSTRATION key management scheme.**
@@ -72,18 +72,18 @@ and `optimize`:
 Generate a new ML-DSA-65 keypair:
 
 ```bash
-pratyaksha keygen --output-dir ./keys
+hash-patch keygen --output-dir ./keys
 ```
 
 Outputs:
-- `./keys/pratyaksha_signing.key` (PKCS#8 PEM private key)
-- `./keys/pratyaksha_signing.pub` (SubjectPublicKeyInfo PEM public key)
+- `./keys/hash-patch_signing.key` (PKCS#8 PEM private key)
+- `./keys/hash-patch_signing.pub` (SubjectPublicKeyInfo PEM public key)
 
 ### 2. Sign CBOM: `sign`
 Sign an already-emitted CBOM file to produce a detached signature file:
 
 ```bash
-pratyaksha sign my_report.cbom.json --key ./keys/pratyaksha_signing.key --output my_report.cbom.json.sig
+hash-patch sign my_report.cbom.json --key ./keys/hash-patch_signing.key --output my_report.cbom.json.sig
 ```
 
 - Operates directly on the **literal file bytes on disk** (not an in-memory re-serialized dict).
@@ -93,7 +93,7 @@ pratyaksha sign my_report.cbom.json --key ./keys/pratyaksha_signing.key --output
 Verify an already-emitted CBOM file against a detached signature file and public key:
 
 ```bash
-pratyaksha verify my_report.cbom.json --sig my_report.cbom.json.sig --key ./keys/pratyaksha_signing.pub
+hash-patch verify my_report.cbom.json --sig my_report.cbom.json.sig --key ./keys/hash-patch_signing.pub
 ```
 
 Exit codes:
@@ -109,7 +109,7 @@ The detached signature is a small, human-readable, schema-versioned JSON file:
 
 ```json
 {
-  "$schema": "https://pratyaksha.dev/schemas/signature-v1.json",
+  "$schema": "https://hash_patch.dev/schemas/signature-v1.json",
   "spec_version": "1.0",
   "algorithm": "ML-DSA-65",
   "standard": "FIPS 204",
@@ -152,7 +152,7 @@ The detached signature is a small, human-readable, schema-versioned JSON file:
    blast-radius estimates are objectively correct.
 2. **Codebase Security**: An untampered CBOM report stating that all findings are
    `BROKEN_BY_SHOR` does not mean the system is secure; it only means the report
-   faithfully documents what PRATYAKSHA discovered.
+   faithfully documents what Hash Patch discovered.
 3. **Key Ownership / Identity**: Without an external PKI or trust root, the signature
    proves custody of the keypair, but does not prove who generated the keypair.
 
@@ -168,9 +168,9 @@ FIPS 204 defines two signing variants:
 the NIST-recommended mode because it protects against side-channel analysis and
 fault-injection attacks (e.g. differential power analysis).
 
-**Implication for PRATYAKSHA**:
+**Implication for Hash Patch**:
 Signing the exact same CBOM file twice with the same ML-DSA-65 key produces two distinct,
 valid signatures. Both signatures independently verify as `VALID` against the public key,
 and both share identical `file_sha256`, `algorithm`, and `public_key_fingerprint` fields.
-PRATYAKSHA's test suite explicitly verifies this structural validity and independent
+Hash Patch's test suite explicitly verifies this structural validity and independent
 verification rather than asserting byte-identical signature blobs.

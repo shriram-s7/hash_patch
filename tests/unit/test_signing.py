@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from pratyaksha.cli import app
-from pratyaksha.sign.keys import (
+from hash_patch.cli import app
+from hash_patch.sign.keys import (
     ALGORITHM_NAME,
     STANDARD_NAME,
     compute_public_key_fingerprint,
@@ -17,8 +17,8 @@ from pratyaksha.sign.keys import (
     load_private_key,
     load_public_key,
 )
-from pratyaksha.sign.sign_cbom import sign_cbom_file
-from pratyaksha.sign.verify_cbom import (
+from hash_patch.sign.sign_cbom import sign_cbom_file
+from hash_patch.sign.verify_cbom import (
     VerificationStatus,
     verify_cbom_file,
 )
@@ -211,8 +211,8 @@ def test_cli_keygen_sign_verify_tamper_pipeline(tmp_path: Path, sample_cbom: Pat
     assert res_kg.exit_code == 0
     assert "generated ML-DSA-65 keypair" in res_kg.stdout
 
-    priv_path = keys_dir / "pratyaksha_signing.key"
-    pub_path = keys_dir / "pratyaksha_signing.pub"
+    priv_path = keys_dir / "hash_patch_signing.key"
+    pub_path = keys_dir / "hash_patch_signing.pub"
     assert priv_path.is_file()
     assert pub_path.is_file()
 

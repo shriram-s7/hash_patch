@@ -1,6 +1,6 @@
 # Reachability classification
 
-PRATYAKSHA classifies every crypto-asset finding from the Python and Java
+Hash Patch classifies every crypto-asset finding from the Python and Java
 detectors into one of four `CryptoAsset.reachability` values:
 
 | Value            | Meaning                                                                 |
@@ -10,8 +10,8 @@ detectors into one of four `CryptoAsset.reachability` values:
 | `INERT`           | Not reachable from anything — dead code, or reachable only from a test file. |
 | `UNKNOWN`         | Reachability could not be determined (dynamic dispatch, reflection, unresolved import, an unmapped evidence location, etc.). |
 
-**Go and C are out of scope.** Their detectors (`pratyaksha/detect/go.py`,
-`pratyaksha/detect/c.py`) are not wired to this analysis; their assets keep
+**Go and C are out of scope.** Their detectors (`hash_patch/detect/go.py`,
+`hash_patch/detect/c.py`) are not wired to this analysis; their assets keep
 the model's default `Reachability.UNKNOWN` unconditionally. See the one-line
 comments on each detector class.
 
@@ -29,7 +29,7 @@ exists specifically to guard this rule with a two-level-indirection case.
 
 ## Pipeline
 
-1. **Call graph** (`pratyaksha/analyze/callgraph.py`) — for one *file set*
+1. **Call graph** (`hash_patch/analyze/callgraph.py`) — for one *file set*
    (every Python file, or every Java file, under one scan target — not per
    file, so cross-file calls within the same target resolve), build a
    name-based call graph: one node per function/method definition, one edge
@@ -41,18 +41,18 @@ exists specifically to guard this rule with a two-level-indirection case.
    **unresolved** call on the calling function — never silently dropped.
 
    Name resolution is deliberately as simple as the existing detectors
-   (`pratyaksha/detect/python.py`, `pratyaksha/detect/java.py`), which do
+   (`hash_patch/detect/python.py`, `hash_patch/detect/java.py`), which do
    plain identifier matching with no import aliasing or type inference —
    there is no separate "resolver" module elsewhere in this codebase to
    reuse, so this module matches that level of sophistication rather than
    inventing a fancier one.
 
-2. **Entry-point tagging** (`pratyaksha/analyze/entrypoints.py`, patterns in
+2. **Entry-point tagging** (`hash_patch/analyze/entrypoints.py`, patterns in
    `rules/entrypoints.yaml`) — see below.
 
 3. **Test-file detection** — see below.
 
-4. **Classification** (`pratyaksha/analyze/reachability.py`) — for each
+4. **Classification** (`hash_patch/analyze/reachability.py`) — for each
    evidence occurrence, map its `(file, line)` to the enclosing function in
    the call graph (unmapped -> `UNKNOWN`), then:
    - the function *is* a tagged entry point, or a tagged entry point is
@@ -156,7 +156,7 @@ caller was found — it classifies `UNKNOWN`, never `INERT`.
 
 ## Deep-nesting safety cap
 
-`pratyaksha/analyze/callgraph.py::_walk_py_calls` walks the tree-sitter AST
+`hash_patch/analyze/callgraph.py::_walk_py_calls` walks the tree-sitter AST
 of every Python function body to collect its call sites. This walk uses an
 explicit heap-allocated stack, not function-call recursion — a real-world
 file with deeply nested expressions/definitions (confirmed on

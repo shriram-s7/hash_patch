@@ -1,4 +1,4 @@
-# PRATYAKSHA (प्रत्यक्ष)
+# Hash Patch
 
 Offline cryptographic discovery and post-quantum risk analysis tool. Built for
 Smart India Hackathon 2026, Problem Statement 26164 (NTRO).
@@ -20,8 +20,8 @@ pip install -e ".[dev]"
 ## Usage
 
 ```bash
-pratyaksha version
-pratyaksha scan PATH
+hash-patch version
+hash-patch scan PATH
 ```
 
 ## Status: M1 scaffold

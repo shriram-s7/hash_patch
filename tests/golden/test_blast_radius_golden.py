@@ -12,12 +12,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pratyaksha.analyze.blast_radius import compute_blast_radius
-from pratyaksha.cli import run_scan
-from pratyaksha.detect.blast_radius.c_buffers import CBufferBlastRadiusDetector
-from pratyaksha.detect.blast_radius.sql_ddl import SqlDdlBlastRadiusDetector
-from pratyaksha.detect.c import COpenSSLDetector
-from pratyaksha.emit import to_cyclonedx
+from hash_patch.analyze.blast_radius import compute_blast_radius
+from hash_patch.cli import run_scan
+from hash_patch.detect.blast_radius.c_buffers import CBufferBlastRadiusDetector
+from hash_patch.detect.blast_radius.sql_ddl import SqlDdlBlastRadiusDetector
+from hash_patch.detect.c import COpenSSLDetector
+from hash_patch.emit import to_cyclonedx
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_FILE = REPO_ROOT / "tests" / "golden" / "blast_radius_manifest.json"
@@ -90,7 +90,7 @@ def test_sql_no_size_no_crypto_name_column_produces_no_constraint() -> None:
 def test_sql_inferred_finding_is_emitted_as_a_synthetic_cbom_component() -> None:
     """Regression for BUG 2: a db_column blast-radius finding with no real
     correlated CryptoAsset (the SQL-only fallback path, see
-    pratyaksha/analyze/blast_radius.py's module docstring) must still show
+    hash_patch/analyze/blast_radius.py's module docstring) must still show
     up as an actual component in the emitted CBOM -- not just a console
     summary line -- so it's visible to anyone reading the report.
     """
@@ -124,7 +124,7 @@ def test_sql_inferred_finding_is_emitted_as_a_synthetic_cbom_component() -> None
     inferred_components = [
         c
         for c in components
-        if any(p["name"] == "pratyaksha:confidence" and p["value"] == "inferred" for p in c.get("properties", []))
+        if any(p["name"] == "hash_patch:confidence" and p["value"] == "inferred" for p in c.get("properties", []))
     ]
     assert len(inferred_components) == 1, f"expected exactly one inferred CBOM component, got: {components}"
     component = inferred_components[0]
@@ -133,6 +133,6 @@ def test_sql_inferred_finding_is_emitted_as_a_synthetic_cbom_component() -> None
     confirmed_components = [
         c
         for c in components
-        if any(p["name"] == "pratyaksha:confidence" and p["value"] == "confirmed" for p in c.get("properties", []))
+        if any(p["name"] == "hash_patch:confidence" and p["value"] == "confirmed" for p in c.get("properties", []))
     ]
     assert confirmed_components == [], "an inferred finding must never be labelled confirmed"

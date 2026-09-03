@@ -1,8 +1,8 @@
 """tests/unit/test_blast_radius.py
 
 Unit tests for Pillar 3 (Blast Radius):
-  pratyaksha/detect/blast_radius/{names,c_buffers,sql_ddl}.py
-  pratyaksha/analyze/blast_radius.py
+  hash_patch/detect/blast_radius/{names,c_buffers,sql_ddl}.py
+  hash_patch/analyze/blast_radius.py
 
 Section 1: cross-file correlation must NEVER happen (the single most
 important safety property this pillar has, per CLAUDE.md's "Blast Radius"
@@ -23,20 +23,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pratyaksha.analyze.blast_radius import (
+from hash_patch.analyze.blast_radius import (
     _estimate_effort_days,
     _severity_for_overflow,
     compute_blast_radius,
     primitive_for_replacement,
     run_blast_radius,
 )
-from pratyaksha.detect.blast_radius.c_buffers import CBufferBlastRadiusDetector
-from pratyaksha.detect.blast_radius.names import load_name_patterns, match_name_pattern
-from pratyaksha.detect.blast_radius.sql_ddl import SqlDdlBlastRadiusDetector
-from pratyaksha.detect.c import COpenSSLDetector
-from pratyaksha.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
-from pratyaksha.model.blast_radius import SizeConstraint
-from pratyaksha.model.evidence import Evidence
+from hash_patch.detect.blast_radius.c_buffers import CBufferBlastRadiusDetector
+from hash_patch.detect.blast_radius.names import load_name_patterns, match_name_pattern
+from hash_patch.detect.blast_radius.sql_ddl import SqlDdlBlastRadiusDetector
+from hash_patch.detect.c import COpenSSLDetector
+from hash_patch.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
+from hash_patch.model.blast_radius import SizeConstraint
+from hash_patch.model.evidence import Evidence
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 C_FIXTURE = REPO_ROOT / "testdata" / "c" / "blast_radius_examples.c"
@@ -87,7 +87,7 @@ def test_cross_file_correlation_never_happens(tmp_path: Path) -> None:
 
 def test_cross_file_correlation_never_happens_via_run_blast_radius(tmp_path: Path) -> None:
     """Same as above, exercised through the actual entry point
-    pratyaksha/cli.py::run_scan calls (run_blast_radius), not the lower-level
+    hash_patch/cli.py::run_scan calls (run_blast_radius), not the lower-level
     compute_blast_radius directly.
     """
     (tmp_path / "buffers.c").write_text(

@@ -1,8 +1,8 @@
 """tests/unit/test_shelf_life.py
 
 Unit tests for Pillar 2 (Shelf-Life Inference):
-  pratyaksha/detect/shelf_life/{ontology,data_context}.py
-  pratyaksha/analyze/shelf_life.py
+  hash_patch/detect/shelf_life/{ontology,data_context}.py
+  hash_patch/analyze/shelf_life.py
 
 Section 1: the three seeded corpus cases (aadhaar via call_argument, no
 signal, and the aadhaar-vs-financial_account tie-break), asserted directly
@@ -11,7 +11,7 @@ tests/golden/test_shelf_life_golden.py, which drives the same corpus off
 tests/golden/shelf_life_manifest.json).
 
 Section 2: cross-file correlation must NEVER happen — the same honesty rule
-pratyaksha/analyze/blast_radius.py enforces (CLAUDE.md's "Blast Radius"
+hash_patch/analyze/blast_radius.py enforces (CLAUDE.md's "Blast Radius"
 section), applied here to DataContextMatch <-> CryptoAsset correlation.
 
 Section 3: "no signal found" must produce no finding at all — never a
@@ -30,14 +30,14 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from pratyaksha.analyze.shelf_life import compute_shelf_life, run_shelf_life
-from pratyaksha.detect.java import JavaJcaDetector
-from pratyaksha.detect.python import PythonCryptoDetector
-from pratyaksha.detect.shelf_life.data_context import find_data_context_matches
-from pratyaksha.detect.shelf_life.ontology import SensitivityCategory, load_sensitivity_categories
-from pratyaksha.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
-from pratyaksha.model.evidence import Evidence
-from pratyaksha.model.shelf_life import DataContextMatch
+from hash_patch.analyze.shelf_life import compute_shelf_life, run_shelf_life
+from hash_patch.detect.java import JavaJcaDetector
+from hash_patch.detect.python import PythonCryptoDetector
+from hash_patch.detect.shelf_life.data_context import find_data_context_matches
+from hash_patch.detect.shelf_life.ontology import SensitivityCategory, load_sensitivity_categories
+from hash_patch.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
+from hash_patch.model.evidence import Evidence
+from hash_patch.model.shelf_life import DataContextMatch
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PY_FIXTURE = REPO_ROOT / "testdata" / "python" / "shelf_life_examples.py"
@@ -154,7 +154,7 @@ def test_cross_file_correlation_never_happens() -> None:
 
 def test_cross_file_correlation_never_happens_via_run_shelf_life() -> None:
     """Same as above, exercised through the actual entry point
-    pratyaksha/cli.py::run_scan calls (run_shelf_life -> find_data_context_matches),
+    hash_patch/cli.py::run_scan calls (run_shelf_life -> find_data_context_matches),
     using two real files in a temp directory.
     """
     import tempfile

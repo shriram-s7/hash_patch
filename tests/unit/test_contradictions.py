@@ -7,13 +7,13 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from pratyaksha.analyze.contradictions import run_contradiction_analysis
-from pratyaksha.cli import app, run_scan
-from pratyaksha.detect.config.source_tls_intent import detect_source_tls_intent
-from pratyaksha.detect.config.tls_config import detect_tls_config_file
-from pratyaksha.emit import to_cyclonedx, validate_cbom
-from pratyaksha.model.config_finding import TlsConfigFinding
-from pratyaksha.model.evidence import Evidence
+from hash_patch.analyze.contradictions import run_contradiction_analysis
+from hash_patch.cli import app, run_scan
+from hash_patch.detect.config.source_tls_intent import detect_source_tls_intent
+from hash_patch.detect.config.tls_config import detect_tls_config_file
+from hash_patch.emit import to_cyclonedx, validate_cbom
+from hash_patch.model.config_finding import TlsConfigFinding
+from hash_patch.model.evidence import Evidence
 
 runner = CliRunner()
 _TESTDATA_DIR = Path(__file__).resolve().parents[2] / "testdata" / "contradictions"
@@ -280,7 +280,7 @@ def test_cyclonedx_schema_validity_with_contradictions(tmp_path: Path) -> None:
 
     # Verify metadata properties contain the contradiction
     meta_props = doc.get("metadata", {}).get("properties", [])
-    contra_props = [p for p in meta_props if p["name"].startswith("pratyaksha:contradiction.")]
+    contra_props = [p for p in meta_props if p["name"].startswith("hash_patch:contradiction.")]
     assert len(contra_props) == 1
     parsed_contra = json.loads(contra_props[0]["value"])
     assert parsed_contra["severity"] == "medium"

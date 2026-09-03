@@ -1,6 +1,6 @@
 """tests/unit/test_go_detector.py
 
-Unit tests for pratyaksha.detect.go.GoCryptoDetector.
+Unit tests for hash_patch.detect.go.GoCryptoDetector.
 
 Design notes:
   - No algorithm names are hardcoded in this file (CLAUDE.md constraint).
@@ -19,13 +19,13 @@ from typing import Any
 import pytest
 import yaml
 
-from pratyaksha.detect.go import (
+from hash_patch.detect.go import (
     GoCryptoDetector,
     _build_function_index,
     _collect_calls,
 )
-from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
-from pratyaksha.model.evidence import Evidence
+from hash_patch.model.assets import AssetType, CryptoAsset, QuantumStatus
+from hash_patch.model.evidence import Evidence
 
 # ---------------------------------------------------------------------------
 # Paths

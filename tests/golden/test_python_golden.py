@@ -18,9 +18,9 @@ from pathlib import Path
 
 import pytest
 
-from pratyaksha.detect.python import PythonCryptoDetector
-from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
-from pratyaksha.model.findings import ScanResult
+from hash_patch.detect.python import PythonCryptoDetector
+from hash_patch.emit import render_cbom_json, to_cyclonedx, validate_cbom
+from hash_patch.model.findings import ScanResult
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = REPO_ROOT / "testdata" / "python" / "crypto_pyca.py"
@@ -28,7 +28,7 @@ GOLDEN_FILE = REPO_ROOT / "tests" / "golden" / "python_crypto_expected.json"
 FIXED_TIMESTAMP = datetime(2026, 1, 1, tzinfo=UTC)
 FIXED_TIMESTAMP_STR = "2026-01-01T00:00:00+00:00"
 
-REGEN = os.environ.get("PRATYAKSHA_REGEN_GOLDEN", "").strip().lower() in ("1", "true", "yes")
+REGEN = (os.environ.get("HASH_PATCH_REGEN_GOLDEN", "") or os.environ.get("PRATYAKSHA_REGEN_GOLDEN", "")).strip().lower() in ("1", "true", "yes")
 
 
 def _build_doc() -> dict:  # type: ignore[type-arg]

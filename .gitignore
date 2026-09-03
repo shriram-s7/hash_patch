@@ -23,7 +23,7 @@ env/
 htmlcov/
 .coverage
 
-# PRATYAKSHA scan outputs
+# Hash Patch scan outputs
 *.cbom.json
 
 plan.json

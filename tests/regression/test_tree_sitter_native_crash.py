@@ -4,10 +4,10 @@ Regression coverage for a real production incident hit scanning
 pyca/cryptography end to end:
 
   1. ORIGINAL SYMPTOM: unbounded function-call recursion in the tree-sitter
-     AST walks (`pratyaksha/analyze/callgraph.py::_walk_py_calls`,
-     `pratyaksha/detect/shelf_life/data_context.py::_walk_python_spans`,
-     `pratyaksha/detect/python.py::_walk`, `pratyaksha/detect/java.py::_walk`,
-     `pratyaksha/detect/config/source_tls_intent.py`'s two `visit` walks)
+     AST walks (`hash_patch/analyze/callgraph.py::_walk_py_calls`,
+     `hash_patch/detect/shelf_life/data_context.py::_walk_python_spans`,
+     `hash_patch/detect/python.py::_walk`, `hash_patch/detect/java.py::_walk`,
+     `hash_patch/detect/config/source_tls_intent.py`'s two `visit` walks)
      could, on a real-world deeply-nested-expression file, raise an
      uncaught `RecursionError` that propagated straight through
      `detect()`/`run_scan()`/the CLI and aborted the ENTIRE scan over one
@@ -55,18 +55,17 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 REGRESSION_TESTDATA_DIR = Path(__file__).resolve().parent / "fixtures"
 
 
-def _pratyaksha_cli_command(*args: str) -> list[str]:
+def _hash_patch_cli_command(*args: str) -> list[str]:
     """Same venv-script-first, module-fallback resolution as
     tests/integration/test_cli_scan.py's subprocess test, so this suite is
     exercising the real installed entry point wherever possible.
     """
-    venv_script_exe = Path(sys.executable).parent / "pratyaksha.exe"
-    venv_script = Path(sys.executable).parent / "pratyaksha"
-    if venv_script_exe.is_file():
-        return [str(venv_script_exe), *args]
-    if venv_script.is_file():
-        return [str(venv_script), *args]
-    return [sys.executable, "-c", "from pratyaksha.cli import app; app()", *args]
+    parent = Path(sys.executable).parent
+    for name in ["hash-patch.exe", "hashpatch.exe", "hash-patch", "hashpatch", "pratyaksha.exe", "pratyaksha"]:
+        cand = parent / name
+        if cand.is_file():
+            return [str(cand), *args]
+    return [sys.executable, "-c", "from hash_patch.cli import app; app()", *args]
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +99,7 @@ def test_deeply_nested_expression_file_scans_without_crashing(tmp_path: Path) ->
     cbom_out = tmp_path / "deep_nested.cbom.json"
 
     completed = subprocess.run(
-        _pratyaksha_cli_command("scan", str(deep_file), "--output", str(cbom_out)),
+        _hash_patch_cli_command("scan", str(deep_file), "--output", str(cbom_out)),
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -137,7 +136,7 @@ def test_vendored_pyca_files_scan_without_crashing(tmp_path: Path) -> None:
     cbom_out = tmp_path / "regression.cbom.json"
 
     completed = subprocess.run(
-        _pratyaksha_cli_command("scan", str(REGRESSION_TESTDATA_DIR), "--output", str(cbom_out)),
+        _hash_patch_cli_command("scan", str(REGRESSION_TESTDATA_DIR), "--output", str(cbom_out)),
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

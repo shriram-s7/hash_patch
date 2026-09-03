@@ -3,9 +3,9 @@ from __future__ import annotations
 import random
 from datetime import UTC, datetime
 
-from pratyaksha.model.assets import AssetType, CryptoAsset, Primitive
-from pratyaksha.model.evidence import Evidence
-from pratyaksha.model.findings import ScanResult
+from hash_patch.model.assets import AssetType, CryptoAsset, Primitive
+from hash_patch.model.evidence import Evidence
+from hash_patch.model.findings import ScanResult
 
 
 def _evidence(locator: str, line: int) -> Evidence:

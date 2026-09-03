@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from pratyaksha.emit import render_cbom_json, to_cyclonedx, validate_cbom
-from pratyaksha.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
-from pratyaksha.model.evidence import Evidence
-from pratyaksha.model.findings import ScanResult
+from hash_patch.emit import render_cbom_json, to_cyclonedx, validate_cbom
+from hash_patch.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
+from hash_patch.model.evidence import Evidence
+from hash_patch.model.findings import ScanResult
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -271,7 +271,7 @@ def test_cbom_is_deterministic_across_a_fresh_subprocess() -> None:
 
     subprocess_script = (
         "from tests.unit.test_cyclonedx import _five_asset_result\n"
-        "from pratyaksha.emit import to_cyclonedx, render_cbom_json\n"
+        "from hash_patch.emit import to_cyclonedx, render_cbom_json\n"
         "import sys\n"
         "sys.stdout.write(render_cbom_json(to_cyclonedx(_five_asset_result())))\n"
     )
@@ -321,7 +321,7 @@ def test_evidence_file_and_line_survive_round_trip_into_occurrences() -> None:
 # -- STEP 5.6: namespace hygiene ------------------------------------------------
 
 
-def test_every_component_property_is_namespaced_pratyaksha() -> None:
+def test_every_component_property_is_namespaced_hash_patch() -> None:
     result = _five_asset_result()
     doc = to_cyclonedx(result)
 
@@ -329,7 +329,7 @@ def test_every_component_property_is_namespaced_pratyaksha() -> None:
     for component in doc["components"]:
         for prop in component.get("properties", []):
             checked_any = True
-            assert prop["name"].startswith("pratyaksha:"), prop["name"]
+            assert prop["name"].startswith("hash_patch:"), prop["name"]
     assert checked_any
 
 

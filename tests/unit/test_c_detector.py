@@ -1,6 +1,6 @@
 """tests/unit/test_c_detector.py
 
-Unit tests for pratyaksha.detect.c.COpenSSLDetector.
+Unit tests for hash_patch.detect.c.COpenSSLDetector.
 
 Design notes:
   - No algorithm names are hardcoded in this file (CLAUDE.md constraint).
@@ -19,12 +19,12 @@ from typing import Any
 import pytest
 import yaml
 
-from pratyaksha.detect.c import (
+from hash_patch.detect.c import (
     COpenSSLDetector,
     _collect_matches,
 )
-from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
-from pratyaksha.model.evidence import Evidence
+from hash_patch.model.assets import AssetType, CryptoAsset, QuantumStatus
+from hash_patch.model.evidence import Evidence
 
 # ---------------------------------------------------------------------------
 # Paths

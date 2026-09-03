@@ -1,6 +1,6 @@
 # Shelf-Life Inference (Pillar 2)
 
-PRATYAKSHA's second detection pillar estimates how long the data protected
+Hash Patch's second detection pillar estimates how long the data protected
 by a cryptographic asset must plausibly remain confidential — the "X"
 variable in Mosca's inequality (X = data shelf-life, Y = migration time,
 Z = years until a cryptographically-relevant quantum computer exists; the
@@ -48,12 +48,12 @@ five named categories (aadhaar, pan, health_record, financial_account,
 biometric), which are all explicitly the kind of data DPDP Act 2023 and
 sectoral regulation single out for special handling.
 
-## Detection: `pratyaksha/detect/shelf_life/data_context.py`
+## Detection: `hash_patch/detect/shelf_life/data_context.py`
 
 Uses the exact same tree-sitter parser instances
-`pratyaksha.detect.python`/`pratyaksha.detect.java` already construct (no
+`hash_patch.detect.python`/`hash_patch.detect.java` already construct (no
 second `Language`/`Parser` stood up — the same convention
-`pratyaksha/detect/blast_radius/c_buffers.py` follows for the C parser).
+`hash_patch/detect/blast_radius/c_buffers.py` follows for the C parser).
 
 For every source-evidence occurrence of every already-detected Python/Java
 `CryptoAsset` (a crypto call site), it collects up to four kinds of nearby
@@ -85,20 +85,20 @@ candidate identifier and matches each (case-insensitive substring) against
 
 If a candidate matches multiple categories, or multiple different
 candidates near one call site match different categories, **all matches are
-kept** as separate `DataContextMatch` objects (`pratyaksha/model/shelf_life.py`)
+kept** as separate `DataContextMatch` objects (`hash_patch/model/shelf_life.py`)
 — detection never silently picks one. If nothing matches anything, no
 `DataContextMatch` is produced for that call site at all — never a
 default guess.
 
 ### Why class-scoped, not file-wide, for `model_field`
 
-`pratyaksha/analyze/shelf_life.py` correlates a `DataContextMatch` to a
+`hash_patch/analyze/shelf_life.py` correlates a `DataContextMatch` to a
 `CryptoAsset` using EXACT `(locator, line)` equality against the asset's own
 evidence — every `DataContextMatch.evidence[0].line` is always the line of
 the crypto call site it was found near, not necessarily the line the
 matched identifier itself is declared on (see the field's own docstring in
-`pratyaksha/model/shelf_life.py`). This gives the same
-anti-cross-contamination discipline `pratyaksha/analyze/blast_radius.py`'s
+`hash_patch/model/shelf_life.py`). This gives the same
+anti-cross-contamination discipline `hash_patch/analyze/blast_radius.py`'s
 nearest-by-line rule provides for Pillar 3 (see that module's BUG 1
 regression note), without a second distance heuristic: correlation is a
 simple, honest, exact-match lookup. Scoping `model_field` candidates to the
@@ -110,14 +110,14 @@ because both happen to live in one file. See
 `testdata/python/shelf_life_examples.py`'s three scenarios, which would
 contradict each other under a naive file-wide interpretation.
 
-## Correlation and the longest-shelf-life-wins rule: `pratyaksha/analyze/shelf_life.py`
+## Correlation and the longest-shelf-life-wins rule: `hash_patch/analyze/shelf_life.py`
 
 `compute_shelf_life` takes every `CryptoAsset` and every `DataContextMatch`,
-and produces a `ShelfLifeFinding` (`pratyaksha/model/shelf_life.py`) for an
+and produces a `ShelfLifeFinding` (`hash_patch/model/shelf_life.py`) for an
 asset when at least one `DataContextMatch` shares BOTH the asset's file
 (`locator`) AND one of the asset's own evidence LINES — never cross-file
 (the same same-file correlation honesty rule
-`pratyaksha/analyze/blast_radius.py` follows, per CLAUDE.md's "Blast
+`hash_patch/analyze/blast_radius.py` follows, per CLAUDE.md's "Blast
 Radius" section), and never merely "somewhere else in the same file"
 either, per the class-scoping design above.
 
@@ -140,7 +140,7 @@ per the "hard evidence or it doesn't exist" principle CLAUDE.md's "Name"
 section describes for the rest of this tool.
 
 `scan_date` is a required parameter, always supplied by the caller
-(`pratyaksha/cli.py::run_scan` passes `ScanResult.scan_started_at.date()` —
+(`hash_patch/cli.py::run_scan` passes `ScanResult.scan_started_at.date()` —
 the one wall-clock read CLAUDE.md's determinism hard constraint already
 permits, and only there). `compute_shelf_life` and `run_shelf_life`
 themselves never read the system clock, so two calls with the same
@@ -149,14 +149,14 @@ themselves never read the system clock, so two calls with the same
 
 ## CLI wiring
 
-`pratyaksha scan PATH --output FILE` runs this pillar automatically for
+`hash-patch scan PATH --output FILE` runs this pillar automatically for
 every Python/Java `CryptoAsset` found. Unlike Pillar 3's `db_column`
 fallback, every `ShelfLifeFinding` always has a real, already-present
 correlated `CryptoAsset` — there is no synthetic-component path here.
 Findings are mirrored onto that asset's CBOM component as
-`pratyaksha:property.shelfLife.<category>` properties (JSON value:
+`hash_patch:property.shelfLife.<category>` properties (JSON value:
 `shelfLifeYears`, `statutoryBasis`, `confidence`, `moscaNote`, `locator`) —
-the same free-form `properties` bag / `pratyaksha:property.<key>`
+the same free-form `properties` bag / `hash_patch:property.<key>`
 namespacing CLAUDE.md documents. Every scan prints a summary line:
 `N shelf-life findings (longest: X years, category)`.
 
@@ -176,7 +176,7 @@ which would defeat the point of keeping the three scenarios independent.
 
 ## Deep-nesting safety cap
 
-`pratyaksha/detect/shelf_life/data_context.py::_walk_python_spans` walks the
+`hash_patch/detect/shelf_life/data_context.py::_walk_python_spans` walks the
 tree-sitter AST of a Python file to collect function/class spans. This walk
 uses an explicit heap-allocated stack, not function-call recursion — a
 real-world file with deeply nested classes/functions/expressions (confirmed
@@ -184,7 +184,7 @@ on `cryptography/hazmat/primitives/serialization/pkcs7.py` from
 `pyca/cryptography`) can exceed the native C thread stack before Python's
 own `RecursionError` guard ever triggers, crashing the process with no
 catchable exception. Moving to an explicit stack (the same pattern
-`pratyaksha/analyze/callgraph.py::_walk_py_calls` uses) bounds traversal
+`hash_patch/analyze/callgraph.py::_walk_py_calls` uses) bounds traversal
 depth by available heap memory instead.
 
 As defense in depth against tree-sitter AST shapes deeper than any real

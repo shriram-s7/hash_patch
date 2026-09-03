@@ -13,11 +13,11 @@ import json
 from datetime import date
 from pathlib import Path
 
-from pratyaksha.analyze.shelf_life import compute_shelf_life
-from pratyaksha.detect.java import JavaJcaDetector
-from pratyaksha.detect.python import PythonCryptoDetector
-from pratyaksha.detect.shelf_life.data_context import find_data_context_matches
-from pratyaksha.detect.shelf_life.ontology import load_sensitivity_categories
+from hash_patch.analyze.shelf_life import compute_shelf_life
+from hash_patch.detect.java import JavaJcaDetector
+from hash_patch.detect.python import PythonCryptoDetector
+from hash_patch.detect.shelf_life.data_context import find_data_context_matches
+from hash_patch.detect.shelf_life.ontology import load_sensitivity_categories
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_FILE = REPO_ROOT / "tests" / "golden" / "shelf_life_manifest.json"

@@ -7,11 +7,11 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from pratyaksha.benchmark.pqc_bench import run_benchmark
-from pratyaksha.cli import app
-from pratyaksha.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
-from pratyaksha.model.evidence import Evidence
-from pratyaksha.recommend import recommend_for_asset
+from hash_patch.benchmark.pqc_bench import run_benchmark
+from hash_patch.cli import app
+from hash_patch.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
+from hash_patch.model.evidence import Evidence
+from hash_patch.recommend import recommend_for_asset
 
 runner = CliRunner()
 
@@ -222,11 +222,11 @@ def test_recommendation_logic_determinism() -> None:
 
 
 def test_cli_benchmark_command(tmp_path: Path) -> None:
-    """CLI subcommand `pratyaksha benchmark` runs and outputs formatted JSON."""
+    """CLI subcommand `hash-patch benchmark` runs and outputs formatted JSON."""
     out_file = tmp_path / "bench_report.json"
     res = runner.invoke(app, ["benchmark", "--iterations", "2", "--warmup", "1", "--output", str(out_file)])
     assert res.exit_code == 0
-    assert "PRATYAKSHA Post-Quantum Cryptography Benchmark" in res.stdout
+    assert "Hash Patch Post-Quantum Cryptography Benchmark" in res.stdout
     assert out_file.is_file()
 
     data = json.loads(out_file.read_text(encoding="utf-8"))
@@ -236,7 +236,7 @@ def test_cli_benchmark_command(tmp_path: Path) -> None:
 
 
 def test_cli_scan_with_benchmark_report(tmp_path: Path) -> None:
-    """CLI scan with --benchmark-report attaches pratyaksha:property.recommendation.*"""
+    """CLI scan with --benchmark-report attaches hash_patch:property.recommendation.*"""
     bench_file = tmp_path / "bench.json"
     bench_res = runner.invoke(app, ["benchmark", "--iterations", "2", "--warmup", "1", "--output", str(bench_file)])
     assert bench_res.exit_code == 0
@@ -255,7 +255,7 @@ def test_cli_scan_with_benchmark_report(tmp_path: Path) -> None:
         prop
         for c in components
         for prop in c.get("properties", [])
-        if prop["name"].startswith("pratyaksha:property.recommendation.")
+        if prop["name"].startswith("hash_patch:property.recommendation.")
     ]
     assert len(rec_props) > 0
     val = json.loads(rec_props[0]["value"])

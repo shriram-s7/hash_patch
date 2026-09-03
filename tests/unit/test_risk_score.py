@@ -1,7 +1,7 @@
 """tests/unit/test_risk_score.py
 
 Unit tests for Pillar 5 (Migration Optimiser) risk scoring and cost
-estimation: pratyaksha/analyze/risk_score.py.
+estimation: hash_patch/analyze/risk_score.py.
 
 Section 1: the risk-score formula (risk_score = shelf_life_magnitude *
 reachability_multiplier) is monotonic in both inputs, as documented.
@@ -18,7 +18,7 @@ Section 4: cost estimation's blast-radius-vs-default distinction.
 
 from __future__ import annotations
 
-from pratyaksha.analyze.risk_score import (
+from hash_patch.analyze.risk_score import (
     DEFAULT_COST_DAYS_NO_BLAST_RADIUS,
     DEFAULT_SHELF_LIFE_YEARS_NO_DATA,
     compute_risk_score,
@@ -27,7 +27,7 @@ from pratyaksha.analyze.risk_score import (
     is_migration_candidate,
     reachability_multiplier,
 )
-from pratyaksha.model.assets import QuantumStatus, Reachability
+from hash_patch.model.assets import QuantumStatus, Reachability
 
 # ===========================================================================
 # Section 1 — risk-score formula monotonicity.

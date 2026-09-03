@@ -1,7 +1,7 @@
 """tests/unit/test_optimizer.py
 
 Unit tests for Pillar 5 (Migration Optimiser):
-  pratyaksha/analyze/{optimizer,optimizer_bruteforce,cbom_reader,
+  hash_patch/analyze/{optimizer,optimizer_bruteforce,cbom_reader,
   quantum_scenarios}.py
 
 Section 1: a small, hand-constructed synthetic instance (<=15 findings)
@@ -11,7 +11,7 @@ is reported, non-negative, and prints the actual gap percentage.
 Section 2: the optimiser strictly outperforms or matches the naive
 baseline at every budget checkpoint on the real accumulated test corpus --
 if greedy ever does worse than naive, that's a bug (see
-pratyaksha/analyze/optimizer.py::_schedule_hybrid_greedy's docstring for
+hash_patch/analyze/optimizer.py::_schedule_hybrid_greedy's docstring for
 the real failure mode this project's own corpus exposed, and the fix).
 
 Section 3: determinism -- same input, same budget, same output ordering
@@ -25,7 +25,7 @@ emitted CBOM, and the migration-candidate filter.
 
 Section 6: the scenario urgency multiplier.
 
-Section 7: a CLI-level smoke test through pratyaksha.cli.run_optimize.
+Section 7: a CLI-level smoke test through hash_patch.cli.run_optimize.
 """
 
 from __future__ import annotations
@@ -35,26 +35,26 @@ from pathlib import Path
 
 import pytest
 
-from pratyaksha.analyze.cbom_reader import read_candidates, read_reference_year
-from pratyaksha.analyze.optimizer import (
+from hash_patch.analyze.cbom_reader import read_candidates, read_reference_year
+from hash_patch.analyze.optimizer import (
     _urgency_multiplier,
     run_optimizer,
     schedule_greedy,
     schedule_naive,
 )
-from pratyaksha.analyze.optimizer_bruteforce import (
+from hash_patch.analyze.optimizer_bruteforce import (
     _MAX_BRUTE_FORCE_CANDIDATES,
     BruteForceItem,
     brute_force_optimal,
     optimality_gap,
 )
-from pratyaksha.analyze.quantum_scenarios import (
+from hash_patch.analyze.quantum_scenarios import (
     QuantumArrivalScenario,
     load_quantum_arrival_scenarios,
 )
-from pratyaksha.cli import run_optimize, run_scan
-from pratyaksha.emit import to_cyclonedx
-from pratyaksha.model.optimizer import OptimizerCandidate
+from hash_patch.cli import run_optimize, run_scan
+from hash_patch.emit import to_cyclonedx
+from hash_patch.model.optimizer import OptimizerCandidate
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTDATA_DIR = REPO_ROOT / "testdata"

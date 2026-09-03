@@ -9,7 +9,7 @@ to it (e.g. because the scan target is a directory and the CLI did not walk
 it recursively before passing paths to supports()).
 
 Design:
-  - Tests call pratyaksha.cli.run_scan() directly (not the detector) so that
+  - Tests call hash_patch.cli.run_scan() directly (not the detector) so that
     the CLI's file-enumeration, detector-dispatch, and evidence-accumulation
     layers are all exercised together.
   - No algorithm names are hardcoded here; expected-asset presence is checked
@@ -25,8 +25,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from pratyaksha.cli import _iter_targets, run_scan
-from pratyaksha.model.assets import QuantumStatus
+from hash_patch.cli import _iter_targets, run_scan
+from hash_patch.model.assets import QuantumStatus
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -36,6 +36,15 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTDATA_JAVA_DIR = REPO_ROOT / "testdata" / "java"
 POSITIVE_FILE = TESTDATA_JAVA_DIR / "crypto_examples.java"
 NEGATIVE_FILE = TESTDATA_JAVA_DIR / "negative_rsa_mention.java"
+
+
+def _resolve_cli_cmd(args: list[str]) -> list[str]:
+    parent = Path(sys.executable).parent
+    for name in ["hash-patch.exe", "hashpatch.exe", "hash-patch", "hashpatch", "pratyaksha.exe", "pratyaksha"]:
+        cand = parent / name
+        if cand.is_file():
+            return [str(cand), *args]
+    return [sys.executable, "-c", "from hash_patch.cli import app; app()", *args]
 
 
 # ---------------------------------------------------------------------------
@@ -215,23 +224,11 @@ def test_cli_scan_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
 
     Uses the venv-installed `pratyaksha` script (same binary the user runs)
     so that import-time registration failures and entry-point issues are caught.
-    Falls back to `python -m pratyaksha.cli` when the script is not present
+    Falls back to `python -m hash_patch.cli` when the script is not present
     (e.g. CI environments that install without scripts).
     """
     cbom_out = tmp_path / "out.cbom.json"
-
-    # Prefer the installed script in the same venv; fall back to -m invocation.
-    venv_script = Path(sys.executable).parent / "pratyaksha"
-    venv_script_exe = Path(sys.executable).parent / "pratyaksha.exe"
-    if venv_script_exe.is_file():
-        cmd = [str(venv_script_exe), "scan", str(TESTDATA_JAVA_DIR), "--output", str(cbom_out)]
-    elif venv_script.is_file():
-        cmd = [str(venv_script), "scan", str(TESTDATA_JAVA_DIR), "--output", str(cbom_out)]
-    else:
-        # Fallback: run as a module (requires pratyaksha.cli to be runnable)
-        cmd = [sys.executable, "-c",
-               "from pratyaksha.cli import app; app()",
-               "scan", str(TESTDATA_JAVA_DIR), "--output", str(cbom_out)]
+    cmd = _resolve_cli_cmd(["scan", str(TESTDATA_JAVA_DIR), "--output", str(cbom_out)])
 
     completed = subprocess.run(
         cmd,
@@ -370,16 +367,7 @@ def test_run_scan_python_is_deterministic() -> None:
 def test_cli_scan_python_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
     """Invoke `pratyaksha scan testdata/python --output <cbom>` as a subprocess."""
     cbom_out = tmp_path / "py_out.cbom.json"
-    venv_script_exe = Path(sys.executable).parent / "pratyaksha.exe"
-    venv_script = Path(sys.executable).parent / "pratyaksha"
-    if venv_script_exe.is_file():
-        cmd = [str(venv_script_exe), "scan", str(TESTDATA_PY_DIR), "--output", str(cbom_out)]
-    elif venv_script.is_file():
-        cmd = [str(venv_script), "scan", str(TESTDATA_PY_DIR), "--output", str(cbom_out)]
-    else:
-        cmd = [sys.executable, "-c",
-               "from pratyaksha.cli import app; app()",
-               "scan", str(TESTDATA_PY_DIR), "--output", str(cbom_out)]
+    cmd = _resolve_cli_cmd(["scan", str(TESTDATA_PY_DIR), "--output", str(cbom_out)])
 
     completed = subprocess.run(
         cmd, cwd=REPO_ROOT, capture_output=True, text=True,
@@ -480,16 +468,7 @@ def test_run_scan_go_is_deterministic() -> None:
 def test_cli_scan_go_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
     """Invoke `pratyaksha scan testdata/go --output <cbom>` as a subprocess."""
     cbom_out = tmp_path / "go_out.cbom.json"
-    venv_script_exe = Path(sys.executable).parent / "pratyaksha.exe"
-    venv_script = Path(sys.executable).parent / "pratyaksha"
-    if venv_script_exe.is_file():
-        cmd = [str(venv_script_exe), "scan", str(TESTDATA_GO_DIR), "--output", str(cbom_out)]
-    elif venv_script.is_file():
-        cmd = [str(venv_script), "scan", str(TESTDATA_GO_DIR), "--output", str(cbom_out)]
-    else:
-        cmd = [sys.executable, "-c",
-               "from pratyaksha.cli import app; app()",
-               "scan", str(TESTDATA_GO_DIR), "--output", str(cbom_out)]
+    cmd = _resolve_cli_cmd(["scan", str(TESTDATA_GO_DIR), "--output", str(cbom_out)])
 
     completed = subprocess.run(
         cmd, cwd=REPO_ROOT, capture_output=True, text=True,
@@ -602,16 +581,7 @@ def test_run_scan_c_is_deterministic() -> None:
 def test_cli_scan_c_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
     """Invoke `pratyaksha scan testdata/c --output <cbom>` as a subprocess."""
     cbom_out = tmp_path / "c_out.cbom.json"
-    venv_script_exe = Path(sys.executable).parent / "pratyaksha.exe"
-    venv_script = Path(sys.executable).parent / "pratyaksha"
-    if venv_script_exe.is_file():
-        cmd = [str(venv_script_exe), "scan", str(TESTDATA_C_DIR), "--output", str(cbom_out)]
-    elif venv_script.is_file():
-        cmd = [str(venv_script), "scan", str(TESTDATA_C_DIR), "--output", str(cbom_out)]
-    else:
-        cmd = [sys.executable, "-c",
-               "from pratyaksha.cli import app; app()",
-               "scan", str(TESTDATA_C_DIR), "--output", str(cbom_out)]
+    cmd = _resolve_cli_cmd(["scan", str(TESTDATA_C_DIR), "--output", str(cbom_out)])
 
     completed = subprocess.run(
         cmd, cwd=REPO_ROOT, capture_output=True, text=True,

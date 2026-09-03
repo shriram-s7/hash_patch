@@ -1,8 +1,8 @@
-# PRATYAKSHA — Project Constitution
+# Hash Patch — Project Constitution
 
 ## One-liner
 
-PRATYAKSHA is an offline cryptographic discovery and post-quantum risk analysis
+Hash Patch is an offline cryptographic discovery and post-quantum risk analysis
 tool. It scans source code, binaries, container images, config/IaC, and live
 network endpoints to find every cryptographic asset (algorithms, keys,
 certificates, protocols, libraries, HSM/KMS usage) and emits a CycloneDX 1.6
@@ -11,13 +11,13 @@ Hackathon 2026, Problem Statement 26164 (NTRO).
 
 ## Name
 
-PRATYAKSHA (प्रत्यक्ष) means "direct perception" — the first and most
+Hash Patch (प्रत्यक्ष) means "direct perception" — the first and most
 authoritative pramana (valid means of knowledge) in Indian epistemology:
 knowledge obtained by directly observing a thing, as opposed to anumana
 (inference) or shabda (testimony). This is the project's core principle.
 Every finding MUST carry direct evidence: file, line, column, byte offset,
 snippet. Inference (e.g. local LLM output) without corroborating direct
-evidence is labelled `pratyaksha:confidence = inferred` and is NEVER merged
+evidence is labelled `hash_patch:confidence = inferred` and is NEVER merged
 into the confirmed inventory.
 
 ## Hard constraints (non-negotiable)
@@ -44,7 +44,7 @@ easier to build.
 ## Directory layout
 
 ```
-pratyaksha/
+hash_patch/
   cli.py           typer CLI entry point
   model/           internal representation (Evidence, CryptoAsset, ScanResult) — pydantic v2
   detect/          Detector base class + registry; concrete detectors live here later
@@ -76,7 +76,7 @@ enums (values match the spec exactly: `CryptoAssetType` = `algorithm` /
 and `SchemaVersion.V1_6` / `JsonV1Dot6` output. `ComponentEvidence.occurrences`
 (`Occurrence(location, line, offset, symbol, additional_context)`) is present
 with a `SchemaVersion1Dot6` view. Given that, PATH B (hand-building JSON) was
-not needed. `to_cyclonedx()` (`pratyaksha/emit/cyclonedx.py`) builds the object
+not needed. `to_cyclonedx()` (`hash_patch/emit/cyclonedx.py`) builds the object
 model through the library, serializes via `make_outputter(..., SchemaVersion.V1_6)`,
 re-parses to a plain `dict`, then runs its own explicit determinism
 normalization pass (see below) before returning. We still vendor the official
@@ -87,7 +87,7 @@ does not substitute for standards-conformance proof.
 and `schemas/jsf-0.82.schema.json` — official CycloneDX 1.6 schemas, tag `1.6`
 of `CycloneDX/specification`, fetched (and re-verified byte-identical to
 upstream) 2026-08-31. Source URLs and re-fetch instructions are in
-`schemas/README.md`. `pratyaksha/emit/validate.py::validate_cbom` resolves
+`schemas/README.md`. `hash_patch/emit/validate.py::validate_cbom` resolves
 `$ref`s (`spdx.schema.json`, `jsf-0.82.schema.json#/definitions/signature`)
 purely from these local files via a `referencing.Registry` keyed by each
 schema's own `$id` — no network access at scan time or test time, ever. This
@@ -102,7 +102,7 @@ happens to already be sorted) but is a library behavior to be aware of, not
 something `to_cyclonedx` added.
 
 **Determinism.**
-- The BOM `serialNumber` is `uuid5(NAMESPACE_URL, f"pratyaksha:cbom:{target}:{sorted_asset_ids}")`
+- The BOM `serialNumber` is `uuid5(NAMESPACE_URL, f"hash_patch:cbom:{target}:{sorted_asset_ids}")`
   — derived from the scan target *and* the full sorted set of emitted asset
   ids, never `uuid4()`. Two scans of the same target that found the same
   assets always get the same serial number, regardless of insertion order;
@@ -130,7 +130,7 @@ something `to_cyclonedx` added.
   in-process render (catches hash-randomization leaks the in-process test
   alone would miss); repeated `serialNumber` across two independent runs;
   and namespace hygiene (every component property name starts with
-  `pratyaksha:`).
+  `hash_patch:`).
 
 **Field mapping.**
 - `AssetType` → `cryptoProperties.assetType`.
@@ -156,47 +156,47 @@ something `to_cyclonedx` added.
   names a programming-language symbol/import, which is not what our
   `Evidence.snippet` is, and we don't repurpose fields.
 - **Fields with no standard CycloneDX home** (never silently dropped, per
-  hard constraint #3 — all under the `pratyaksha:` namespace, camelCase):
+  hard constraint #3 — all under the `hash_patch:` namespace, camelCase):
   - `Evidence.source_type`, `.column`, `.snippet` have no structured field
     on `occurrenceType`. They are folded into that occurrence's
     `additionalContext` as a compact JSON object, scoped to the correct
     piece of evidence rather than flattened into unscoped component-level
     properties.
-  - `CryptoAsset.quantum_status` → `pratyaksha:quantumStatus`,
-    `.reachability` → `pratyaksha:reachability`.
+  - `CryptoAsset.quantum_status` → `hash_patch:quantumStatus`,
+    `.reachability` → `hash_patch:reachability`.
   - The sorted, comma-joined set of `Evidence.detector_id` /
     `.detector_version` values across an asset's evidence →
-    `pratyaksha:detectorId` / `pratyaksha:detectorVersion`. Tradeoff: if a
+    `hash_patch:detectorId` / `hash_patch:detectorVersion`. Tradeoff: if a
     single asset has evidence from more than one distinct detector, which
     *specific* evidence came from which detector is not preserved beyond
     this asset-level aggregate (only `additionalContext`'s source_type/
     column/snippet stay per-occurrence).
-  - `pratyaksha:confidence` comes straight from `CryptoAsset.confidence`
+  - `hash_patch:confidence` comes straight from `CryptoAsset.confidence`
     (`"confirmed"` by default). Every real detector always leaves it at
     `"confirmed"` — a direct observation, backed by ≥1 `Evidence` (enforced
     below). The one existing `"inferred"` producer is the blast-radius
     `db_column` name-pattern-only fallback (see "Blast Radius" below and
-    `pratyaksha/cli.py::_synthetic_asset_for_inferred_finding`): a
+    `hash_patch/cli.py::_synthetic_asset_for_inferred_finding`): a
     synthetic component that still carries real `Evidence` (the file/line
     that suggested it) but is not a direct observation of which algorithm
     produced the artefact, per CLAUDE.md's "Name" section.
   - Any `crypto_functions` / `mode` value that does *not* match the
     CycloneDX enum is preserved verbatim in
-    `pratyaksha:cryptoFunctionsUnmapped` / `pratyaksha:modeUnmapped` rather
+    `hash_patch:cryptoFunctionsUnmapped` / `hash_patch:modeUnmapped` rather
     than being coerced or dropped.
   - `CryptoAsset.properties` (our own free-form bag) maps to
-    `pratyaksha:property.<key>`.
+    `hash_patch:property.<key>`.
 - An asset with zero `Evidence` is refused at emit time (`ValueError`) —
   this is the emitter-level enforcement of hard constraint #3.
 
-**CLI.** `pratyaksha scan PATH --output FILE` writes the CBOM.
+**CLI.** `hash-patch scan PATH --output FILE` writes the CBOM.
 `--validate/--no-validate` (default: validate) runs the emitted document
 through `validate_cbom` and exits non-zero — printing each schema error to
 stderr — without writing the output file if it fails. Every run prints a
 one-line summary: asset count broken down by quantum status
 (`N assets (status=count, ...)`).
 
-**Known limitation.** `pratyaksha/emit/validate.py` locates `schemas/` via
+**Known limitation.** `hash_patch/emit/validate.py` locates `schemas/` via
 `Path(__file__).resolve().parents[2]`, i.e. relative to the source tree.
 This holds for the editable dev install this project currently uses; a
 real (non-editable) wheel install would need `schemas/` declared as package
@@ -207,9 +207,9 @@ distributed package.
 
 `CryptoAsset.reachability` (Python and Java only — Go and C keep the model
 default `UNKNOWN` unconditionally, see the one-line comments in
-`pratyaksha/detect/go.py` / `c.py`) is computed by
-`pratyaksha/analyze/{callgraph,entrypoints,reachability}.py` and wired into
-`pratyaksha scan` via `pratyaksha/cli.py::run_scan`.
+`hash_patch/detect/go.py` / `c.py`) is computed by
+`hash_patch/analyze/{callgraph,entrypoints,reachability}.py` and wired into
+`hash-patch scan` via `hash_patch/cli.py::run_scan`.
 
 **HARD SAFETY RULE (non-negotiable): this analysis is fail-safe. A live,
 externally-reachable crypto call must NEVER be classified `INERT`. Whenever
@@ -223,8 +223,8 @@ from anything" defaults to `UNKNOWN` rather than `INERT` for non-test code.
 
 ## Shelf-Life Inference
 
-Pillar 2: `pratyaksha/analyze/shelf_life.py` (detection in
-`pratyaksha/detect/shelf_life/`) derives how long the data protected by a
+Pillar 2: `hash_patch/analyze/shelf_life.py` (detection in
+`hash_patch/detect/shelf_life/`) derives how long the data protected by a
 Python or Java `CryptoAsset` must plausibly remain confidential — the "X"
 variable in Mosca's inequality — from name-pattern signal
 (`ontology/data_sensitivity.yaml`) found near the crypto call site (a call
@@ -242,7 +242,7 @@ work, not implemented here. See docs/SHELF_LIFE.md for the full method.
 
 ## Blast Radius
 
-Pillar 3: `pratyaksha/analyze/blast_radius.py` predicts whether migrating a
+Pillar 3: `hash_patch/analyze/blast_radius.py` predicts whether migrating a
 `BROKEN_BY_SHOR` `CryptoAsset` to its PQC replacement will overflow a
 statically declared size constraint (a C fixed-size buffer/heap allocation,
 or a SQL DDL fixed-width column — currently the only scope; Java/Go/Python
@@ -264,7 +264,7 @@ have no same-file `CryptoAsset` to correlate against since there is no SQL
 algorithm detector) uses a clearly-flagged, weaker-evidence name-pattern
 fallback instead of loosening the same-file rule — see
 docs/BLAST_RADIUS.md. Such a fallback finding is still emitted as a
-SYNTHETIC CBOM component (`pratyaksha:confidence = "inferred"`), not
+SYNTHETIC CBOM component (`hash_patch:confidence = "inferred"`), not
 silently dropped from the report.
 
 `estimated_effort_days` on a `BlastRadiusFinding` is an explicitly
@@ -288,29 +288,29 @@ and `rules/tls_source_intent.yaml`. No directive or API names are hardcoded in P
 not observe out-of-band configurations not committed to the scanned repository.
 
 **CBOM representation:** Emitted under `metadata.properties` as
-`pratyaksha:contradiction.<id>` rather than forced into the CVE-focused
+`hash_patch:contradiction.<id>` rather than forced into the CVE-focused
 `vulnerabilities` array. See `docs/CONTRADICTIONS.md`.
 
 ## Optimiser
 
-Pillar 5: `pratyaksha optimize INPUT.cbom.json --budget-days N --parallelism
-P [--output PLAN.json]` — a SEPARATE CLI subcommand (not part of `pratyaksha
+Pillar 5: `hash-patch optimize INPUT.cbom.json --budget-days N --parallelism
+P [--output PLAN.json]` — a SEPARATE CLI subcommand (not part of `hash-patch
 scan`) that reads an already-emitted CBOM
-(`pratyaksha/analyze/cbom_reader.py`, never re-scanning source) and
+(`hash_patch/analyze/cbom_reader.py`, never re-scanning source) and
 produces a recommended migration order, a residual-risk-over-time curve,
 and a comparison against a naive (risk-only, cost-blind) baseline, for
 each of 3 named quantum-arrival scenarios
 (`ontology/quantum_arrival.yaml`). Only `BROKEN_BY_SHOR` findings are
-candidates (`pratyaksha/analyze/risk_score.py`); risk score is the plain
+candidates (`hash_patch/analyze/risk_score.py`); risk score is the plain
 product `shelf_life_magnitude * reachability_multiplier`; migration cost
 is the real Pillar-3 blast-radius effort-days sum when present, else a
 documented flat default. The greedy scheduler
-(`pratyaksha/analyze/optimizer.py`) is a hybrid of risk-density and
+(`hash_patch/analyze/optimizer.py`) is a hybrid of risk-density and
 raw-risk ordering — a real failure mode of pure density-greedy was found
 on this project's own corpus and fixed by always taking whichever ordering
 eliminates more risk, so the optimiser is guaranteed to never do worse
 than the naive baseline it's compared against.
-`pratyaksha/analyze/optimizer_bruteforce.py` is a small-instance
+`hash_patch/analyze/optimizer_bruteforce.py` is a small-instance
 (≤15-candidate) exact validation tool, not part of the normal CLI path.
 The quantum-arrival scenario figures are explicitly illustrative, not
 sourced from a verified survey — see `ontology/quantum_arrival.yaml`'s own
@@ -318,8 +318,8 @@ header and docs/OPTIMISER.md for the full method and every honesty caveat.
 
 ## Signing (Pillar 6)
 
-Pillar 6: `pratyaksha keygen --output-dir DIR`, `pratyaksha sign INPUT.cbom.json
---key KEYFILE [--output SIGFILE]`, and `pratyaksha verify INPUT.cbom.json --sig
+Pillar 6: `hash-patch keygen --output-dir DIR`, `hash-patch sign INPUT.cbom.json
+--key KEYFILE [--output SIGFILE]`, and `hash-patch verify INPUT.cbom.json --sig
 SIGFILE --key PUBKEYFILE` — CLI subcommands operating on files, providing
 post-quantum tamper-evident signing for emitted CBOM reports using **ML-DSA-65
 (FIPS 204)**.
@@ -331,7 +331,7 @@ it triggers runtime source-compilation via CMake/C compiler into `_oqs`,
 violating offline scan-time requirements. `pyca/cryptography>=50.0.0` provides
 statically packaged Windows/Linux wheels with full FIPS 204 support out of the box.
 
-**Key management caveat:** The local key generation scheme (`pratyaksha keygen`)
+**Key management caveat:** The local key generation scheme (`hash-patch keygen`)
 is for **demonstration and local offline development only** (unencrypted local
 PEM files, no HSM, no key rotation, no access control). Production deployments
 require accredited HSM or secure cloud KMS backing.
@@ -344,14 +344,14 @@ technical details, the detached signature format, and tamper-detection guarantee
 
 ## Benchmarking & Recommendations
 
-PRATYAKSHA provides a native PQC benchmark harness and hardware-grounded
+Hash Patch provides a native PQC benchmark harness and hardware-grounded
 recommendation engine:
-- `pratyaksha benchmark --iterations N --warmup W [--output FILE.json]`:
+- `hash-patch benchmark --iterations N --warmup W [--output FILE.json]`:
   Measures real keygen, sign/encapsulate, and verify/decapsulate latencies (min,
   p50, p95, max) and exact wire byte sizes on the host system across ML-DSA-44/65/87,
   ML-KEM-768/1024, and classical baselines (RSA-2048, ECDSA-P256).
-- `pratyaksha scan PATH --benchmark-report FILE.json`:
-  Attaches hardware-measured PQC migration recommendations (`pratyaksha:property.recommendation.*`)
+- `hash-patch scan PATH --benchmark-report FILE.json`:
+  Attaches hardware-measured PQC migration recommendations (`hash_patch:property.recommendation.*`)
   to broken-by-shor assets citing real latency deltas, exact size increases, platform,
   and date (`confidence="measured"`).
 - **Fallback & Gaps:** Without a benchmark report, the recommender falls back to
@@ -362,7 +362,7 @@ recommendation engine:
 ## Detection rules live in YAML, not Python
 
 All algorithm/pattern/OID detection rules belong in `rules/` as YAML data,
-loaded at runtime. `pratyaksha/detect/` contains detector *mechanics* (how to
+loaded at runtime. `hash_patch/detect/` contains detector *mechanics* (how to
 walk a target, how to invoke a matcher, how to attach evidence) — it must
 never contain a hardcoded table of algorithm names, OIDs, or regex patterns
 for a specific crypto primitive. If you catch yourself writing
@@ -385,7 +385,7 @@ Every new detector requires:
   or wall-clock-dependent source) inside anything that contributes to a
   `CryptoAsset.id` or to output ordering. Asset IDs are derived
   deterministically from asset identity fields (see
-  `pratyaksha/model/assets.py::derive_asset_id`).
+  `hash_patch/model/assets.py::derive_asset_id`).
 - Do NOT hardcode algorithm/OID/pattern detection rules in Python. They
   belong in `rules/` as YAML.
 - Do NOT construct or emit a finding/asset without at least one `Evidence`
@@ -396,4 +396,4 @@ Every new detector requires:
   version, the same way they were first added.
 - Do NOT use `uuid4()` for the CBOM `serialNumber` either. It is derived via
   `uuid5(NAMESPACE_URL, ...)` from the scan target (see
-  `pratyaksha/emit/cyclonedx.py::_derive_serial_number`).
+  `hash_patch/emit/cyclonedx.py::_derive_serial_number`).

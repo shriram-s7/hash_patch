@@ -1,6 +1,6 @@
 """tests/unit/test_python_detector.py
 
-Unit tests for pratyaksha.detect.python.PythonCryptoDetector.
+Unit tests for hash_patch.detect.python.PythonCryptoDetector.
 
 Design notes:
   - No algorithm names are hardcoded in this file (CLAUDE.md constraint).
@@ -19,14 +19,14 @@ from typing import Any
 import pytest
 import yaml
 
-from pratyaksha.detect.python import (
+from hash_patch.detect.python import (
     PythonCryptoDetector,
     _build_pyca_index,
     _build_pycryptodome_index,
     _collect_calls,
 )
-from pratyaksha.model.assets import AssetType, CryptoAsset, QuantumStatus
-from pratyaksha.model.evidence import Evidence
+from hash_patch.model.assets import AssetType, CryptoAsset, QuantumStatus
+from hash_patch.model.evidence import Evidence
 
 # ---------------------------------------------------------------------------
 # Paths

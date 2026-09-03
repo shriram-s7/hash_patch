@@ -25,23 +25,23 @@
       "name": "MD5",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "broken-classically"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -69,23 +69,23 @@
       "name": "EC",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "broken-by-shor"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -119,23 +119,23 @@
       "name": "RSA",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "broken-by-shor"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -169,23 +169,23 @@
       "name": "AES",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "weakened-by-grover"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -214,23 +214,23 @@
       "name": "SHA-256",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "weakened-by-grover"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -259,23 +259,23 @@
       "name": "SHA-1",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "broken-classically"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -303,23 +303,23 @@
       "name": "ECDSA",
       "properties": [
         {
-          "name": "pratyaksha:confidence",
+          "name": "hash_patch:confidence",
           "value": "confirmed"
         },
         {
-          "name": "pratyaksha:detectorId",
+          "name": "hash_patch:detectorId",
           "value": "java-jca"
         },
         {
-          "name": "pratyaksha:detectorVersion",
+          "name": "hash_patch:detectorVersion",
           "value": "0.1.0"
         },
         {
-          "name": "pratyaksha:quantumStatus",
+          "name": "hash_patch:quantumStatus",
           "value": "broken-by-shor"
         },
         {
-          "name": "pratyaksha:reachability",
+          "name": "hash_patch:reachability",
           "value": "unknown"
         }
       ],
@@ -354,14 +354,14 @@
     "tools": {
       "components": [
         {
-          "name": "PRATYAKSHA",
+          "name": "Hash Patch",
           "type": "application",
           "version": "0.1.0"
         }
       ]
     }
   },
-  "serialNumber": "urn:uuid:585a3a05-eaa3-519f-abbf-8600af0c194b",
+  "serialNumber": "urn:uuid:f286871f-b160-5e8f-849e-71027d86c56d",
   "specVersion": "1.6",
   "version": 1
 }
