@@ -1,7 +1,7 @@
 """tests/integration/test_cli_scan.py
 
 Integration tests that exercise the CLI's run_scan() function — the same
-code path the `pratyaksha scan` command invokes — against real testdata.
+code path the `hash-patch scan` command invokes — against real testdata.
 
 These tests catch the class of bug where a detector is correctly registered
 and passes all unit tests, but the CLI's scan command fails to route files
@@ -14,7 +14,7 @@ Design:
     layers are all exercised together.
   - No algorithm names are hardcoded here; expected-asset presence is checked
     by asserting len > 0 and by loading from rules/java_jca.yaml.
-  - The subprocess test uses the installed `pratyaksha` entry-point to catch
+  - The subprocess test uses the installed `hash-patch` entry-point to catch
     any import-time registration failures that only manifest in a fresh process.
 """
 
@@ -40,7 +40,7 @@ NEGATIVE_FILE = TESTDATA_JAVA_DIR / "negative_rsa_mention.java"
 
 def _resolve_cli_cmd(args: list[str]) -> list[str]:
     parent = Path(sys.executable).parent
-    for name in ["hash-patch.exe", "hashpatch.exe", "hash-patch", "hashpatch", "pratyaksha.exe", "pratyaksha"]:
+    for name in ["hash-patch.exe", "hashpatch.exe", "hash-patch", "hashpatch", ]:
         cand = parent / name
         if cand.is_file():
             return [str(cand), *args]
@@ -220,9 +220,9 @@ def test_run_scan_is_deterministic_on_directory() -> None:
 
 
 def test_cli_scan_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
-    """Invoke `pratyaksha scan <dir> --output <cbom>` as a real subprocess.
+    """Invoke `hash-patch scan <dir> --output <cbom>` as a real subprocess.
 
-    Uses the venv-installed `pratyaksha` script (same binary the user runs)
+    Uses the venv-installed `hash-patch` script (same binary the user runs)
     so that import-time registration failures and entry-point issues are caught.
     Falls back to `python -m hash_patch.cli` when the script is not present
     (e.g. CI environments that install without scripts).
@@ -365,7 +365,7 @@ def test_run_scan_python_is_deterministic() -> None:
 
 
 def test_cli_scan_python_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
-    """Invoke `pratyaksha scan testdata/python --output <cbom>` as a subprocess."""
+    """Invoke `hash-patch scan testdata/python --output <cbom>` as a subprocess."""
     cbom_out = tmp_path / "py_out.cbom.json"
     cmd = _resolve_cli_cmd(["scan", str(TESTDATA_PY_DIR), "--output", str(cbom_out)])
 
@@ -466,7 +466,7 @@ def test_run_scan_go_is_deterministic() -> None:
 
 
 def test_cli_scan_go_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
-    """Invoke `pratyaksha scan testdata/go --output <cbom>` as a subprocess."""
+    """Invoke `hash-patch scan testdata/go --output <cbom>` as a subprocess."""
     cbom_out = tmp_path / "go_out.cbom.json"
     cmd = _resolve_cli_cmd(["scan", str(TESTDATA_GO_DIR), "--output", str(cbom_out)])
 
@@ -579,7 +579,7 @@ def test_run_scan_c_is_deterministic() -> None:
 
 
 def test_cli_scan_c_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
-    """Invoke `pratyaksha scan testdata/c --output <cbom>` as a subprocess."""
+    """Invoke `hash-patch scan testdata/c --output <cbom>` as a subprocess."""
     cbom_out = tmp_path / "c_out.cbom.json"
     cmd = _resolve_cli_cmd(["scan", str(TESTDATA_C_DIR), "--output", str(cbom_out)])
 

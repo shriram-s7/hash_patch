@@ -1,8 +1,8 @@
 # rules/entrypoints.yaml
 #
-# Config-driven entry-point tagging for pratyaksha/analyze/entrypoints.py.
+# Config-driven entry-point tagging for hash_patch/analyze/entrypoints.py.
 #
-# PRATYAKSHA constraint (same spirit as detection rules): the *patterns* that
+# Hash Patch constraint (same spirit as detection rules): the *patterns* that
 # mark a function as a tagged entry point live here as data, not hardcoded in
 # analyze/ Python code, so the list can be extended without touching analyze/.
 #

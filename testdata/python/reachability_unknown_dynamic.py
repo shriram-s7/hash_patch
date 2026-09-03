@@ -5,7 +5,7 @@ reachability_unknown_dynamic.py — Reachability corpus fixture (UNKNOWN).
 invoked by a statically-resolvable call anywhere in this codebase — its
 only reference is as a VALUE inside `_DISPATCH`, invoked through a dynamic
 subscript lookup (`_DISPATCH[action]()`). This analyzer's simple, name-based
-call resolver (pratyaksha/analyze/callgraph.py) deliberately does not trace
+call resolver (hash_patch/analyze/callgraph.py) deliberately does not trace
 values through a dict — doing so would require real data-flow analysis,
 which is out of scope, matching the level of sophistication the existing
 detectors already use.

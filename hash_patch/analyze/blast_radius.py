@@ -45,7 +45,7 @@ more conservative of the two), with a synthetic `asset_id`
 (`"blast-radius-inferred:<field>"`) instead of a real CryptoAsset id. This
 is weaker evidence than a real correlation and is documented as such — see
 docs/BLAST_RADIUS.md. `hash_patch/cli.py` turns such a finding into a
-SYNTHETIC CBOM component (`pratyaksha:confidence = "inferred"`, never
+SYNTHETIC CBOM component (`hash_patch:confidence = "inferred"`, never
 `"confirmed"`) carrying the SizeConstraint's own evidence, rather than
 mirroring it onto a real (nonexistent) CryptoAsset's properties — see
 `hash_patch.cli._synthetic_asset_for_inferred_finding` and

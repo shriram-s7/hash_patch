@@ -6,7 +6,7 @@ Scans testdata/go/crypto_examples.go with a fixed timestamp and compares
 the resulting CBOM JSON against tests/golden/go_crypto_expected.json.
 
 To regenerate:
-    PRATYAKSHA_REGEN_GOLDEN=1 pytest tests/golden/test_go_golden.py
+    HASH_PATCH_REGEN_GOLDEN=1 pytest tests/golden/test_go_golden.py
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ GOLDEN_FILE = REPO_ROOT / "tests" / "golden" / "go_crypto_expected.json"
 FIXED_TIMESTAMP = datetime(2026, 1, 1, tzinfo=UTC)
 FIXED_TIMESTAMP_STR = "2026-01-01T00:00:00+00:00"
 
-REGEN = (os.environ.get("HASH_PATCH_REGEN_GOLDEN", "") or os.environ.get("PRATYAKSHA_REGEN_GOLDEN", "")).strip().lower() in ("1", "true", "yes")
+REGEN = (os.environ.get("HASH_PATCH_REGEN_GOLDEN", "") or os.environ.get("HASH_PATCH_REGEN_GOLDEN", "")).strip().lower() in ("1", "true", "yes")
 
 
 def _build_doc() -> dict:  # type: ignore[type-arg]
@@ -66,14 +66,14 @@ def _normalize_doc(doc: dict) -> dict:  # type: ignore[type-arg]
 def test_golden_file_exists() -> None:
     if REGEN:
         pytest.skip("Regen mode")
-    assert GOLDEN_FILE.is_file(), f"Missing: {GOLDEN_FILE}. Run with PRATYAKSHA_REGEN_GOLDEN=1."
+    assert GOLDEN_FILE.is_file(), f"Missing: {GOLDEN_FILE}. Run with HASH_PATCH_REGEN_GOLDEN=1."
 
 
 def test_go_golden_corpus() -> None:
     doc = _build_doc()
     if REGEN:
         _regen_golden(doc)
-        pytest.skip("Golden regenerated; re-run without PRATYAKSHA_REGEN_GOLDEN to verify.")
+        pytest.skip("Golden regenerated; re-run without HASH_PATCH_REGEN_GOLDEN to verify.")
 
     assert GOLDEN_FILE.is_file()
     live = json.loads(render_cbom_json(doc))
@@ -83,7 +83,7 @@ def test_go_golden_corpus() -> None:
         "Live CBOM does not match golden file.\n"
         f"Live:   {[c['name'] for c in live.get('components', [])]}\n"
         f"Golden: {[c['name'] for c in golden.get('components', [])]}\n"
-        "Run with PRATYAKSHA_REGEN_GOLDEN=1 to regenerate."
+        "Run with HASH_PATCH_REGEN_GOLDEN=1 to regenerate."
     )
 
 

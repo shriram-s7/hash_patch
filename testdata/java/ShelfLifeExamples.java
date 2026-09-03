@@ -15,7 +15,7 @@ import java.security.MessageDigest;
  * rules/java_jca.yaml) takes only an algorithm-name string literal, never
  * the data itself, so for Java the signal comes from enclosing method/class
  * names and same-class field names instead — see
- * pratyaksha/detect/shelf_life/data_context.py.
+ * hash_patch/detect/shelf_life/data_context.py.
  *
  *   1. hashAadhaarNumber() — MessageDigest.getInstance("SHA-256") inside a
  *      method whose own name names the aadhaar category (`enclosing_function`
@@ -30,7 +30,7 @@ import java.security.MessageDigest;
  *      the only signal comes from CustomerRecord's own two fields
  *      (`model_field` candidate kind, class-scoped): aadhaarNumber (aadhaar
  *      category) and accountNumber (financial_account category). Per
- *      pratyaksha/analyze/shelf_life.py's longest-shelf-life-wins fail-safe
+ *      hash_patch/analyze/shelf_life.py's longest-shelf-life-wins fail-safe
  *      rule, this must resolve to whichever of {aadhaar, financial_account}
  *      has the LONGER shelf_life_years in ontology/data_sensitivity.yaml —
  *      the test reads those actual numbers rather than assuming which one

@@ -22,9 +22,9 @@ otherwise merge multiple call sites' evidence onto one asset):
      the class name ("CustomerRecord") is crypto-suggestive, so the only
      signal comes from CustomerRecord's own two dataclass fields
      (`model_field` candidate kind, class-scoped — see
-     pratyaksha/detect/shelf_life/data_context.py): aadhaar_number (aadhaar
+     hash_patch/detect/shelf_life/data_context.py): aadhaar_number (aadhaar
      category) and account_number (financial_account category). Per
-     pratyaksha/analyze/shelf_life.py's longest-shelf-life-wins fail-safe
+     hash_patch/analyze/shelf_life.py's longest-shelf-life-wins fail-safe
      rule, this must resolve to whichever of {aadhaar, financial_account}
      has the LONGER shelf_life_years in ontology/data_sensitivity.yaml — the
      test reads those actual numbers rather than assuming which one wins.

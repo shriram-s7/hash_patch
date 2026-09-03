@@ -3,7 +3,7 @@
 
 // Negative fixture: RSA, AES, MD5, SHA-1, DES appear only in comments,
 // string literals, function parameters, and non-crypto struct types.
-// PRATYAKSHA must produce ZERO CryptoAssets from this file.
+// Hash Patch must produce ZERO CryptoAssets from this file.
 
 // RSA is a public-key cryptosystem.
 // AES is an advanced encryption standard.

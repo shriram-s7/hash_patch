@@ -11,9 +11,9 @@ ScheduleOrdering = Literal["greedy_risk_density", "naive_risk_only"]
 class OptimizerCandidate(BaseModel):
     """One migration candidate parsed from an already-emitted CBOM
     (hash_patch/analyze/cbom_reader.py) — every field here is read from a
-    real `pratyaksha:` property already attached to that CBOM component by
+    real `hash_patch:` property already attached to that CBOM component by
     P1/P2/P3, never invented. Only components whose
-    `pratyaksha:quantumStatus` is `broken-by-shor` become candidates at all
+    `hash_patch:quantumStatus` is `broken-by-shor` become candidates at all
     — see hash_patch/analyze/risk_score.py::is_migration_candidate and
     docs/OPTIMISER.md for why broken-classically/weakened-by-grover findings
     are out of scope for this pillar.
@@ -84,7 +84,7 @@ class ScenarioResult(BaseModel):
 
 class OptimalityGapResult(BaseModel):
     """Output of hash_patch/analyze/optimizer_bruteforce.py's validation
-    check — NOT part of the normal `pratyaksha optimize` CLI path (real
+    check — NOT part of the normal `hash-patch optimize` CLI path (real
     scans routinely exceed the brute-force candidate cap). See
     docs/OPTIMISER.md.
     """

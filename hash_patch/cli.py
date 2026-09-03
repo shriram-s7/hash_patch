@@ -113,7 +113,7 @@ def _shelf_life_property(finding: ShelfLifeFinding) -> tuple[str, str]:
 
 def _attach_shelf_life_properties(result: ScanResult) -> None:
     """Mirror each shelf-life finding onto its correlated CBOM component's
-    `properties` bag — the same `pratyaksha:property.<key>` namespacing
+    `properties` bag — the same `hash_patch:property.<key>` namespacing
     CLAUDE.md documents (see hash_patch/emit/cyclonedx.py's field mapping)
     and `_attach_blast_radius_properties` already uses.
 
@@ -175,7 +175,7 @@ def _synthetic_asset_for_inferred_finding(finding: BlastRadiusFinding) -> Crypto
 
 def _attach_blast_radius_properties(result: ScanResult) -> None:
     """Mirror each blast-radius finding onto a CBOM component's `properties`
-    bag — the same `pratyaksha:property.<key>` CBOM namespacing pattern
+    bag — the same `hash_patch:property.<key>` CBOM namespacing pattern
     CLAUDE.md already documents for arbitrary asset-level data (see
     hash_patch/emit/cyclonedx.py's field mapping).
 
@@ -367,13 +367,13 @@ def _optimize_summary(report: OptimizationReport) -> str:
 
 
 def run_optimize(input_path: Path, budget_days: float, parallelism: int) -> OptimizationReport:
-    """Core `pratyaksha optimize` logic, separated from the CLI surface for
+    """Core `hash-patch optimize` logic, separated from the CLI surface for
     testability -- mirrors run_scan()'s split for the `scan` command.
 
     Reads an ALREADY-EMITTED CBOM (hash_patch/analyze/cbom_reader.py) --
     this command never re-scans source code itself, per Pillar 5's scope
     (docs/OPTIMISER.md): it operates purely on P1/P2/P3 data already
-    attached to CryptoAsset findings by a prior `pratyaksha scan`.
+    attached to CryptoAsset findings by a prior `hash-patch scan`.
     """
     doc = json.loads(input_path.read_text(encoding="utf-8"))
     candidates, excluded_count = read_candidates(doc)
@@ -390,7 +390,7 @@ def run_optimize(input_path: Path, budget_days: float, parallelism: int) -> Opti
 @app.command()
 def optimize(
     input: Annotated[
-        Path, typer.Argument(help="Path to an already-emitted CBOM JSON file (from `pratyaksha scan`).")
+        Path, typer.Argument(help="Path to an already-emitted CBOM JSON file (from `hash-patch scan`).")
     ],
     budget_days: Annotated[
         float, typer.Option("--budget-days", help="Migration budget, in engineer-days.")
@@ -405,7 +405,7 @@ def optimize(
 ) -> None:
     """Read an already-emitted CBOM and produce a Pillar 5 migration plan.
 
-    NOT part of `pratyaksha scan` -- this is a separate pipeline stage that
+    NOT part of `hash-patch scan` -- this is a separate pipeline stage that
     operates on a CBOM already carrying P1 (reachability), P2 (shelf-life),
     and P3 (blast-radius) data. See docs/OPTIMISER.md for the risk-score
     formula, the greedy-vs-naive comparison, and the quantum-arrival

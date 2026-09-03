@@ -3,7 +3,7 @@
 Regression test for the reachability corpus additions under testdata/python/
 and testdata/java/ (see docs/REACHABILITY.md and the "Reachability" section
 of CLAUDE.md). Runs the real CLI scan path (hash_patch.cli.run_scan) — the
-same one `pratyaksha scan` uses — over each language's testdata directory
+same one `hash-patch scan` uses — over each language's testdata directory
 and checks every entry in tests/golden/reachability_manifest.json against
 the resulting CryptoAsset.reachability, so each of the four classifications
 (LIVE_EXTERNAL, LIVE_INTERNAL, INERT, UNKNOWN) is regression-tested rather

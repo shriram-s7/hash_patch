@@ -1,5 +1,5 @@
 """
-negative_rsa_mention.py — Negative fixture for PRATYAKSHA Python detector.
+negative_rsa_mention.py — Negative fixture for Hash Patch Python detector.
 
 "RSA", "AES", and "MD5" appear only in:
   - Module docstrings
@@ -7,7 +7,7 @@ negative_rsa_mention.py — Negative fixture for PRATYAKSHA Python detector.
   - String literals not passed to a crypto API
   - An unrelated class that happens to be named "RSA"
 
-PRATYAKSHA must produce ZERO CryptoAssets from this file.
+Hash Patch must produce ZERO CryptoAssets from this file.
 """
 
 # RSA is a public-key algorithm — this is just a comment.

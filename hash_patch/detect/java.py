@@ -4,7 +4,7 @@ Uses tree-sitter to parse Java source files and identify calls to JCA/JCE
 factory methods (Cipher.getInstance, MessageDigest.getInstance, etc.) and
 BouncyCastle equivalents listed in rules/java_jca.yaml.
 
-PRATYAKSHA constraints (enforced here):
+Hash Patch constraints (enforced here):
   - No algorithm names, OIDs, or patterns hardcoded in this file — all
     detection knowledge comes exclusively from rules/java_jca.yaml.
   - Every CryptoAsset is backed by at least one Evidence with file, line,

@@ -37,14 +37,14 @@ around):
     `credentials`'s short (1yr) real shelf-life also has a second effect:
     under EVERY one of ontology/quantum_arrival.yaml's 3 scenarios, these
     three findings' data will plausibly already be safe to disclose long
-    before a CRQC arrives, so pratyaksha/analyze/optimizer.py's scenario
+    before a CRQC arrives, so hash_patch/analyze/optimizer.py's scenario
     urgency discount applies to all three, in all three scenarios --
     unlike the "expensive" ECDSA finding (which has no real Pillar-2
     shelf-life at all -- C is out of scope for Pillar 2 -- so it is NEVER
     discounted, per the "never discount without real evidence" rule).
     That is deliberate: it keeps the same greedy-vs-naive divergence this
     fixture set demonstrates visible even in the SCENARIO-ADJUSTED numbers
-    `pratyaksha optimize` actually reports, not just the scenario-
+    `hash_patch optimize` actually reports, not just the scenario-
     independent risk_score. See docs/OPTIMISER.md's worked example.
 
 See also testdata/python/test_optimizer_low_value.py for this corpus's

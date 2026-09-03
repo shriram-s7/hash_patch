@@ -4,7 +4,7 @@ package com.example.negative;
  * Negative fixture: "RSA" appears only in comments and unrelated string
  * literals — NOT as an argument to a JCA/JCE getInstance() call.
  *
- * PRATYAKSHA must produce ZERO CryptoAssets from this file.
+ * Hash Patch must produce ZERO CryptoAssets from this file.
  */
 public class NegativeRsaMention {
 

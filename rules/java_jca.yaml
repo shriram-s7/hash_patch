@@ -1,7 +1,7 @@
 # rules/java_jca.yaml
 # Java JCA/JCE and BouncyCastle algorithm detection rules.
 #
-# PRATYAKSHA constraint: all algorithm names, primitives, parameter sets, and
+# Hash Patch constraint: all algorithm names, primitives, parameter sets, and
 # quantum-status mappings belong here — never hardcoded in Python detector code.
 #
 # Schema for each algorithm entry:
@@ -11,7 +11,7 @@
 #     quantum_status: <QuantumStatus value>
 #     oid: <dotted OID string | null>  # optional; omit if unknown
 #
-# quantum_status values mirror pratyaksha.model.assets.QuantumStatus:
+# quantum_status values mirror hash_patch.model.assets.QuantumStatus:
 #   broken-by-shor        – asymmetric, broken by Shor's algorithm on a CRQC
 #   weakened-by-grover    – symmetric/hash, key size halved by Grover; safe at
 #                           ≥256-bit / ≥128-bit post-quantum security level

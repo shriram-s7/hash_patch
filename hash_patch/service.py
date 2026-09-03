@@ -78,7 +78,7 @@ def optimize_cbom(req: OptimizeRequest) -> dict[str, Any]:
     currently loaded in the UI, whether it came from a live folder scan or an
     uploaded file, with no separate file on disk required. Reuses
     `read_candidates` / `read_reference_year` / `run_optimizer` exactly as
-    `pratyaksha optimize` (hash_patch/cli.py::run_optimize) does; the only
+    `hash-patch optimize` (hash_patch/cli.py::run_optimize) does; the only
     difference is the CBOM comes from the request body instead of a file path.
     """
     if req.cbom is None:

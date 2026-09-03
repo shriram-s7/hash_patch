@@ -28,15 +28,15 @@ pyca/cryptography end to end:
      `tree-sitter-python==0.25.0`) directly toggled the crash: 0.26.0
      crashes, 0.25.x does not. Fix: pin `tree-sitter>=0.25,<0.26` in
      pyproject.toml (see that pin's comment for detail). This is a real
-     upstream dependency regression, not a pratyaksha code bug — no amount
-     of rewriting pratyaksha's own walk functions fixes it, which is why
+     upstream dependency regression, not a hash_patch code bug — no amount
+     of rewriting hash_patch's own walk functions fixes it, which is why
      the second test class below scans real files via a full subprocess
      rather than asserting anything about traversal shape.
 
 Both classes of regression need a SUBPROCESS-based test: a stack overflow
 or a native access violation kills the process outright — pytest cannot
 observe it as a normal exception in-process. Every test here shells out to
-the installed `pratyaksha` CLI (same convention as
+the installed `hash-patch` CLI (same convention as
 tests/integration/test_cli_scan.py) with a timeout and asserts a clean
 `returncode == 0`.
 """
@@ -61,7 +61,7 @@ def _hash_patch_cli_command(*args: str) -> list[str]:
     exercising the real installed entry point wherever possible.
     """
     parent = Path(sys.executable).parent
-    for name in ["hash-patch.exe", "hashpatch.exe", "hash-patch", "hashpatch", "pratyaksha.exe", "pratyaksha"]:
+    for name in ["hash-patch.exe", "hashpatch.exe", "hash-patch", "hashpatch", ]:
         cand = parent / name
         if cand.is_file():
             return [str(cand), *args]

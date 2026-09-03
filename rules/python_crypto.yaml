@@ -1,7 +1,7 @@
 # rules/python_crypto.yaml
 # Python cryptography library detection rules.
 #
-# PRATYAKSHA constraint: all algorithm names, primitives, parameter sets, and
+# Hash Patch constraint: all algorithm names, primitives, parameter sets, and
 # quantum-status mappings belong here — never hardcoded in Python detector code.
 #
 # Two patterns are detected (both by inspecting "module.attribute" call shapes):
@@ -21,7 +21,7 @@
 # For Pattern B: the key in `pycryptodome_classes` maps object-name.method
 #   directly to an algo rule.
 #
-# quantum_status values mirror pratyaksha.model.assets.QuantumStatus:
+# quantum_status values mirror hash_patch.model.assets.QuantumStatus:
 #   broken-by-shor        – asymmetric; vulnerable to Shor's algorithm on CRQC
 #   weakened-by-grover    – symmetric/hash; key size halved by Grover
 #   broken-classically    – already broken without a quantum computer

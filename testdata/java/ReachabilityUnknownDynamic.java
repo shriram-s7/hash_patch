@@ -11,7 +11,7 @@ import javax.crypto.Cipher;
  * a statically-resolvable call anywhere in this codebase — it is only
  * referenced as a method reference stored in a Map<String, Runnable> and
  * invoked through a runtime key lookup. This analyzer's simple, name-based
- * call resolver (pratyaksha/analyze/callgraph.py) does not trace values
+ * call resolver (hash_patch/analyze/callgraph.py) does not trace values
  * through a Map (real data-flow analysis, out of scope).
  *
  * Because we cannot prove cipherUnknownHelper is unreachable, and it sits

@@ -5,7 +5,7 @@ crypto APIs (both legacy low-level API like RSA_*, DES_*, MD5_* and the modern
 EVP_* API like EVP_aes_256_gcm, EVP_sha256, etc.) as listed in
 rules/c_openssl.yaml.
 
-PRATYAKSHA constraints (enforced here):
+Hash Patch constraints (enforced here):
   - No algorithm names, OIDs, or patterns hardcoded in this file — all
     detection knowledge comes exclusively from rules/c_openssl.yaml.
   - Every CryptoAsset is backed by at least one Evidence with file, line,

@@ -1,7 +1,7 @@
 # rules/pqc_sizes.yaml
 #
 # Single source of truth for classical and post-quantum artefact byte sizes,
-# used by pratyaksha/analyze/blast_radius.py to decide whether a statically
+# used by hash_patch/analyze/blast_radius.py to decide whether a statically
 # declared buffer/column size will overflow once an algorithm is migrated to
 # its PQC replacement. Data only — no Python logic reads or duplicates these
 # numbers as literals anywhere else in the codebase.
@@ -139,7 +139,7 @@ pqc:
     nist_security_level: 5
 
 # ---------------------------------------------------------------------------
-# Which PQC parameter set pratyaksha/analyze/blast_radius.py uses as the
+# Which PQC parameter set hash_patch/analyze/blast_radius.py uses as the
 # "smallest currently credible" replacement per classical primitive family.
 # Deliberately NOT the smallest entry in this file overall (ML-KEM-512 /
 # ML-DSA-44) — those are NIST category 1/2, below the security level most

@@ -14,7 +14,7 @@ from hash_patch.model.evidence import Evidence
 # blast-radius db_column fallback, see hash_patch/analyze/blast_radius.py) —
 # per CLAUDE.md's "Name" section, this is never merged into the confirmed
 # inventory as if it were equivalent; it must stay visibly distinguishable in
-# the emitted CBOM (pratyaksha:confidence property, see emit/cyclonedx.py).
+# the emitted CBOM (hash_patch:confidence property, see emit/cyclonedx.py).
 Confidence = Literal["confirmed", "inferred"]
 
 

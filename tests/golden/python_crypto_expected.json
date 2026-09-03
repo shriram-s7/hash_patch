@@ -17,13 +17,13 @@
           {
             "additionalContext": "{\"column\": 13, \"snippet\": \"hashes.MD5()\", \"source_type\": \"source\"}",
             "line": 48,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 1556
           },
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"MD5.new()\", \"source_type\": \"source\"}",
             "line": 90,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 2759
           }
         ]
@@ -67,13 +67,13 @@
           {
             "additionalContext": "{\"column\": 18, \"snippet\": \"rsa.generate_private_key(\\n        public_exponent=65537,\\n        key_size=2048,\\n        backend=default_backend(),\\n    )\", \"source_type\": \"source\"}",
             "line": 22,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 954
           },
           {
             "additionalContext": "{\"column\": 10, \"snippet\": \"RSA.generate(2048)\", \"source_type\": \"source\"}",
             "line": 84,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 2626
           }
         ]
@@ -117,13 +117,13 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"algorithms.AES(key)\", \"source_type\": \"source\"}",
             "line": 33,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 1230
           },
           {
             "additionalContext": "{\"column\": 13, \"snippet\": \"AES.new(key, AES.MODE_GCM)\", \"source_type\": \"source\"}",
             "line": 78,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 2488
           }
         ]
@@ -168,7 +168,7 @@
           {
             "additionalContext": "{\"column\": 13, \"snippet\": \"hashes.SHA256()\", \"source_type\": \"source\"}",
             "line": 42,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 1431
           }
         ]
@@ -213,7 +213,7 @@
           {
             "additionalContext": "{\"column\": 13, \"snippet\": \"hashes.SHA1()\", \"source_type\": \"source\"}",
             "line": 54,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 1681
           }
         ]
@@ -258,7 +258,7 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"ec.SECP256R1()\", \"source_type\": \"source\"}",
             "line": 61,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 1860
           }
         ]
@@ -302,7 +302,7 @@
           {
             "additionalContext": "{\"column\": 18, \"snippet\": \"ec.generate_private_key(\\n        ec.SECP256R1(),\\n        backend=default_backend(),\\n    )\", \"source_type\": \"source\"}",
             "line": 60,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\python\\crypto_pyca.py",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\crypto_pyca.py",
             "offset": 1827
           }
         ]

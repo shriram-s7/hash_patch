@@ -27,7 +27,7 @@ from hash_patch.model.benchmark import (
 )
 
 # Realistic 32-byte payload representing a standard SHA-256 digest being signed
-REPRESENTATIVE_PAYLOAD: bytes = b"PRATYAKSHA_BENCHMARK_DIGEST_32B"
+REPRESENTATIVE_PAYLOAD: bytes = b"HASH_PATCH_BENCHMARK_DIGEST_32B"
 
 
 def _calc_timing(durations_ms: list[float]) -> OperationTiming:

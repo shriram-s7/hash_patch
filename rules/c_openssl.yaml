@@ -1,7 +1,7 @@
 # rules/c_openssl.yaml
 # OpenSSL C/C++ crypto detection rules (legacy and EVP APIs).
 #
-# PRATYAKSHA constraint: all algorithm names, primitives, parameter sets, and
+# Hash Patch constraint: all algorithm names, primitives, parameter sets, and
 # quantum-status mappings belong here — never hardcoded in Python detector code.
 #
 # Schema for entries:
@@ -12,7 +12,7 @@
 #   quantum_status: <string>         # broken-by-shor | weakened-by-grover | broken-classically | quantum-safe | unknown
 #   oid: <string | null>             # OID if known
 #
-# quantum_status values mirror pratyaksha.model.assets.QuantumStatus:
+# quantum_status values mirror hash_patch.model.assets.QuantumStatus:
 #   broken-by-shor        – asymmetric; vulnerable to Shor's algorithm on CRQC
 #   weakened-by-grover    – symmetric/hash; key size halved by Grover
 #   broken-classically    – already broken without a quantum computer

@@ -302,7 +302,7 @@ def test_scan_determinism_with_contradictions() -> None:
 
 
 def test_cli_scan_contradictions_summary_line() -> None:
-    """pratyaksha scan PATH outputs the contradiction summary line."""
+    """hash-patch scan PATH outputs the contradiction summary line."""
     target_path = str(_TESTDATA_DIR / "scenario1_conflict")
     res = runner.invoke(app, ["scan", target_path])
     assert res.exit_code == 0

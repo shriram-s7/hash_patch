@@ -7,9 +7,9 @@ and compares the resulting CBOM JSON (minus the timestamp field) against
 tests/golden/java_jca_expected.json.
 
 To regenerate the golden file after an intentional change:
-    PRATYAKSHA_REGEN_GOLDEN=1 pytest tests/golden/test_java_golden.py
+    HASH_PATCH_REGEN_GOLDEN=1 pytest tests/golden/test_java_golden.py
 
-PRATYAKSHA constraints enforced here:
+Hash Patch constraints enforced here:
   - No algorithm names hardcoded in this file.
   - The golden file is the source of truth for expected output; the test
     only verifies the live detector matches it.
@@ -42,7 +42,7 @@ GOLDEN_FILE = REPO_ROOT / "tests" / "golden" / "java_jca_expected.json"
 FIXED_TIMESTAMP = datetime(2026, 1, 1, tzinfo=UTC)
 FIXED_TIMESTAMP_STR = "2026-01-01T00:00:00+00:00"
 
-REGEN = (os.environ.get("HASH_PATCH_REGEN_GOLDEN", "") or os.environ.get("PRATYAKSHA_REGEN_GOLDEN", "")).strip().lower() in ("1", "true", "yes")
+REGEN = (os.environ.get("HASH_PATCH_REGEN_GOLDEN", "") or os.environ.get("HASH_PATCH_REGEN_GOLDEN", "")).strip().lower() in ("1", "true", "yes")
 
 
 # ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ def _build_doc() -> dict:  # type: ignore[type-arg]
 
 
 # ---------------------------------------------------------------------------
-# Regeneration helper (used when PRATYAKSHA_REGEN_GOLDEN=1)
+# Regeneration helper (used when HASH_PATCH_REGEN_GOLDEN=1)
 # ---------------------------------------------------------------------------
 
 
@@ -102,7 +102,7 @@ def test_golden_file_exists() -> None:
         pytest.skip("Regen mode — golden file may be overwritten by other tests")
     assert GOLDEN_FILE.is_file(), (
         f"Golden file missing: {GOLDEN_FILE}\n"
-        "Run with PRATYAKSHA_REGEN_GOLDEN=1 to generate it."
+        "Run with HASH_PATCH_REGEN_GOLDEN=1 to generate it."
     )
 
 
@@ -114,11 +114,11 @@ def test_java_golden_corpus() -> None:
 
     if REGEN:
         _regen_golden(doc)
-        pytest.skip("Golden file regenerated; re-run without PRATYAKSHA_REGEN_GOLDEN to verify.")
+        pytest.skip("Golden file regenerated; re-run without HASH_PATCH_REGEN_GOLDEN to verify.")
 
     assert GOLDEN_FILE.is_file(), (
         f"Golden file missing: {GOLDEN_FILE}. "
-        "Run with PRATYAKSHA_REGEN_GOLDEN=1 to generate it."
+        "Run with HASH_PATCH_REGEN_GOLDEN=1 to generate it."
     )
 
     live_json = render_cbom_json(doc)
@@ -134,7 +134,7 @@ def test_java_golden_corpus() -> None:
         f"Golden:  {GOLDEN_FILE}\n"
         f"Live components: {[c['name'] for c in live_parsed.get('components', [])]}\n"
         f"Golden components: {[c['name'] for c in golden_parsed.get('components', [])]}\n"
-        "Run with PRATYAKSHA_REGEN_GOLDEN=1 to regenerate if this is an intentional change."
+        "Run with HASH_PATCH_REGEN_GOLDEN=1 to regenerate if this is an intentional change."
     )
 
 

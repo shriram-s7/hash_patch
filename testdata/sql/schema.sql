@@ -1,7 +1,7 @@
 -- schema.sql — Pillar 3 (Blast Radius) SQL DDL corpus fixture.
 --
 -- No detector in this codebase produces a CryptoAsset from a .sql file (see
--- pratyaksha/analyze/blast_radius.py's "db_column name-pattern-only
+-- hash_patch/analyze/blast_radius.py's "db_column name-pattern-only
 -- fallback" note), so the `signature` column below fires through that
 -- fallback path, not a real same-file CryptoAsset correlation. Expected
 -- outcomes are recorded in tests/golden/blast_radius_manifest.json.

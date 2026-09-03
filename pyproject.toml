@@ -40,7 +40,6 @@ service = [
 [project.scripts]
 hash-patch = "hash_patch.cli:app"
 hashpatch = "hash_patch.cli:app"
-pratyaksha = "hash_patch.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["hash_patch"]

@@ -41,7 +41,7 @@ void sign_with_rsa_generous_buffer(RSA *key, const unsigned char *msg, unsigned 
 
 /* (4) MUST be silently skipped, not guessed: UNRESOLVED_SIG_LEN is not
  * #define'd anywhere in this file (imagine it coming from an external
- * header pratyaksha never sees), so its size cannot be resolved — no
+ * header hash_patch never sees), so its size cannot be resolved — no
  * SizeConstraint is emitted for it at all. */
 void sign_with_unresolved_buffer(RSA *key, const unsigned char *msg, unsigned int msg_len) {
     unsigned char sig_buffer[UNRESOLVED_SIG_LEN];

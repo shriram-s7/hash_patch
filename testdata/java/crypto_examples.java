@@ -10,7 +10,7 @@ import java.security.Security;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
- * Demonstrates JCA/JCE usage patterns detected by PRATYAKSHA.
+ * Demonstrates JCA/JCE usage patterns detected by Hash Patch.
  * Each getInstance() call below should produce a CryptoAsset in the CBOM.
  */
 public class CryptoExamples {

@@ -5,7 +5,7 @@ crypto packages (crypto/rsa, crypto/ecdsa, crypto/aes, crypto/cipher,
 crypto/sha256, crypto/md5, crypto/des, crypto/rc4, etc.) as listed in
 rules/go_crypto.yaml.
 
-PRATYAKSHA constraints (enforced here):
+Hash Patch constraints (enforced here):
   - No algorithm names, OIDs, or patterns hardcoded in this file — all
     detection knowledge comes exclusively from rules/go_crypto.yaml.
   - Every CryptoAsset is backed by at least one Evidence with file, line,

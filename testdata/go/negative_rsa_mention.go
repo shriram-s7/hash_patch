@@ -4,7 +4,7 @@ import "fmt"
 
 // Negative fixture: RSA, AES, MD5, SHA1 appear only in comments,
 // string literals, variable names, and non-crypto struct methods.
-// PRATYAKSHA must produce ZERO CryptoAssets from this file.
+// Hash Patch must produce ZERO CryptoAssets from this file.
 
 // RSA is a public-key cryptosystem.
 // AES is an encryption standard.

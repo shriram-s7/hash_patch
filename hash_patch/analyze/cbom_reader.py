@@ -3,13 +3,13 @@ document back into OptimizerCandidate objects for Pillar 5 (Migration
 Optimiser).
 
 This is the inverse of hash_patch/emit/cyclonedx.py: rather than building a
-CBOM from a fresh ScanResult, `pratyaksha optimize` (hash_patch/cli.py)
-reads an EXISTING CBOM file (produced by a prior `pratyaksha scan`, possibly
+CBOM from a fresh ScanResult, `hash-patch optimize` (hash_patch/cli.py)
+reads an EXISTING CBOM file (produced by a prior `hash-patch scan`, possibly
 run separately, possibly across multiple targets merged by hand) and pulls
-out exactly the `pratyaksha:` properties P1/P2/P3 already attached —
-`pratyaksha:quantumStatus`, `pratyaksha:reachability`, the
-`pratyaksha:property.shelfLife.<category>` and
-`pratyaksha:property.blastRadius.<kind>.<name>.<line>` free-form properties
+out exactly the `hash_patch:` properties P1/P2/P3 already attached —
+`hash_patch:quantumStatus`, `hash_patch:reachability`, the
+`hash_patch:property.shelfLife.<category>` and
+`hash_patch:property.blastRadius.<kind>.<name>.<line>` free-form properties
 — never re-deriving or inventing any of them. See CLAUDE.md's "Output
 format" -> "Field mapping" for the exact property shapes this reads back.
 """
@@ -32,12 +32,12 @@ from hash_patch.model.optimizer import OptimizerCandidate
 _SHELF_LIFE_PREFIXES = (
     "hash_patch:property.shelfLife.",
     "hash-patch:property.shelfLife.",
-    "pratyaksha:property.shelfLife.",
+    "hash_patch:property.shelfLife.",
 )
 _BLAST_RADIUS_PREFIXES = (
     "hash_patch:property.blastRadius.",
     "hash-patch:property.blastRadius.",
-    "pratyaksha:property.blastRadius.",
+    "hash_patch:property.blastRadius.",
 )
 
 
@@ -49,7 +49,7 @@ def _get_prop(props: dict[str, str], suffix: str) -> str | None:
     return (
         props.get(f"hash_patch:{suffix}")
         or props.get(f"hash-patch:{suffix}")
-        or props.get(f"pratyaksha:{suffix}")
+        or props.get(f"hash_patch:{suffix}")
     )
 
 

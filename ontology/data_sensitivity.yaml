@@ -37,12 +37,12 @@
 # placeholder with much weaker categorical grounding" (medium).
 #
 # ===========================================================================
-# Matching (see pratyaksha/detect/shelf_life/ontology.py)
+# Matching (see hash_patch/detect/shelf_life/ontology.py)
 # ===========================================================================
 # name_patterns are matched case-insensitively as a SUBSTRING against a
 # candidate identifier (a call argument, an enclosing function/method name,
 # an enclosing class name, or a same-class dataclass/pydantic field name /
-# Java field or getter name — see pratyaksha/detect/shelf_life/data_context.py
+# Java field or getter name — see hash_patch/detect/shelf_life/data_context.py
 # and docs/SHELF_LIFE.md). Patterns are deliberately listed in BOTH
 # snake_case and concatenated/no-separator form (e.g. "account_number" and
 # "accountnumber") where the underscore would otherwise prevent a match

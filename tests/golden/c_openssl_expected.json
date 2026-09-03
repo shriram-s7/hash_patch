@@ -17,19 +17,19 @@
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"MD5_Init(&ctx)\", \"source_type\": \"source\"}",
             "line": 43,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1139
           },
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"MD5_Update(&ctx, data, len)\", \"source_type\": \"source\"}",
             "line": 44,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1159
           },
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"MD5_Final(digest, &ctx)\", \"source_type\": \"source\"}",
             "line": 45,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1192
           }
         ]
@@ -75,7 +75,7 @@
           {
             "additionalContext": "{\"column\": 32, \"snippet\": \"EVP_aes_256_gcm()\", \"source_type\": \"source\"}",
             "line": 34,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 896
           }
         ]
@@ -119,19 +119,19 @@
           {
             "additionalContext": "{\"column\": 45, \"snippet\": \"EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL)\", \"source_type\": \"source\"}",
             "line": 13,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 326
           },
           {
             "additionalContext": "{\"column\": 15, \"snippet\": \"RSA_new()\", \"source_type\": \"source\"}",
             "line": 20,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 472
           },
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"RSA_generate_key_ex(rsa, 2048, bne, NULL)\", \"source_type\": \"source\"}",
             "line": 24,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 575
           }
         ]
@@ -176,19 +176,19 @@
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"DES_set_key(&key1, &ks1)\", \"source_type\": \"source\"}",
             "line": 72,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1917
           },
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"DES_set_key(&key2, &ks2)\", \"source_type\": \"source\"}",
             "line": 73,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1947
           },
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"DES_set_key(&key3, &ks3)\", \"source_type\": \"source\"}",
             "line": 74,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1977
           }
         ]
@@ -233,7 +233,7 @@
           {
             "additionalContext": "{\"column\": 33, \"snippet\": \"EVP_sha256()\", \"source_type\": \"source\"}",
             "line": 82,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 2288
           }
         ]
@@ -278,19 +278,19 @@
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"SHA1_Init(&ctx)\", \"source_type\": \"source\"}",
             "line": 52,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1388
           },
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"SHA1_Update(&ctx, data, len)\", \"source_type\": \"source\"}",
             "line": 53,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1409
           },
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"SHA1_Final(digest, &ctx)\", \"source_type\": \"source\"}",
             "line": 54,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1443
           }
         ]
@@ -336,7 +336,7 @@
           {
             "additionalContext": "{\"column\": 4, \"snippet\": \"DES_ede3_cbc_encrypt(in, out, len, &ks1, &ks2, &ks3, &ivec, DES_ENCRYPT)\", \"source_type\": \"source\"}",
             "line": 75,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 2007
           }
         ]
@@ -381,7 +381,7 @@
           {
             "additionalContext": "{\"column\": 43, \"snippet\": \"EC_KEY_new_by_curve_name(NID_X9_62_prime256v1)\", \"source_type\": \"source\"}",
             "line": 59,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1592
           }
         ]
@@ -425,13 +425,13 @@
           {
             "additionalContext": "{\"column\": 18, \"snippet\": \"EC_KEY_new_by_curve_name(NID_X9_62_prime256v1)\", \"source_type\": \"source\"}",
             "line": 59,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1567
           },
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"EC_KEY_generate_key(key)\", \"source_type\": \"source\"}",
             "line": 61,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\c\\crypto_examples.c",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\crypto_examples.c",
             "offset": 1638
           }
         ]

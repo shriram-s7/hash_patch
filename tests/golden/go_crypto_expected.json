@@ -17,7 +17,7 @@
           {
             "additionalContext": "{\"column\": 6, \"snippet\": \"md5.New()\", \"source_type\": \"source\"}",
             "line": 32,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 592
           }
         ]
@@ -61,7 +61,7 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"rsa.GenerateKey(rand.Reader, 2048)\", \"source_type\": \"source\"}",
             "line": 18,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 268
           }
         ]
@@ -105,7 +105,7 @@
           {
             "additionalContext": "{\"column\": 15, \"snippet\": \"aes.NewCipher(key)\", \"source_type\": \"source\"}",
             "line": 23,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 421
           }
         ]
@@ -150,7 +150,7 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"sha256.Sum256(data)\", \"source_type\": \"source\"}",
             "line": 56,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 1150
           }
         ]
@@ -195,7 +195,7 @@
           {
             "additionalContext": "{\"column\": 6, \"snippet\": \"sha1.New()\", \"source_type\": \"source\"}",
             "line": 39,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 724
           }
         ]
@@ -240,7 +240,7 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"des.NewTripleDESCipher(key[:24])\", \"source_type\": \"source\"}",
             "line": 51,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 1021
           }
         ]
@@ -285,7 +285,7 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"cipher.NewGCM(block)\", \"source_type\": \"source\"}",
             "line": 27,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 486
           }
         ]
@@ -330,7 +330,7 @@
           {
             "additionalContext": "{\"column\": 26, \"snippet\": \"elliptic.P256()\", \"source_type\": \"source\"}",
             "line": 46,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 883
           }
         ]
@@ -374,7 +374,7 @@
           {
             "additionalContext": "{\"column\": 8, \"snippet\": \"ecdsa.GenerateKey(elliptic.P256(), rand.Reader)\", \"source_type\": \"source\"}",
             "line": 46,
-            "location": "D:\\CBOM-SIH\\pratyaksha\\testdata\\go\\crypto_examples.go",
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\crypto_examples.go",
             "offset": 865
           }
         ]

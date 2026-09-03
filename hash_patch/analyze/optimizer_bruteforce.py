@@ -1,7 +1,7 @@
 """hash_patch/analyze/optimizer_bruteforce.py — Pillar 5 (Migration
 Optimiser) optimality-gap validation.
 
-This is a TESTING/VALIDATION TOOL, not part of the normal `pratyaksha
+This is a TESTING/VALIDATION TOOL, not part of the normal `hash_patch
 optimize` CLI path — see docs/OPTIMISER.md. Real scans routinely produce
 more than `_MAX_BRUTE_FORCE_CANDIDATES` migration candidates, at which
 point an exact solve becomes combinatorially infeasible; this module

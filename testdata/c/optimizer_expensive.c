@@ -5,12 +5,12 @@
  * site in this file, all correlating (same-file, nearest-by-line, per
  * docs/BLAST_RADIUS.md) to the SAME merged "ECDSA" CryptoAsset (ECDSA_sign
  * carries no parameter_set — rules/c_openssl.yaml — so all five call
- * sites merge into one asset id, per pratyaksha/model/assets.py's
+ * sites merge into one asset id, per hash_patch/model/assets.py's
  * derive_asset_id). Each buffer produces its own BlastRadiusFinding
- * (0.5 engineer-days each, pratyaksha/analyze/blast_radius.py's flat base
+ * (0.5 engineer-days each, hash_patch/analyze/blast_radius.py's flat base
  * estimate), so this asset's TOTAL blast-radius cost is 2.5 engineer-days —
  * 5x the flat no-blast-radius-data default (see
- * pratyaksha/analyze/risk_score.py::DEFAULT_COST_DAYS_NO_BLAST_RADIUS) —
+ * hash_patch/analyze/risk_score.py::DEFAULT_COST_DAYS_NO_BLAST_RADIUS) —
  * deliberately EXPENSIVE. Go and C get no P1/P2 data (see
  * docs/REACHABILITY.md / docs/SHELF_LIFE.md), so this asset's reachability
  * stays UNKNOWN and its shelf-life stays the documented default — real,

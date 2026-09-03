@@ -280,7 +280,7 @@ def run_optimizer(
     scenarios: Sequence[QuantumArrivalScenario] | None = None,
     excluded_count: int = 0,
 ) -> OptimizationReport:
-    """End-to-end entry point used by `pratyaksha optimize`
+    """End-to-end entry point used by `hash-patch optimize`
     (hash_patch/cli.py): for each quantum-arrival scenario, compute a
     scenario-adjusted greedy plan and naive baseline (see module docstring
     on the scenario urgency multiplier), and the headline risk-reduction

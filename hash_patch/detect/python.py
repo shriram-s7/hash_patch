@@ -17,7 +17,7 @@ Uses tree-sitter to parse Python source files and identify calls to:
 All detection knowledge lives exclusively in rules/python_crypto.yaml.
 No algorithm names, OIDs, or patterns are hardcoded in this file.
 
-PRATYAKSHA constraints enforced here:
+Hash Patch constraints enforced here:
   - Rules-only: every lookup goes through the YAML index; no `if name == "RSA"`.
   - Evidence: every CryptoAsset carries an Evidence with file, 1-based line,
     column, byte offset, and snippet from the tree-sitter node.

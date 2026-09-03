@@ -29,7 +29,7 @@ _CRYPTO_MODE_VALUES = {m.value for m in CryptoMode}
 
 # Every asset still needs at least one Evidence entry regardless of
 # confidence (an asset with none is refused below -- CLAUDE.md hard
-# constraint #3). `pratyaksha:confidence` itself comes straight from
+# constraint #3). `hash_patch:confidence` itself comes straight from
 # CryptoAsset.confidence: "confirmed" for a real detector finding, or
 # "inferred" for a name-pattern-only guess (e.g. the blast-radius db_column
 # fallback synthetic asset built in hash_patch/cli.py) that still carries
@@ -56,7 +56,7 @@ def _derive_serial_number(result: ScanResult) -> UUID:
 def _map_crypto_functions(functions: list[str]) -> tuple[list[CryptoFunction], list[str]]:
     """Split our free-form crypto_functions strings into ones that fit the
     CycloneDX CryptoFunction enum and ones that don't. Unmapped values are
-    never dropped -- the caller must surface them via a pratyaksha: property.
+    never dropped -- the caller must surface them via a hash_patch: property.
     """
     mapped: list[CryptoFunction] = []
     unmapped: list[str] = []

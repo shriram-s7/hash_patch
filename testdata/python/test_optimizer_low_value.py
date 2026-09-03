@@ -8,7 +8,7 @@ rule: "it has no callers at all and sits directly in a test file"). The
 X25519 call below uses a generic, non-crypto-suggestive parameter name, so
 Pillar 2 (Shelf-Life) also finds no signal for it -- both axes default,
 giving this finding the lowest possible risk score in this corpus (see
-pratyaksha/analyze/risk_score.py's near-zero INERT reachability multiplier
+hash_patch/analyze/risk_score.py's near-zero INERT reachability multiplier
 and its default shelf-life constant). See docs/OPTIMISER.md.
 """
 

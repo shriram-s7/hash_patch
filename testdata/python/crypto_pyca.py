@@ -1,5 +1,5 @@
 """
-crypto_pyca.py — Positive fixture for PRATYAKSHA Python detector.
+crypto_pyca.py — Positive fixture for Hash Patch Python detector.
 
 Demonstrates PyCA (cryptography library) and pycryptodome usage patterns.
 Every algorithm reference below is an actual API call that must produce a
