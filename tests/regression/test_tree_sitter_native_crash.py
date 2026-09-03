@@ -163,7 +163,7 @@ def test_vendored_pyca_files_scan_repeatedly_without_crashing(tmp_path: Path) ->
     for i in range(3):
         cbom_out = tmp_path / f"regression_{i}.cbom.json"
         completed = subprocess.run(
-            _pratyaksha_cli_command("scan", str(REGRESSION_TESTDATA_DIR), "--output", str(cbom_out)),
+            _hash_patch_cli_command("scan", str(REGRESSION_TESTDATA_DIR), "--output", str(cbom_out)),
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,

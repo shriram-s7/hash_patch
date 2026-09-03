@@ -83,6 +83,19 @@ def _regen_golden(doc: dict) -> None:  # type: ignore[type-arg]
 # ---------------------------------------------------------------------------
 
 
+def _normalize_doc(doc: dict) -> dict:  # type: ignore[type-arg]
+    d = json.loads(json.dumps(doc))
+    d.pop("serialNumber", None)
+    for c in d.get("components", []):
+        for occ in c.get("evidence", {}).get("occurrences", []):
+            if "location" in occ:
+                loc = occ["location"].replace("\\", "/")
+                idx = loc.find("testdata/")
+                if idx != -1:
+                    occ["location"] = loc[idx:]
+    return d
+
+
 def test_golden_file_exists() -> None:
     """The golden file must exist (checked in before any comparison test)."""
     if REGEN:
@@ -115,7 +128,8 @@ def test_java_golden_corpus() -> None:
     live_parsed = json.loads(live_json)
     golden_parsed = json.loads(golden_json)
 
-    assert live_parsed == golden_parsed, (
+    assert live_parsed.get("serialNumber", "").startswith("urn:uuid:")
+    assert _normalize_doc(live_parsed) == _normalize_doc(golden_parsed), (
         "Live CBOM does not match golden file.\n"
         f"Golden:  {GOLDEN_FILE}\n"
         f"Live components: {[c['name'] for c in live_parsed.get('components', [])]}\n"

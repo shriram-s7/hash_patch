@@ -50,6 +50,19 @@ def _regen_golden(doc: dict) -> None:  # type: ignore[type-arg]
     print(f"\n[regen] Wrote golden: {GOLDEN_FILE}")
 
 
+def _normalize_doc(doc: dict) -> dict:  # type: ignore[type-arg]
+    d = json.loads(json.dumps(doc))
+    d.pop("serialNumber", None)
+    for c in d.get("components", []):
+        for occ in c.get("evidence", {}).get("occurrences", []):
+            if "location" in occ:
+                loc = occ["location"].replace("\\", "/")
+                idx = loc.find("testdata/")
+                if idx != -1:
+                    occ["location"] = loc[idx:]
+    return d
+
+
 def test_golden_file_exists() -> None:
     if REGEN:
         pytest.skip("Regen mode")
@@ -65,7 +78,8 @@ def test_python_golden_corpus() -> None:
     assert GOLDEN_FILE.is_file()
     live = json.loads(render_cbom_json(doc))
     golden = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
-    assert live == golden, (
+    assert live.get("serialNumber", "").startswith("urn:uuid:")
+    assert _normalize_doc(live) == _normalize_doc(golden), (
         "Live CBOM does not match golden file.\n"
         f"Live:   {[c['name'] for c in live.get('components', [])]}\n"
         f"Golden: {[c['name'] for c in golden.get('components', [])]}\n"
