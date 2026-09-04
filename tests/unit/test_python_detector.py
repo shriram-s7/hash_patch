@@ -37,6 +37,9 @@ TESTDATA_PY = REPO_ROOT / "testdata" / "python"
 RULES_PATH = REPO_ROOT / "rules" / "python_crypto.yaml"
 POSITIVE_FIXTURE = TESTDATA_PY / "crypto_pyca.py"
 NEGATIVE_FIXTURE = TESTDATA_PY / "negative_rsa_mention.py"
+HASHLIB_ALONE_FIXTURE = TESTDATA_PY / "hashlib_sha256_alone.py"
+HASHLIB_EXAMPLES_FIXTURE = TESTDATA_PY / "hashlib_examples.py"
+PYNACL_JWT_FIXTURE = TESTDATA_PY / "pynacl_and_jwt_examples.py"
 
 
 # ---------------------------------------------------------------------------
@@ -349,6 +352,14 @@ def test_pyca_index_has_hashes_namespace() -> None:
     assert "SHA256" in index["hashes"], "hashes must map SHA256"
 
 
+def test_pyca_index_has_hashlib_namespace() -> None:
+    rules = _load_rules()
+    index = _build_pyca_index(rules)
+    assert "hashlib" in index, "pyca_modules must contain a 'hashlib' namespace"
+    for attr in ("MD5", "SHA1", "SHA256", "SHA384", "SHA512", "SHA3_256", "SHA3_384", "SHA3_512"):
+        assert attr in index["hashlib"], f"hashlib namespace missing {attr}"
+
+
 def test_pycryptodome_index_has_aes_new() -> None:
     rules = _load_rules()
     index = _build_pycryptodome_index(rules)
@@ -393,6 +404,225 @@ def test_collect_calls_finds_attribute_calls() -> None:
     assert "SHA256" in attrs
     assert "RSA" in objs
     assert "generate" in attrs
+
+
+# ---------------------------------------------------------------------------
+# hashlib coverage-gap regression (rules/python_crypto.yaml's `hashlib`
+# namespace + hashlib.new()/hmac.new() special-shape handling).
+#
+# CONFIRMED BUG: before this namespace existed, a file containing exactly
+#   import hashlib
+#   hashlib.sha256(value.encode()).hexdigest()
+# produced ZERO findings when scanned in isolation. This exact bug class —
+# a stdlib module with zero rule coverage — must never silently recur.
+# ---------------------------------------------------------------------------
+
+
+def test_hashlib_alone_fixture_exists() -> None:
+    assert HASHLIB_ALONE_FIXTURE.is_file()
+
+
+def test_hashlib_examples_fixture_exists() -> None:
+    assert HASHLIB_EXAMPLES_FIXTURE.is_file()
+
+
+def test_hashlib_sha256_alone_produces_exactly_one_finding(
+    detector: PythonCryptoDetector,
+) -> None:
+    """The literal regression test: `hashlib.sha256(...)`, scanned in
+    isolation, must produce exactly one SHA-256 finding with quantum_status
+    weakened-by-grover — never zero.
+    """
+    assets = detector.detect(HASHLIB_ALONE_FIXTURE)
+    assert len(assets) == 1, f"Expected exactly 1 finding, got: {[a.name for a in assets]}"
+    asset = assets[0]
+    assert asset.name == "SHA-256"
+    assert asset.quantum_status == QuantumStatus.WEAKENED_BY_GROVER
+    assert len(asset.evidence) == 1
+    _assert_evidence_populated(asset.evidence[0], HASHLIB_ALONE_FIXTURE)
+
+
+def test_hashlib_direct_call_detected_via_alone_fixture(detector: PythonCryptoDetector) -> None:
+    """hashlib.sha256(...) — direct-call form, resolved through the same
+    Pattern A namespace-lookup mechanism as hashes.SHA256(), now that
+    rules/python_crypto.yaml has a `hashlib` namespace."""
+    assets = detector.detect(HASHLIB_ALONE_FIXTURE)
+    sha256_hits = _find_assets(assets, "SHA-256")
+    assert sha256_hits, f"hashlib.sha256(...) not detected. Got: {[a.name for a in assets]}"
+    snippets = [e.snippet for a in sha256_hits for e in a.evidence]
+    assert any("hashlib.sha256" in s for s in snippets), snippets
+
+
+def test_hashlib_new_string_literal_detected(detector: PythonCryptoDetector) -> None:
+    """hashlib.new("md5", data) — the string-based constructor form must
+    resolve the literal and produce an MD5 finding, broken-classically."""
+    assets = detector.detect(HASHLIB_EXAMPLES_FIXTURE)
+    md5_hits = _find_assets(assets, "MD5")
+    assert md5_hits, f"hashlib.new('md5') not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.BROKEN_CLASSICALLY for a in md5_hits)
+    snippets = [e.snippet for a in md5_hits for e in a.evidence]
+    assert any("hashlib.new" in s for s in snippets), snippets
+
+
+def test_hmac_new_hashlib_digestmod_reference_detected(detector: PythonCryptoDetector) -> None:
+    """hmac.new(secret, payload, hashlib.sha256) — the bare hashlib.sha256
+    reference (not itself a call) passed as the digestmod argument must be
+    recognised as a SHA-256 hash-algorithm usage, weakened-by-grover. This
+    is the second real missed finding from the reproduction corpus
+    (python/orchestration/app/crypto/wrappers.py)."""
+    assets = detector.detect(HASHLIB_EXAMPLES_FIXTURE)
+    sha256_hits = _find_assets(assets, "SHA-256")
+    assert sha256_hits, f"hmac.new's hashlib.sha256 digestmod not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in sha256_hits)
+    snippets = [e.snippet for a in sha256_hits for e in a.evidence]
+    assert any("hmac.new" in s for s in snippets), snippets
+
+
+def test_hashlib_new_unresolvable_literal_produces_unresolved(detector: PythonCryptoDetector) -> None:
+    """hashlib.new(algo_name, data) where algo_name is a variable, not a
+    string literal, must emit an UNRESOLVED finding with confidence LOW rather
+    than being discarded."""
+    assets = detector.detect(HASHLIB_EXAMPLES_FIXTURE)
+    assert len(assets) == 3, (
+        f"Expected exactly 3 findings (MD5, SHA-256, UNRESOLVED), got: "
+        f"{[a.name for a in assets]}"
+    )
+    unresolved = [a for a in assets if a.name == "UNRESOLVED"]
+    assert len(unresolved) == 1
+    assert unresolved[0].confidence == "LOW"
+    assert unresolved[0].properties.get("api") == "hashlib.new"
+    assert unresolved[0].properties.get("resolution_path") == "null"
+
+
+def test_negative_fixture_no_longer_contains_hashlib_calls() -> None:
+    """Guards against the exact way this bug was previously masked: the
+    negative fixture used to contain hashlib.md5()/hashlib.sha1() calls
+    commented as "not detected" — i.e. the coverage gap was baked into a
+    'must produce zero assets' test as if it were correct behavior. Those
+    calls were moved out; this test fails loudly if they ever come back
+    here, since they would now (correctly) produce findings and break
+    test_negative_fixture_produces_no_assets for the wrong reason."""
+    text = NEGATIVE_FIXTURE.read_text(encoding="utf-8")
+    assert "hashlib.md5(" not in text
+    assert "hashlib.sha1(" not in text
+
+
+# ---------------------------------------------------------------------------
+# PyNaCl + PyJWT coverage (found via the post-hashlib-fix audit — see
+# docs/COVERAGE.md). Pattern C (bare constructor calls) and Pattern D
+# (jwt.encode's algorithm= literal).
+# ---------------------------------------------------------------------------
+
+
+def test_pynacl_jwt_fixture_exists() -> None:
+    assert PYNACL_JWT_FIXTURE.is_file()
+
+
+def test_pynacl_box_and_privatekey_merge_into_x25519(detector: PythonCryptoDetector) -> None:
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    hits = _find_assets(assets, "X25519")
+    assert hits, f"PyNaCl X25519 usage not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.BROKEN_BY_SHOR for a in hits)
+    snippets = [e.snippet for a in hits for e in a.evidence]
+    assert any("PrivateKey.generate" in s for s in snippets), snippets
+    assert any(s.startswith("Box(") for s in snippets), snippets
+
+
+def test_pynacl_signingkey_detected_as_ed25519(detector: PythonCryptoDetector) -> None:
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    hits = _find_assets(assets, "Ed25519")
+    assert hits, f"SigningKey.generate() not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.BROKEN_BY_SHOR for a in hits)
+
+
+def test_pynacl_secretbox_detected_as_xsalsa20_poly1305(detector: PythonCryptoDetector) -> None:
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    hits = _find_assets(assets, "XSalsa20-Poly1305")
+    assert hits, f"SecretBox(...) not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in hits)
+
+
+def test_jwt_encode_hs256_detected_as_hmac(detector: PythonCryptoDetector) -> None:
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    hits = _find_assets(assets, "HMAC")
+    assert hits, f"jwt.encode(algorithm='HS256') not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in hits)
+
+
+def test_jwt_encode_rs256_detected_as_rsa_signature(detector: PythonCryptoDetector) -> None:
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    hits = _find_assets(assets, "RSA")
+    assert hits, f"jwt.encode(algorithm='RS256') not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.BROKEN_BY_SHOR for a in hits)
+    assert all(a.primitive.value == "signature" for a in hits)
+
+
+def test_jwt_encode_es384_detected_as_ecdsa(detector: PythonCryptoDetector) -> None:
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    hits = _find_assets(assets, "ECDSA")
+    assert hits, f"jwt.encode(algorithm='ES384') not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.BROKEN_BY_SHOR for a in hits)
+    assert all(a.parameter_set == "384" for a in hits)
+
+
+def test_jwt_encode_dynamic_algorithm_produces_unresolved(detector: PythonCryptoDetector) -> None:
+    """sign_dynamic()'s `algorithm=alg` (a variable, not a literal) must
+    emit an UNRESOLVED finding with confidence LOW rather than being discarded."""
+    assets = detector.detect(PYNACL_JWT_FIXTURE)
+    assert len(assets) == 7, (
+        f"Expected exactly 7 findings (6 resolvable + UNRESOLVED), got: {[a.name for a in assets]}"
+    )
+    unresolved = [a for a in assets if a.name == "UNRESOLVED"]
+    assert len(unresolved) == 1
+    assert unresolved[0].confidence == "LOW"
+    assert unresolved[0].properties.get("api") == "jwt.encode"
+    assert unresolved[0].properties.get("resolution_path") == "null"
+
+
+def test_bare_constructor_index_has_expected_classes() -> None:
+    rules = _load_rules()
+    from hash_patch.detect.python import _build_bare_constructor_index
+
+    index = _build_bare_constructor_index(rules)
+    for cls in ("Box", "PrivateKey", "SigningKey", "SecretBox"):
+        assert cls in index, f"bare_constructors missing {cls}"
+
+
+def test_jwt_algorithm_index_has_expected_algs() -> None:
+    rules = _load_rules()
+    from hash_patch.detect.python import _build_jwt_algorithm_index
+
+    index = _build_jwt_algorithm_index(rules)
+    for alg in ("HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "PS256", "ES256", "ES384", "ES512"):
+        assert alg in index, f"jwt_algorithms missing {alg}"
+
+
+def test_bare_call_not_collected_without_bare_names() -> None:
+    """The default (no bare_names passed) must behave exactly as before —
+    _collect_calls(root_node) alone never collects a bare call, even one
+    that WOULD match if bare_names were supplied."""
+    import tree_sitter_python as _tspy
+    from tree_sitter import Language, Parser
+
+    lang = Language(_tspy.language())
+    parser = Parser(lang)
+    src = b"Box(sk, pk)\n"
+    tree = parser.parse(src)
+    calls = _collect_calls(tree.root_node)
+    assert calls == [], f"Expected no calls without bare_names, got {calls}"
+
+
+def test_bare_call_collected_with_matching_bare_names() -> None:
+    import tree_sitter_python as _tspy
+    from tree_sitter import Language, Parser
+
+    lang = Language(_tspy.language())
+    parser = Parser(lang)
+    src = b"Box(sk, pk)\nunrelated_call(1)\n"
+    tree = parser.parse(src)
+    calls = _collect_calls(tree.root_node, bare_names=frozenset({"Box"}))
+    assert len(calls) == 1
+    assert calls[0]["bare_call"] == "Box"
 
 
 def test_collect_calls_ignores_plain_function_calls() -> None:

@@ -1,0 +1,123 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.2.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 27, \"snippet\": \"EVP_sha256()\", \"source_type\": \"source\"}",
+            "line": 22,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\evp_digest_and_hmac_examples.c",
+            "offset": 988
+          },
+          {
+            "additionalContext": "{\"column\": 35, \"snippet\": \"EVP_sha256()\", \"source_type\": \"source\"}",
+            "line": 34,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\evp_digest_and_hmac_examples.c",
+            "offset": 1465
+          }
+        ]
+      },
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:6907b4f1b76700a56becac6358f94488",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "mac"
+        },
+        "assetType": "algorithm"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 4, \"snippet\": \"HMAC_Init_ex(ctx, key, keylen, EVP_sha256(), NULL)\", \"source_type\": \"source\"}",
+            "line": 34,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\c\\evp_digest_and_hmac_examples.c",
+            "offset": 1434
+          }
+        ]
+      },
+      "name": "HMAC",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c"
+    },
+    {
+      "ref": "crypto-asset:6907b4f1b76700a56becac6358f94488"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "Hash Patch",
+          "type": "application",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:55a0b6d8-19cd-5c7f-a881-d2f4a56611af",
+  "specVersion": "1.6",
+  "version": 1
+}

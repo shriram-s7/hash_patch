@@ -34,6 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTDATA_C = REPO_ROOT / "testdata" / "c"
 RULES_PATH = REPO_ROOT / "rules" / "c_openssl.yaml"
 POSITIVE_FIXTURE = TESTDATA_C / "crypto_examples.c"
+EVP_HMAC_FIXTURE = TESTDATA_C / "evp_digest_and_hmac_examples.c"
 NEGATIVE_FIXTURE = TESTDATA_C / "negative_rsa_mention.c"
 
 
@@ -376,3 +377,49 @@ def test_collect_matches_ignores_non_crypto_calls() -> None:
         set(rules.get("string_arg_functions", [])),
     )
     assert matches == []
+
+
+# ---------------------------------------------------------------------------
+# EVP_DigestInit_ex/EVP_MD selector (regression lock) + HMAC (real gap) —
+# both checked in the post-hashlib-fix audit (see docs/COVERAGE.md).
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def evp_hmac_assets(detector: COpenSSLDetector) -> list[CryptoAsset]:
+    return detector.detect(EVP_HMAC_FIXTURE)
+
+
+def test_evp_hmac_fixture_exists() -> None:
+    assert EVP_HMAC_FIXTURE.is_file()
+
+
+def test_evp_digestinit_ex_sha256_selector_detected(evp_hmac_assets: list[CryptoAsset]) -> None:
+    """EVP_DigestInit_ex(ctx, EVP_sha256(), NULL) — regression lock: this
+    already worked before evp_digest_and_hmac_examples.c existed, since
+    EVP_sha256() is matched independently of its enclosing call."""
+    hits = _find_assets(evp_hmac_assets, "SHA-256")
+    assert hits, f"EVP_sha256() selector not detected. Got: {[a.name for a in evp_hmac_assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in hits)
+
+
+def test_hmac_init_ex_detected(evp_hmac_assets: list[CryptoAsset]) -> None:
+    """HMAC_Init_ex(...) must ALSO produce a distinct HMAC finding, additive
+    to the SHA-256 finding its own EVP_sha256() selector argument produces —
+    this file had zero HMAC coverage before this fix."""
+    hits = _find_assets(evp_hmac_assets, "HMAC")
+    assert hits, f"HMAC_Init_ex not detected. Got: {[a.name for a in evp_hmac_assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in hits)
+    assert all(a.primitive.value == "mac" for a in hits)
+
+
+def test_evp_hmac_fixture_component_count(evp_hmac_assets: list[CryptoAsset]) -> None:
+    assert len(evp_hmac_assets) == 2, f"Expected 2 findings, got: {[a.name for a in evp_hmac_assets]}"
+
+
+def test_functions_index_has_hmac_entries() -> None:
+    rules = _load_rules()
+    functions = rules.get("functions", {})
+    for name in ("HMAC_Init_ex", "HMAC_Init", "HMAC"):
+        assert name in functions, f"functions missing {name}"
+        assert functions[name]["primitive"] == "mac"

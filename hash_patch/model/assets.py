@@ -15,7 +15,7 @@ from hash_patch.model.evidence import Evidence
 # per CLAUDE.md's "Name" section, this is never merged into the confirmed
 # inventory as if it were equivalent; it must stay visibly distinguishable in
 # the emitted CBOM (hash_patch:confidence property, see emit/cyclonedx.py).
-Confidence = Literal["confirmed", "inferred"]
+Confidence = Literal["confirmed", "inferred", "HIGH", "LOW", "high", "low"]
 
 
 class AssetType(str, Enum):
@@ -63,6 +63,7 @@ def derive_asset_id(
     name: str,
     parameter_set: str | None,
     mode: str | None,
+    extra: str | None = None,
 ) -> str:
     """Deterministically derive a CryptoAsset id from its identity fields.
 
@@ -70,14 +71,15 @@ def derive_asset_id(
     must always yield the same id, across processes and across runs, so that
     scan output is byte-identical for identical input.
     """
-    basis = "|".join(
-        [
-            asset_type.value,
-            name,
-            parameter_set or "",
-            mode or "",
-        ]
-    )
+    parts = [
+        asset_type.value,
+        name,
+        parameter_set or "",
+        mode or "",
+    ]
+    if extra:
+        parts.append(extra)
+    basis = "|".join(parts)
     digest = hashlib.sha256(basis.encode("utf-8")).hexdigest()[:32]
     return f"crypto-asset:{digest}"
 
@@ -108,10 +110,11 @@ class CryptoAsset(BaseModel):
         primitive: Primitive,
         parameter_set: str | None = None,
         mode: str | None = None,
+        extra_id_seed: str | None = None,
         **kwargs: object,
     ) -> CryptoAsset:
         """Construct a CryptoAsset with its id derived deterministically."""
-        asset_id = derive_asset_id(asset_type, name, parameter_set, mode)
+        asset_id = derive_asset_id(asset_type, name, parameter_set, mode, extra=extra_id_seed)
         return cls(
             id=asset_id,
             asset_type=asset_type,

@@ -161,20 +161,28 @@ def _try_collect(
 
         if args_node:
             if fn_text in macro_arg_functions:
+                m_matched = False
                 for child in args_node.children:
                     if child.type == "identifier":
                         id_text = child.text.decode("utf-8", errors="replace")
                         m_rule = macro_args.get(id_text)
                         if m_rule is not None:
                             results.append((child, call_node, m_rule))
+                            m_matched = True
+                if not m_matched:
+                    results.append((args_node, call_node, {"canonical": "UNRESOLVED", "unresolved": True, "api": fn_text}))
 
             if fn_text in string_arg_functions:
+                s_matched = False
                 for child in args_node.children:
                     if child.type == "string_literal":
                         str_text = child.text.decode("utf-8", errors="replace").strip('"')
                         s_rule = string_args.get(str_text)
                         if s_rule is not None:
                             results.append((child, call_node, s_rule))
+                            s_matched = True
+                if not s_matched:
+                    results.append((args_node, call_node, {"canonical": "UNRESOLVED", "unresolved": True, "api": fn_text}))
 
 
 # ---------------------------------------------------------------------------
@@ -238,12 +246,31 @@ class COpenSSLDetector(Detector):
         locator = str(target)
 
         for pos_node, call_node, rule in matches:
-            canonical: str = rule["canonical"]
-            primitive = _primitive_from_str(rule.get("primitive"))
-            parameter_set: str | None = rule.get("parameter_set")
-            mode: str | None = rule.get("mode")
-            quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
-            oid: str | None = rule.get("oid")
+            is_unresolved = rule.get("unresolved", False)
+            if is_unresolved:
+                canonical = "UNRESOLVED"
+                primitive = Primitive.UNKNOWN
+                parameter_set = None
+                mode = None
+                quantum_status = QuantumStatus.UNKNOWN
+                oid = None
+                confidence: Confidence = "LOW"
+                api_name = rule.get("api", "openssl.call")
+                properties = {
+                    "api": api_name,
+                    "resolution_path": "null",
+                }
+                extra_id_seed = api_name
+            else:
+                canonical = rule["canonical"]
+                primitive = _primitive_from_str(rule.get("primitive"))
+                parameter_set = rule.get("parameter_set")
+                mode = rule.get("mode")
+                quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
+                oid = rule.get("oid")
+                confidence = "confirmed"
+                properties = {}
+                extra_id_seed = None
 
             line = pos_node.start_point.row + 1
             column = pos_node.start_point.column
@@ -269,6 +296,9 @@ class COpenSSLDetector(Detector):
                 mode=mode,
                 quantum_status=quantum_status,
                 oid=oid,
+                confidence=confidence,
+                properties=properties,
+                extra_id_seed=extra_id_seed,
                 evidence=[evidence],
             )
 

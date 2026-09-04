@@ -166,19 +166,17 @@ def _classify_evidence(ev: Evidence, contexts: dict[str, ReachabilityContext]) -
     return ctx.classify_occurrence(ev.locator, ev.line)
 
 
-def apply_reachability(assets: list[CryptoAsset], scanned_files: Sequence[Path]) -> None:
-    """Classify reachability in place for every asset with Python and/or Java
-    evidence, using ONE directory-level call graph per language built from
-    every file of that language in `scanned_files` (Step 1: per file *set*,
-    not per file).
-
-    Assets with no Python/Java evidence at all (pure Go/C findings) are left
-    untouched at the model default (`Reachability.UNKNOWN`).
+def build_reachability_contexts(scanned_files: Sequence[Path]) -> dict[str, ReachabilityContext]:
+    """Build one `ReachabilityContext` (call graph + tagged entry points +
+    test-file rule) per language present in `scanned_files`, keyed by file
+    suffix (".py" / ".java"). Extracted from `apply_reachability` so other
+    analyses (e.g. hash_patch/analyze/call_relations.py) can reuse the exact
+    same call graph rather than re-parsing the file set from scratch.
     """
     python_files = [f for f in scanned_files if f.suffix.lower() == ".py"]
     java_files = [f for f in scanned_files if f.suffix.lower() == ".java"]
     if not python_files and not java_files:
-        return
+        return {}
 
     config = load_entrypoint_config()
     contexts: dict[str, ReachabilityContext] = {}
@@ -193,6 +191,16 @@ def apply_reachability(assets: list[CryptoAsset], scanned_files: Sequence[Path])
         entrypoints = tag_java_entrypoints(graph.function_infos, config)
         contexts[".java"] = ReachabilityContext(graph, entrypoints, is_java_test_file)
 
+    return contexts
+
+
+def apply_reachability_with_contexts(
+    assets: list[CryptoAsset], contexts: dict[str, ReachabilityContext]
+) -> None:
+    """Classify reachability in place given already-built contexts (see
+    `build_reachability_contexts`). Assets with no evidence matching any
+    context's language are left untouched at the model default.
+    """
     for asset in assets:
         best = Reachability.INERT
         has_vote = False
@@ -205,3 +213,21 @@ def apply_reachability(assets: list[CryptoAsset], scanned_files: Sequence[Path])
                 best = label
         if has_vote:
             asset.reachability = best
+
+
+def apply_reachability(assets: list[CryptoAsset], scanned_files: Sequence[Path]) -> None:
+    """Classify reachability in place for every asset with Python and/or Java
+    evidence, using ONE directory-level call graph per language built from
+    every file of that language in `scanned_files` (Step 1: per file *set*,
+    not per file).
+
+    Assets with no Python/Java evidence at all (pure Go/C findings) are left
+    untouched at the model default (`Reachability.UNKNOWN`). Convenience
+    wrapper around `build_reachability_contexts` +
+    `apply_reachability_with_contexts` for callers that don't need the
+    contexts themselves; `hash_patch/cli.py::run_scan` calls the two-step
+    form directly so it can reuse the same contexts for call-relation
+    extraction (hash_patch/analyze/call_relations.py).
+    """
+    contexts = build_reachability_contexts(scanned_files)
+    apply_reachability_with_contexts(assets, contexts)

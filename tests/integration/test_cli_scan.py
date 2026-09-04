@@ -437,9 +437,25 @@ def test_run_scan_go_directory_asset_ids_match_file_scan() -> None:
     assert not missing, f"Dir scan missing assets found in file scan: {missing}"
 
 
-def test_run_scan_go_negative_fixture_adds_no_extra_assets() -> None:
-    """The negative fixture must not add any new asset IDs beyond the positive file."""
-    dir_result = run_scan(TESTDATA_GO_DIR)
+def test_run_scan_go_negative_fixture_adds_no_extra_assets(tmp_path: Path) -> None:
+    """The negative fixture must not add any new asset IDs beyond the positive file.
+
+    Scans an isolated temp directory containing only {positive, negative}
+    fixtures rather than the whole testdata/go/ tree, so this assertion
+    stays scoped to the negative fixture's own behaviour even as other
+    legitimate positive fixtures (e.g. bcrypt_examples.go, added by the
+    coverage-gap audit — see docs/COVERAGE.md) are added to testdata/go/
+    over time. Same pattern
+    test_run_scan_on_directory_negative_fixture_adds_no_extra_assets (Java),
+    test_run_scan_python_negative_fixture_adds_no_extra_assets, and
+    test_run_scan_c_negative_fixture_adds_no_extra_assets already use below.
+    """
+    isolated = tmp_path / "go_negative_check"
+    isolated.mkdir()
+    (isolated / POSITIVE_GO_FILE.name).write_text(POSITIVE_GO_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+    (isolated / NEGATIVE_GO_FILE.name).write_text(NEGATIVE_GO_FILE.read_text(encoding="utf-8"), encoding="utf-8")
+
+    dir_result = run_scan(isolated)
     file_result = run_scan(POSITIVE_GO_FILE)
     dir_ids = sorted(a.id for a in dir_result.assets)
     file_ids = sorted(a.id for a in file_result.assets)
@@ -596,5 +612,95 @@ def test_cli_scan_c_directory_subprocess_nonzero_assets(tmp_path: Path) -> None:
     assert cbom_out.is_file(), "CLI did not write the CBOM output file"
     doc = json.loads(cbom_out.read_text(encoding="utf-8"))
     assert len(doc.get("components", [])) > 0
+
+
+# ===========================================================================
+# Mixed-language directory: cross-language evidence must never be silently
+# dropped when a shared parent directory contains files from multiple
+# supported languages.
+#
+# `testdata/mixed_language_sha256/` has two files, in two different
+# languages, both computing SHA-256 independently at different locations:
+#   - pyservice/hasher.py  (hashlib.sha256, python-crypto detector)
+#   - goservice/hasher.go  (crypto/sha256, go-crypto detector)
+#
+# The CORRECT result is ONE CryptoAsset named "SHA-256" (asset identity is
+# deliberately (asset_type, name, parameter_set, mode) only — see
+# hash_patch/model/assets.py::derive_asset_id's own docstring, and the
+# already-existing test_md5_has_two_evidence_entries_pyca_and_pycryptodome
+# in tests/unit/test_python_detector.py, which the exact same
+# one-component/many-locations model already covers for two detectors
+# merging within a SINGLE language) carrying BOTH evidence occurrences,
+# each with the correct locator/line/detector_id. A test asserting "two
+# separate SHA-256 assets must exist" would be asserting the WRONG, broken
+# behavior — CycloneDX models one technology as one component with
+# multiple evidence occurrences, not one component per call site. What
+# this test actually guards against is DATA LOSS: either evidence location
+# missing, or a locator overwritten by the other language's, would fail it.
+# ===========================================================================
+
+TESTDATA_MIXED_DIR = REPO_ROOT / "testdata" / "mixed_language_sha256"
+MIXED_PY_FILE = TESTDATA_MIXED_DIR / "pyservice" / "hasher.py"
+MIXED_GO_FILE = TESTDATA_MIXED_DIR / "goservice" / "hasher.go"
+
+
+def test_mixed_language_fixture_files_exist() -> None:
+    assert MIXED_PY_FILE.is_file()
+    assert MIXED_GO_FILE.is_file()
+
+
+def test_mixed_language_directory_keeps_both_findings() -> None:
+    """Scanning the shared parent directory must find BOTH the Python and
+    the Go SHA-256 call sites — as distinct Evidence entries on the single,
+    correctly-merged SHA-256 asset. Losing either one silently (the exact
+    bug class this test exists to catch forever) fails this test.
+    """
+    result = run_scan(TESTDATA_MIXED_DIR)
+
+    sha256_assets = [a for a in result.assets if a.name == "SHA-256"]
+    assert len(sha256_assets) == 1, (
+        f"Expected exactly one merged SHA-256 asset, got {len(sha256_assets)}: "
+        f"{[a.id for a in sha256_assets]}"
+    )
+    asset = sha256_assets[0]
+
+    locators_and_detectors = {(ev.locator, ev.detector_id) for ev in asset.evidence}
+    assert (str(MIXED_PY_FILE), "python-crypto") in locators_and_detectors, (
+        f"Python SHA-256 evidence missing from merged asset. "
+        f"Evidence present: {[(ev.locator, ev.detector_id, ev.line) for ev in asset.evidence]}"
+    )
+    assert (str(MIXED_GO_FILE), "go-crypto") in locators_and_detectors, (
+        f"Go SHA-256 evidence missing from merged asset. "
+        f"Evidence present: {[(ev.locator, ev.detector_id, ev.line) for ev in asset.evidence]}"
+    )
+    assert len(asset.evidence) == 2, (
+        f"Expected exactly 2 evidence entries (one per language), got {len(asset.evidence)}: "
+        f"{[(ev.locator, ev.line) for ev in asset.evidence]}"
+    )
+
+
+def test_mixed_language_directory_matches_union_of_independent_scans() -> None:
+    """The full mixed-directory scan's evidence set must equal the UNION of
+    scanning each language subdirectory independently — the precise
+    "diff the union" check this bug report demanded, kept as a permanent
+    regression guard rather than a one-off investigation.
+    """
+
+    def evidence_rows(path: Path) -> set[tuple[str, str, str, str, int | None]]:
+        result = run_scan(path)
+        return {
+            (a.name, a.primitive.value, a.quantum_status.value, ev.locator, ev.line)
+            for a in result.assets
+            for ev in a.evidence
+        }
+
+    union = evidence_rows(TESTDATA_MIXED_DIR / "pyservice") | evidence_rows(TESTDATA_MIXED_DIR / "goservice")
+    combined = evidence_rows(TESTDATA_MIXED_DIR)
+
+    assert union == combined, (
+        f"Union of independent per-language scans != combined directory scan.\n"
+        f"Missing from combined: {union - combined}\n"
+        f"Extra in combined (unexpected): {combined - union}"
+    )
 
 

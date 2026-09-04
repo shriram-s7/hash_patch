@@ -400,3 +400,114 @@ def test_bouncy_castle_rsa_detected_and_merged_with_native(
         "No evidence found for the BouncyCastle RSA call. "
         f"Snippets: {[ev.snippet for ev in asset.evidence]}"
     )
+
+
+# ---------------------------------------------------------------------------
+# KeyAgreement.getInstance + BouncyCastle lightweight API
+# (found via the post-hashlib-fix audit — see docs/COVERAGE.md)
+# ---------------------------------------------------------------------------
+
+BC_KEYAGREEMENT_FIXTURE = TESTDATA_JAVA / "bouncycastle_and_keyagreement.java"
+
+
+@pytest.fixture(scope="module")
+def bc_keyagreement_assets(detector: JavaJcaDetector) -> list[CryptoAsset]:
+    return detector.detect(BC_KEYAGREEMENT_FIXTURE)
+
+
+def test_bc_keyagreement_fixture_exists() -> None:
+    assert BC_KEYAGREEMENT_FIXTURE.is_file()
+
+
+def test_keyagreement_getinstance_dh_detected(bc_keyagreement_assets: list[CryptoAsset]) -> None:
+    asset = _find_asset(bc_keyagreement_assets, "DH")
+    assert asset is not None, f"Got: {[a.name for a in bc_keyagreement_assets]}"
+    assert asset.quantum_status == QuantumStatus.BROKEN_BY_SHOR
+
+
+def test_keyagreement_getinstance_ecdh_detected(bc_keyagreement_assets: list[CryptoAsset]) -> None:
+    asset = _find_asset(bc_keyagreement_assets, "ECDH")
+    assert asset is not None, f"Got: {[a.name for a in bc_keyagreement_assets]}"
+    assert asset.quantum_status == QuantumStatus.BROKEN_BY_SHOR
+
+
+def test_bc_new_rsakeypairgenerator_detected(bc_keyagreement_assets: list[CryptoAsset]) -> None:
+    asset = _find_asset(bc_keyagreement_assets, "RSA")
+    assert asset is not None, f"Got: {[a.name for a in bc_keyagreement_assets]}"
+    snippets = [ev.snippet for ev in asset.evidence]
+    assert any("new RSAKeyPairGenerator" in s for s in snippets), snippets
+
+
+def test_bc_new_ecdsasigner_detected(bc_keyagreement_assets: list[CryptoAsset]) -> None:
+    asset = _find_asset(bc_keyagreement_assets, "ECDSA")
+    assert asset is not None, f"Got: {[a.name for a in bc_keyagreement_assets]}"
+    snippets = [ev.snippet for ev in asset.evidence]
+    assert any("new ECDSASigner" in s for s in snippets), snippets
+
+
+def test_bc_new_ed25519signer_and_keypairgenerator_merge(
+    bc_keyagreement_assets: list[CryptoAsset],
+) -> None:
+    asset = _find_asset(bc_keyagreement_assets, "Ed25519")
+    assert asset is not None, f"Got: {[a.name for a in bc_keyagreement_assets]}"
+    assert len(asset.evidence) == 2
+    snippets = [ev.snippet for ev in asset.evidence]
+    assert any("Ed25519Signer" in s for s in snippets), snippets
+    assert any("Ed25519KeyPairGenerator" in s for s in snippets), snippets
+
+
+def test_bc_new_x25519keypairgenerator_detected(bc_keyagreement_assets: list[CryptoAsset]) -> None:
+    asset = _find_asset(bc_keyagreement_assets, "X25519")
+    assert asset is not None, f"Got: {[a.name for a in bc_keyagreement_assets]}"
+
+
+def test_bc_keyagreement_fixture_component_count(bc_keyagreement_assets: list[CryptoAsset]) -> None:
+    assert len(bc_keyagreement_assets) == 6, (
+        f"Expected 6 findings, got: {[a.name for a in bc_keyagreement_assets]}"
+    )
+
+
+def test_bc_constructor_index_has_expected_classes() -> None:
+    from hash_patch.detect.java import _build_bc_constructor_index
+
+    index = _build_bc_constructor_index(_load_rules())
+    for cls in (
+        "RSAKeyPairGenerator",
+        "ECDSASigner",
+        "Ed25519Signer",
+        "Ed25519KeyPairGenerator",
+        "X25519KeyPairGenerator",
+    ):
+        assert cls in index, f"bc_constructors missing {cls}"
+
+
+def test_object_creation_not_collected_without_bc_classes() -> None:
+    """The default (no bc_classes passed) must behave exactly as before —
+    _collect_jca_calls(root_node) alone never collects a `new X()` call,
+    even one that WOULD match if bc_classes were supplied."""
+    import tree_sitter_java as _tsjava
+    from tree_sitter import Language, Parser
+
+    from hash_patch.detect.java import _collect_jca_calls
+
+    lang = Language(_tsjava.language())
+    parser = Parser(lang)
+    src = b"class T { void m() { Object o = new RSAKeyPairGenerator(); } }"
+    tree = parser.parse(src)
+    calls = _collect_jca_calls(tree.root_node)
+    assert calls == [], f"Expected no calls without bc_classes, got {calls}"
+
+
+def test_object_creation_collected_with_matching_bc_classes() -> None:
+    import tree_sitter_java as _tsjava
+    from tree_sitter import Language, Parser
+
+    from hash_patch.detect.java import _collect_jca_calls
+
+    lang = Language(_tsjava.language())
+    parser = Parser(lang)
+    src = b"class T { void m() { Object o = new RSAKeyPairGenerator(); } }"
+    tree = parser.parse(src)
+    calls = _collect_jca_calls(tree.root_node, bc_classes=frozenset({"RSAKeyPairGenerator"}))
+    assert len(calls) == 1
+    assert calls[0]["bc_class"] == "RSAKeyPairGenerator"

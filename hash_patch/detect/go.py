@@ -179,18 +179,38 @@ class GoCryptoDetector(Detector):
         local: dict[str, CryptoAsset] = {}
         locator = str(target)
 
+        known_pkgs = {k.split(".")[0] for k in self._functions.keys()}
+
         for call in calls:
             target_func = call["target"]
+            pkg = target_func.split(".")[0]
             rule = self._functions.get(target_func)
             if rule is None:
-                continue
-
-            canonical: str = rule["canonical"]
-            primitive = _primitive_from_str(rule.get("primitive"))
-            parameter_set: str | None = rule.get("parameter_set")
-            mode: str | None = rule.get("mode")
-            quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
-            oid: str | None = rule.get("oid")
+                if pkg in known_pkgs:
+                    canonical = "UNRESOLVED"
+                    primitive = Primitive.UNKNOWN
+                    parameter_set = None
+                    mode = None
+                    quantum_status = QuantumStatus.UNKNOWN
+                    oid = None
+                    confidence: Confidence = "LOW"
+                    properties = {
+                        "api": target_func,
+                        "resolution_path": "null",
+                    }
+                    extra_id_seed = target_func
+                else:
+                    continue
+            else:
+                canonical = rule["canonical"]
+                primitive = _primitive_from_str(rule.get("primitive"))
+                parameter_set = rule.get("parameter_set")
+                mode = rule.get("mode")
+                quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
+                oid = rule.get("oid")
+                confidence = "confirmed"
+                properties = {}
+                extra_id_seed = None
 
             fn_node = call["fn_node"]
             call_node = call["call_node"]
@@ -218,6 +238,9 @@ class GoCryptoDetector(Detector):
                 mode=mode,
                 quantum_status=quantum_status,
                 oid=oid,
+                confidence=confidence,
+                properties=properties,
+                extra_id_seed=extra_id_seed,
                 evidence=[evidence],
             )
 

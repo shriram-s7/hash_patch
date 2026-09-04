@@ -169,6 +169,90 @@ pyca_modules:
       quantum_status: weakened-by-grover
       oid: "1.2.156.10197.1.401"
 
+  # Python standard-library `hashlib` module — the single most common way
+  # Python code hashes anything, and previously had ZERO rule coverage here
+  # (confirmed via `git log` on this file: no commit ever added it). Direct
+  # calls (`hashlib.sha256(...)`) resolve through this same Pattern A
+  # namespace-lookup mechanism as `hashes.SHA256()` above — no detector code
+  # change needed for that shape. `hashlib.new("<literal>")` (a string-named
+  # constructor) and `hmac.new(key, msg, hashlib.sha256)` (a bare hashlib.*
+  # reference used as an argument, not a call) are resolved by looking up
+  # this SAME namespace by the literal/attribute text — see
+  # hash_patch/detect/python.py's `_positional_or_keyword_arg` /
+  # `_string_literal_text` and the "special_lookup" handling in `detect()`.
+  # Canonical/OID values mirror the `hashes` namespace above (same
+  # algorithms, different library surface).
+  hashlib:
+    MD5:
+      canonical: MD5
+      primitive: hash
+      parameter_set: "128"
+      quantum_status: broken-classically
+      oid: "1.2.840.113549.2.5"
+
+    SHA1:
+      canonical: SHA-1
+      primitive: hash
+      parameter_set: "160"
+      quantum_status: broken-classically
+      oid: "1.3.14.3.2.26"
+
+    SHA256:
+      canonical: SHA-256
+      primitive: hash
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.1"
+
+    SHA384:
+      canonical: SHA-384
+      primitive: hash
+      parameter_set: "384"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.2"
+
+    SHA512:
+      canonical: SHA-512
+      primitive: hash
+      parameter_set: "512"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.3"
+
+    SHA3_256:
+      canonical: SHA3-256
+      primitive: hash
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.8"
+
+    SHA3_384:
+      canonical: SHA3-384
+      primitive: hash
+      parameter_set: "384"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.9"
+
+    SHA3_512:
+      canonical: SHA3-512
+      primitive: hash
+      parameter_set: "512"
+      quantum_status: weakened-by-grover
+      oid: "2.16.840.1.101.3.4.2.10"
+
+    BLAKE2b:
+      canonical: BLAKE2b
+      primitive: hash
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
+    BLAKE2s:
+      canonical: BLAKE2s
+      primitive: hash
+      parameter_set: null
+      quantum_status: weakened-by-grover
+      oid: null
+
   algorithms:
     AES:
       canonical: AES
@@ -702,3 +786,166 @@ pycryptodome_classes:
     parameter_set: null
     quantum_status: weakened-by-grover
     oid: null
+
+  # PyNaCl classmethod key generation — same "ClassName.method" call shape
+  # this table already matches, so these need no detector changes.
+  # `PrivateKey(seed_bytes)` / `SigningKey(seed)` (the bare-constructor
+  # forms, no `.generate()`) are handled separately below in
+  # bare_constructors, since they have no attribute receiver at all.
+  PrivateKey.generate:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  SigningKey.generate:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+# ---------------------------------------------------------------------------
+# Pattern C — bare constructor calls: ClassName(...) with NO attribute
+# receiver at all (e.g. `Box(sk, pk)`, `SecretBox(key)`) — PyNaCl's most
+# idiomatic usage for these two classes has no `.generate()`/`.new()`
+# classmethod to hang a Pattern A/B match off of. Matched only when the
+# bare identifier is a key in this table (hash_patch/detect/python.py's
+# `_try_collect_call` threads this table's keys through as `bare_names`);
+# unmatched bare calls (print(...), some_function(...)) are never collected
+# at all, preserving the existing "ignores plain function calls" contract.
+#
+# Same false-positive tradeoff Pattern B already accepts for e.g. `AES.new`:
+# a plain `Box(...)`/`SecretBox(...)` elsewhere in unrelated code with a
+# same-named class would also match. `PrivateKey`/`SigningKey` are listed
+# here too so their bare-constructor form (not just `.generate()` above) is
+# covered.
+# ---------------------------------------------------------------------------
+bare_constructors:
+
+  Box:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  PrivateKey:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  SigningKey:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  SecretBox:
+    canonical: XSalsa20-Poly1305
+    primitive: ae
+    parameter_set: "256"
+    quantum_status: weakened-by-grover
+    oid: null
+
+# ---------------------------------------------------------------------------
+# Pattern D — PyJWT: jwt.encode(payload, key, algorithm="HS256"). The
+# `algorithm` argument (3rd positional or `algorithm=` keyword) is a string
+# literal that names the actual primitive — HS* is HMAC, RS*/PS* is RSA
+# signing, ES* is ECDSA signing. Only a resolvable string literal counts;
+# a variable-named algorithm, or "algorithm" omitted entirely (PyJWT
+# defaults it to HS256), is skipped silently rather than guessed at — same
+# discipline as hashlib.new()'s string-literal resolution.
+# Keys here are the exact JWT `alg` header values, uppercased.
+# ---------------------------------------------------------------------------
+jwt_algorithms:
+
+  HS256:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: "256"
+    quantum_status: weakened-by-grover
+    oid: null
+
+  HS384:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: "384"
+    quantum_status: weakened-by-grover
+    oid: null
+
+  HS512:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: "512"
+    quantum_status: weakened-by-grover
+    oid: null
+
+  RS256:
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RS384:
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RS512:
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  PS256:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  PS384:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  PS512:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  # ES512 uses curve P-521 (not P-512) per the JOSE/JWA spec — the "512"
+  # in the alg name refers to the SHA-512 hash, not the curve.
+  ES256:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "256"
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ES384:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "384"
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ES512:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: "521"
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"

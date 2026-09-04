@@ -647,6 +647,41 @@ functions:
     quantum_status: weakened-by-grover
     oid: "2.16.840.1.101.3.4.2.3"
 
+  # ---------------------------------------------------------------------------
+  # HMAC (openssl/hmac.h) — found via the post-hashlib-fix audit (see
+  # docs/COVERAGE.md): this file had ZERO HMAC coverage at all before this
+  # addition. `EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)`-style generic
+  # digest calls needed NO new entry here — `EVP_sha256()` etc. above are
+  # already matched independently of their enclosing call, since this
+  # detector's walk visits every call_expression node in the tree, nested
+  # or not (hash_patch/detect/c.py::_walk). HMAC_Init_ex/HMAC_Init/HMAC are
+  # a genuinely separate finding (the MAC construction itself), additive to
+  # whichever EVP_MD selector call already fires for the underlying hash.
+  # ---------------------------------------------------------------------------
+  HMAC_Init_ex:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  HMAC_Init:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  HMAC:
+    canonical: HMAC
+    primitive: mac
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
 # -----------------------------------------------------------------------------
 # 2. Macro argument identifiers (e.g. in EVP_PKEY_CTX_new_id, EC_KEY_new_by_curve_name)
 # -----------------------------------------------------------------------------

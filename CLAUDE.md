@@ -359,6 +359,16 @@ recommendation engine:
   the absence of SLH-DSA (FIPS 205) and ML-KEM-512 in `pyca/cryptography 50.0.1`.
   See `docs/BENCHMARKING.md`.
 
+## Coverage boundary
+
+Detection is rule-based: a library/API not listed in `rules/*.yaml` produces
+no finding, period — not a heuristic near-miss, just nothing. See
+`docs/COVERAGE.md` for the explicit, per-language inventory of what IS
+covered after each audit, and the honest list of known gaps. When a new gap
+is found (the way `hashlib` was — via an adversarial corpus, not a code
+review), fix it in the relevant `rules/*.yaml` file and update
+`docs/COVERAGE.md` in the same change.
+
 ## Detection rules live in YAML, not Python
 
 All algorithm/pattern/OID detection rules belong in `rules/` as YAML data,

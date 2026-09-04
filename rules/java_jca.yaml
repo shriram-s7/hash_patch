@@ -34,6 +34,7 @@ target_methods:
   - "Signature.getInstance"
   - "KeyGenerator.getInstance"
   - "Mac.getInstance"
+  - "KeyAgreement.getInstance"
   - "SecretKeyFactory.getInstance"
   - "AlgorithmParameters.getInstance"
   - "KeyFactory.getInstance"
@@ -373,3 +374,54 @@ algorithms:
     parameter_set: null
     quantum_status: broken-classically
     oid: null
+
+# ---------------------------------------------------------------------------
+# BouncyCastle lightweight API: `new ClassName(...)` — an
+# object_creation_expression, not a getInstance-style method_invocation
+# with a string-literal algorithm argument. The class name itself names
+# the algorithm, so this table is schema-different from `algorithms:`
+# above: each entry carries its own `canonical` name (the class name is
+# not already the canonical algorithm name the way "AES"/"RSA" are above).
+# Highest-prevalence BC entry points only, not the full BC API surface —
+# see docs/COVERAGE.md.
+#
+# Matched by hash_patch/detect/java.py's `_try_collect_object_creation` by
+# the SIMPLE (trailing) class name only — no import resolution, same
+# convention every other detector in this codebase already follows.
+# ---------------------------------------------------------------------------
+bc_constructors:
+
+  RSAKeyPairGenerator:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  ECDSASigner:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  Ed25519Signer:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  Ed25519KeyPairGenerator:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  X25519KeyPairGenerator:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"

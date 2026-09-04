@@ -15,9 +15,13 @@ from hash_patch.analyze.blast_radius import (
     primitive_for_replacement,
     run_blast_radius,
 )
+from hash_patch.analyze.call_relations import compute_call_relations
 from hash_patch.analyze.cbom_reader import read_candidates, read_reference_year
 from hash_patch.analyze.optimizer import run_optimizer
-from hash_patch.analyze.reachability import apply_reachability
+from hash_patch.analyze.reachability import (
+    apply_reachability_with_contexts,
+    build_reachability_contexts,
+)
 from hash_patch.analyze.shelf_life import run_shelf_life
 from hash_patch.detect import registry  # triggers side-effect detector registration
 from hash_patch.detect.base import Detector
@@ -92,6 +96,26 @@ def _attach_recommendation_properties(
             continue
         key, val = _recommendation_property(rec)
         asset.properties[key] = val
+
+
+def _attach_call_relation_properties(
+    result: ScanResult, relations: dict[str, dict[str, list[str]]]
+) -> None:
+    """Mirror hash_patch/analyze/call_relations.py's per-asset caller/callee
+    ids onto that asset's `properties` bag, the same pattern used for
+    recommendations/shelf-life/blast-radius — see
+    hash_patch/emit/cyclonedx.py's `hash_patch:property.<key>` mapping.
+    """
+    by_id = {asset.id: asset for asset in result.assets}
+    for asset_id, rel in relations.items():
+        asset = by_id.get(asset_id)
+        if asset is None:
+            continue
+        asset.properties["callRelation"] = json.dumps(
+            {"callers": rel["callers"], "callees": rel["callees"]},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
 
 
 def _shelf_life_property(finding: ShelfLifeFinding) -> tuple[str, str]:
@@ -254,8 +278,17 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     # model's default Reachability.UNKNOWN — see hash_patch/detect/go.py and
     # hash_patch/detect/c.py). Runs over the whole scanned file set so calls
     # across files in the same target are resolved, per
-    # hash_patch/analyze/reachability.py.
-    apply_reachability(result.assets, scanned_files)
+    # hash_patch/analyze/reachability.py. The same contexts (call graph +
+    # tagged entry points) are reused below for call-relation extraction
+    # rather than re-parsing the file set a second time.
+    reachability_contexts = build_reachability_contexts(scanned_files)
+    apply_reachability_with_contexts(result.assets, reachability_contexts)
+
+    # Asset Relationships (UI graph): direct caller/callee edges between
+    # findings, derived from the same call graph — see
+    # hash_patch/analyze/call_relations.py.
+    call_relations = compute_call_relations(result.assets, reachability_contexts)
+    _attach_call_relation_properties(result, call_relations)
 
     # Pillar 3 (Blast Radius): only does anything when the scanned file set
     # contains C and/or .sql files — see hash_patch/analyze/blast_radius.py.

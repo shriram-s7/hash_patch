@@ -523,3 +523,25 @@ functions:
     mode: null
     quantum_status: weakened-by-grover
     oid: null
+
+  # ---------------------------------------------------------------------------
+  # Password hashing — golang.org/x/crypto/bcrypt (found via the
+  # post-hashlib-fix audit — see docs/COVERAGE.md; x/crypto/chacha20poly1305,
+  # crypto/aes + crypto/cipher, and crypto/hmac were assumed missing by that
+  # same audit's source prompt but were already covered above).
+  # ---------------------------------------------------------------------------
+  bcrypt.GenerateFromPassword:
+    canonical: bcrypt
+    primitive: kdf
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  bcrypt.CompareHashAndPassword:
+    canonical: bcrypt
+    primitive: kdf
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null

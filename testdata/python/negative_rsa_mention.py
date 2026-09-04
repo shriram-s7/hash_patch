@@ -47,7 +47,15 @@ configure_algo("MD5")
 # Attribute access on an object that is in the namespace list but the
 # attribute itself is not an algorithm (e.g. hashes.HashAlgorithm is a
 # base class, not a concrete hash — and in any case this just assigns it).
-import hashlib  # standard library — not in our rules
-
-md5_obj = hashlib.md5(b"hello")   # hashlib.md5 — "hashlib" is not a PyCA namespace
-sha1_obj = hashlib.sha1(b"hello") # same — not detected
+#
+# NOTE: this file used to also contain two hashlib hash-function calls
+# here (md5 and sha1, each on a literal byte string), commented as
+# "hashlib is not a PyCA namespace... not detected" — that was the
+# hashlib coverage gap itself,
+# baked into this NEGATIVE fixture as if it were correct behavior. Now that
+# rules/python_crypto.yaml has a `hashlib` namespace (see
+# testdata/python/hashlib_examples.py / hashlib_sha256_alone.py for the
+# positive coverage), those two lines would rightly produce MD5/SHA-1
+# findings, so they were moved out of this "must produce ZERO assets" file
+# rather than left here contradicting the fix.
+import hashlib  # standard library — genuinely unused below, just imported

@@ -1,0 +1,71 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.2.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"hashlib.sha256(value.encode())\", \"source_type\": \"source\"}",
+            "line": 24,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\hashlib_sha256_alone.py",
+            "offset": 932
+          }
+        ]
+      },
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "Hash Patch",
+          "type": "application",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:50ed0740-4282-5e15-b434-326e9ea49b97",
+  "specVersion": "1.6",
+  "version": 1
+}

@@ -36,6 +36,7 @@ TESTDATA_GO = REPO_ROOT / "testdata" / "go"
 RULES_PATH = REPO_ROOT / "rules" / "go_crypto.yaml"
 POSITIVE_FIXTURE = TESTDATA_GO / "crypto_examples.go"
 NEGATIVE_FIXTURE = TESTDATA_GO / "negative_rsa_mention.go"
+BCRYPT_FIXTURE = TESTDATA_GO / "bcrypt_examples.go"
 
 
 # ---------------------------------------------------------------------------
@@ -344,3 +345,41 @@ def test_collect_calls_ignores_plain_function_calls() -> None:
     tree = parser.parse(src)
     calls = _collect_calls(tree.root_node)
     assert calls == []
+
+
+# ---------------------------------------------------------------------------
+# golang.org/x/crypto/bcrypt (found via the post-hashlib-fix audit — see
+# docs/COVERAGE.md)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def bcrypt_assets(detector: GoCryptoDetector) -> list[CryptoAsset]:
+    return detector.detect(BCRYPT_FIXTURE)
+
+
+def test_bcrypt_fixture_exists() -> None:
+    assert BCRYPT_FIXTURE.is_file()
+
+
+def test_bcrypt_generate_from_password_detected(bcrypt_assets: list[CryptoAsset]) -> None:
+    hits = _find_assets(bcrypt_assets, "bcrypt")
+    assert hits, f"bcrypt.GenerateFromPassword not detected. Got: {[a.name for a in bcrypt_assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in hits)
+    snippets = [e.snippet for a in hits for e in a.evidence]
+    assert any("GenerateFromPassword" in s for s in snippets), snippets
+
+
+def test_bcrypt_compare_hash_and_password_merged(bcrypt_assets: list[CryptoAsset]) -> None:
+    hits = _find_assets(bcrypt_assets, "bcrypt")
+    assert hits
+    total_ev = sum(len(a.evidence) for a in hits)
+    assert total_ev == 2, f"Expected 2 evidence entries (both bcrypt calls merged), got {total_ev}"
+    snippets = [e.snippet for a in hits for e in a.evidence]
+    assert any("CompareHashAndPassword" in s for s in snippets), snippets
+
+
+def test_function_index_has_bcrypt_entries() -> None:
+    index = _build_function_index(_load_rules())
+    assert "bcrypt.GenerateFromPassword" in index
+    assert "bcrypt.CompareHashAndPassword" in index

@@ -24,6 +24,24 @@
       "locator_suffix": "reachability_unknown_dynamic.py",
       "expected": "unknown",
       "scenario": "ChaCha20.new() inside a helper reachable only via an unresolved dynamic-dispatch table lookup"
+    },
+    {
+      "algorithm": "SHA-512",
+      "locator_suffix": "call_chain_example.py",
+      "expected": "live-external",
+      "scenario": "hashes.SHA512() in level_2(), reached via main -> root_entry -> dispatch -> level_2 in a 6-level deep call chain; level_2 directly calls level_4 (RSA)"
+    },
+    {
+      "algorithm": "RSA",
+      "locator_suffix": "call_chain_example.py",
+      "expected": "live-external",
+      "scenario": "rsa.generate_private_key() in level_4(), called directly by level_2 (SHA-512) and directly calling level_6_leaf (MD5) in a 6-level deep call chain"
+    },
+    {
+      "algorithm": "MD5",
+      "locator_suffix": "call_chain_example.py",
+      "expected": "live-external",
+      "scenario": "hashes.MD5() in level_6_leaf(), called directly by level_4 (RSA), the deepest node in a 6-level deep call chain"
     }
   ],
   "java": [

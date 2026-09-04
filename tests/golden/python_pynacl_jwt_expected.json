@@ -1,0 +1,368 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "crypto-asset:122958edd068fe750b07b79c7b77a3b8",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "255",
+          "primitive": "key-agree"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.101.110"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 9, \"snippet\": \"PrivateKey.generate()\", \"source_type\": \"source\"}",
+            "line": 27,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1085
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"Box(sk, sk.public_key)\", \"source_type\": \"source\"}",
+            "line": 28,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1117
+          }
+        ]
+      },
+      "name": "X25519",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 54, \"snippet\": \"jwt.encode(payload, private_key, algorithm=\\\"RS256\\\")\", \"source_type\": \"source\"}",
+            "line": 48,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1652
+          }
+        ]
+      },
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:3077ee0158e3d25b20c9ea5e39a00fc0",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "255",
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.101.112"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"SigningKey.generate()\", \"source_type\": \"source\"}",
+            "line": 34,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1230
+          }
+        ]
+      },
+      "name": "Ed25519",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:4905365aeeba9938d7371601f985e324",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "ae"
+        },
+        "assetType": "algorithm"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"SecretBox(key)\", \"source_type\": \"source\"}",
+            "line": 39,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1358
+          }
+        ]
+      },
+      "name": "XSalsa20-Poly1305",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:7197438841a11ee37a1253392d2c67a8",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "mac"
+        },
+        "assetType": "algorithm"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 49, \"snippet\": \"jwt.encode(payload, secret, algorithm=\\\"HS256\\\")\", \"source_type\": \"source\"}",
+            "line": 44,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1536
+          }
+        ]
+      },
+      "name": "HMAC",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:a36ca2d65c73d596afff77397b9578fc",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "unknown"
+        },
+        "assetType": "algorithm"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 46, \"snippet\": \"jwt.encode(payload, key, algorithm=alg)\", \"source_type\": \"source\"}",
+            "line": 57,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1958
+          }
+        ]
+      },
+      "name": "UNRESOLVED",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "LOW"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.api",
+          "value": "jwt.encode"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "null"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "unknown"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:b2e48fcd76f485c45456c0f9a90020f4",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "384",
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.10045.4.3.2"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 54, \"snippet\": \"jwt.encode(payload, private_key, algorithm=\\\"ES384\\\")\", \"source_type\": \"source\"}",
+            "line": 52,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\python\\pynacl_and_jwt_examples.py",
+            "offset": 1768
+          }
+        ]
+      },
+      "name": "ECDSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "crypto-asset:122958edd068fe750b07b79c7b77a3b8"
+    },
+    {
+      "ref": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde"
+    },
+    {
+      "ref": "crypto-asset:3077ee0158e3d25b20c9ea5e39a00fc0"
+    },
+    {
+      "ref": "crypto-asset:4905365aeeba9938d7371601f985e324"
+    },
+    {
+      "ref": "crypto-asset:7197438841a11ee37a1253392d2c67a8"
+    },
+    {
+      "ref": "crypto-asset:a36ca2d65c73d596afff77397b9578fc"
+    },
+    {
+      "ref": "crypto-asset:b2e48fcd76f485c45456c0f9a90020f4"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "Hash Patch",
+          "type": "application",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:c1db59f4-4bcf-5763-888a-ec9f54f83cd9",
+  "specVersion": "1.6",
+  "version": 1
+}

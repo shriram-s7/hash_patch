@@ -70,6 +70,15 @@ def _build_target_set(rules: dict[str, Any]) -> frozenset[str]:
     return frozenset(rules.get("target_methods", []))
 
 
+def _build_bc_constructor_index(rules: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return {'SimpleClassName' -> rule} from bc_constructors — BouncyCastle
+    lightweight-API classes instantiated via `new ClassName(...)`, a call
+    shape (object_creation_expression) distinct from the getInstance-family
+    method_invocation this detector otherwise matches exclusively."""
+    raw: dict[str, dict[str, Any]] = rules.get("bc_constructors", {})
+    return {k: v for k, v in raw.items()}
+
+
 def _build_algo_index(rules: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Return a dict keyed by UPPERCASE algorithm name → rule entry."""
     raw: dict[str, dict[str, Any]] = rules.get("algorithms", {})
@@ -109,20 +118,22 @@ def _extract_string_fragment(string_literal_node: Any) -> str | None:
     return None
 
 
-def _collect_jca_calls(root_node: Any) -> list[dict[str, Any]]:
-    """Walk the AST and collect all method_invocation nodes of interest.
+def _collect_jca_calls(root_node: Any, bc_classes: frozenset[str] = frozenset()) -> list[dict[str, Any]]:
+    """Walk the AST and collect all method_invocation nodes of interest,
+    plus (only when `bc_classes` is non-empty) matching BC constructor calls.
 
     Returns a list of dicts with keys:
         class_name, method_name, algo_raw, node, algo_node
     where ``node`` is the method_invocation node and ``algo_node`` is the
-    first string_literal in the argument_list (the algorithm argument).
+    first string_literal in the argument_list (the algorithm argument);
+    OR, for a BC constructor match: {bc_class, node, type_node}.
 
     Only calls whose first argument is a string literal are returned — calls
     where the algorithm is a variable reference are not detectable without
     data-flow analysis and are deliberately excluded to avoid false positives.
     """
     results: list[dict[str, Any]] = []
-    _walk(root_node, results)
+    _walk(root_node, results, bc_classes)
     return results
 
 
@@ -140,8 +151,15 @@ def _collect_jca_calls(root_node: Any) -> list[dict[str, Any]]:
 _MAX_WALK_DEPTH = 500
 
 
-def _walk(node: Any, results: list[dict[str, Any]]) -> None:
-    """Iterative DFS walk that collects matching method_invocation nodes."""
+def _walk(node: Any, results: list[dict[str, Any]], bc_classes: frozenset[str] = frozenset()) -> None:
+    """Iterative DFS walk that collects matching method_invocation nodes,
+    plus (only when `bc_classes` is non-empty) `new ClassName(...)`
+    object_creation_expression nodes whose class is in `bc_classes` — the
+    BouncyCastle lightweight API (e.g. `new RSAKeyPairGenerator()`), which
+    has no getInstance-style string-literal argument to match on at all.
+    Callers that omit `bc_classes` (the default) get exactly the original
+    method_invocation-only behavior.
+    """
     stack: list[tuple[Any, int]] = [(node, 0)]
     while stack:
         current, depth = stack.pop()
@@ -151,9 +169,37 @@ def _walk(node: Any, results: list[dict[str, Any]]) -> None:
             _try_collect(current, results)
             # Still recurse into children — a method invocation can itself be
             # an argument to another call (e.g. Cipher.getInstance(getAlgo())).
+        elif current.type == "object_creation_expression" and bc_classes:
+            _try_collect_object_creation(current, results, bc_classes)
         children = current.children
         if children:
             stack.extend((child, depth + 1) for child in reversed(children))
+
+
+def _try_collect_object_creation(
+    node: Any, results: list[dict[str, Any]], bc_classes: frozenset[str]
+) -> None:
+    """If node is `new ClassName(...)` for a known BC class, append an entry.
+
+    No import resolution happens anywhere else in this codebase either (see
+    e.g. hash_patch/detect/shelf_life's own docstring), so a fully-qualified
+    `new org.bouncycastle.crypto...ClassName(...)` is matched the same way a
+    plain `new ClassName(...)` is: by its simple (trailing) type name.
+    """
+    type_node: Any | None = None
+    for child in node.children:
+        if child.type in ("type_identifier", "generic_type", "scoped_type_identifier"):
+            type_node = child
+            break
+    if type_node is None:
+        return
+
+    type_text = type_node.text.decode("utf-8", errors="replace")
+    simple_name = type_text.rsplit(".", 1)[-1].split("<", 1)[0]
+    if simple_name not in bc_classes:
+        return
+
+    results.append({"bc_class": simple_name, "node": node, "type_node": type_node})
 
 
 def _try_collect(node: Any, results: list[dict[str, Any]]) -> None:
@@ -179,23 +225,37 @@ def _try_collect(node: Any, results: list[dict[str, Any]]) -> None:
     method_node = identifiers[1]
     arglist_node = arglists[0]
 
+    named_args = list(arglist_node.named_children)
+    first_arg = named_args[0] if named_args else None
+
     # Find the first string_literal in the argument list (the algorithm arg).
     string_literals = [c for c in arglist_node.children if c.type == "string_literal"]
-    if not string_literals:
-        return  # algorithm passed as variable — skip
+    if string_literals:
+        algo_node = string_literals[0]
+        algo_raw = _extract_string_fragment(algo_node)
+        if algo_raw:
+            results.append(
+                {
+                    "class_name": class_node.text.decode("utf-8", errors="replace"),
+                    "method_name": method_node.text.decode("utf-8", errors="replace"),
+                    "algo_raw": algo_raw,
+                    "node": node,
+                    "algo_node": algo_node,
+                    "arg_node": first_arg,
+                }
+            )
+            return
 
-    algo_node = string_literals[0]
-    algo_raw = _extract_string_fragment(algo_node)
-    if not algo_raw:
-        return  # empty string literal
-
+    # If first_arg is present but not a resolvable literal (variable, expression, or missing):
+    algo_node = first_arg if first_arg is not None else method_node
     results.append(
         {
             "class_name": class_node.text.decode("utf-8", errors="replace"),
             "method_name": method_node.text.decode("utf-8", errors="replace"),
-            "algo_raw": algo_raw,
+            "algo_raw": None,
             "node": node,
             "algo_node": algo_node,
+            "arg_node": first_arg,
         }
     )
 
@@ -262,6 +322,7 @@ class JavaJcaDetector(Detector):
         rules = _load_rules(_RULES_PATH)
         self._targets: frozenset[str] = _build_target_set(rules)
         self._algo_index: dict[str, dict[str, Any]] = _build_algo_index(rules)
+        self._bc_constructors: dict[str, dict[str, Any]] = _build_bc_constructor_index(rules)
 
     def supports(self, target: Path) -> bool:
         """Return True for .java files (when tree-sitter is available)."""
@@ -279,7 +340,7 @@ class JavaJcaDetector(Detector):
 
         source_bytes = target.read_bytes()
         tree = _PARSER.parse(source_bytes)  # type: ignore[union-attr]
-        calls = _collect_jca_calls(tree.root_node)
+        calls = _collect_jca_calls(tree.root_node, bc_classes=frozenset(self._bc_constructors))
 
         # Accumulate assets by id so that multiple call sites for the same
         # algorithm merge their evidence (via ScanResult.add_asset semantics).
@@ -290,23 +351,54 @@ class JavaJcaDetector(Detector):
         locator = str(target)
 
         for call in calls:
-            qualified = f"{call['class_name']}.{call['method_name']}"
-            if qualified not in self._targets:
-                continue  # not a JCA target method
+            confidence: Confidence = "confirmed"
+            properties: dict[str, str] = {}
+            extra_id_seed: str | None = None
 
-            algo_raw: str = call["algo_raw"]
-            lookup = _lookup_algo(algo_raw, self._algo_index)
-            if lookup is None:
-                continue  # algorithm not in our rules — skip silently
+            bc_class = call.get("bc_class")
+            if bc_class is not None:
+                # BouncyCastle lightweight API: `new ClassName(...)` — the
+                # class name alone (not a getInstance-style string literal)
+                # names the algorithm.
+                rule = self._bc_constructors.get(bc_class)
+                if rule is None:
+                    continue
+                canonical_name = rule["canonical"]
+                algo_node = call["type_node"]
+                inv_node = call["node"]
+            else:
+                qualified = f"{call['class_name']}.{call['method_name']}"
+                if qualified not in self._targets:
+                    continue  # not a JCA target method
 
-            canonical_name, rule = lookup
-            primitive = _primitive_from_str(rule.get("primitive"))
-            parameter_set: str | None = rule.get("parameter_set")
-            quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
-            oid: str | None = rule.get("oid")
+                algo_raw: str | None = call.get("algo_raw")
+                algo_node = call["algo_node"]
+                inv_node = call["node"]
 
-            algo_node = call["algo_node"]
-            inv_node = call["node"]
+                lookup = _lookup_algo(algo_raw, self._algo_index) if algo_raw else None
+                if lookup is not None:
+                    canonical_name, rule = lookup
+                else:
+                    canonical_name = "UNRESOLVED"
+                    rule = None
+                    confidence = "LOW"
+                    properties = {
+                        "api": qualified,
+                        "resolution_path": "null",
+                    }
+                    extra_id_seed = qualified
+
+            if rule is not None:
+                primitive = _primitive_from_str(rule.get("primitive"))
+                parameter_set: str | None = rule.get("parameter_set")
+                quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
+                oid: str | None = rule.get("oid")
+            else:
+                primitive = Primitive.UNKNOWN
+                parameter_set = None
+                quantum_status = QuantumStatus.UNKNOWN
+                oid = None
+
             # line is 0-based in tree-sitter; convert to 1-based for humans.
             line = algo_node.start_point.row + 1
             column = algo_node.start_point.column
@@ -333,6 +425,9 @@ class JavaJcaDetector(Detector):
                 mode=None,
                 quantum_status=quantum_status,
                 oid=oid,
+                confidence=confidence,
+                properties=properties,
+                extra_id_seed=extra_id_seed,
                 evidence=[evidence],
             )
 

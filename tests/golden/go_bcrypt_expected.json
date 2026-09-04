@@ -1,0 +1,75 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "crypto-asset:944b81efa9b2d7f35d9c6f3e76009938",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "kdf"
+        },
+        "assetType": "algorithm"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 8, \"snippet\": \"bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)\", \"source_type\": \"source\"}",
+            "line": 11,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\bcrypt_examples.go",
+            "offset": 456
+          },
+          {
+            "additionalContext": "{\"column\": 8, \"snippet\": \"bcrypt.CompareHashAndPassword(hash, password)\", \"source_type\": \"source\"}",
+            "line": 16,
+            "location": "D:\\CBOM-SIH\\hash_patch\\testdata\\go\\bcrypt_examples.go",
+            "offset": 636
+          }
+        ]
+      },
+      "name": "bcrypt",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "crypto-asset:944b81efa9b2d7f35d9c6f3e76009938"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "Hash Patch",
+          "type": "application",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:564237ec-584a-5171-bc05-3024fe7709d2",
+  "specVersion": "1.6",
+  "version": 1
+}
