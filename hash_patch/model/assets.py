@@ -101,6 +101,7 @@ class CryptoAsset(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
     properties: dict[str, str] = Field(default_factory=dict)
     confidence: Confidence = "confirmed"
+    finding_type: str = "OPERATION"
 
     @classmethod
     def create(
@@ -111,10 +112,14 @@ class CryptoAsset(BaseModel):
         parameter_set: str | None = None,
         mode: str | None = None,
         extra_id_seed: str | None = None,
+        finding_type: str = "OPERATION",
         **kwargs: object,
     ) -> CryptoAsset:
         """Construct a CryptoAsset with its id derived deterministically."""
-        asset_id = derive_asset_id(asset_type, name, parameter_set, mode, extra=extra_id_seed)
+        seed = extra_id_seed
+        if finding_type != "OPERATION":
+            seed = f"{extra_id_seed}:{finding_type}" if extra_id_seed else finding_type
+        asset_id = derive_asset_id(asset_type, name, parameter_set, mode, extra=seed)
         return cls(
             id=asset_id,
             asset_type=asset_type,
@@ -122,5 +127,6 @@ class CryptoAsset(BaseModel):
             primitive=primitive,
             parameter_set=parameter_set,
             mode=mode,
+            finding_type=finding_type,
             **kwargs,
         )

@@ -128,6 +128,8 @@ def _asset_properties(
         )
     if unmapped_mode:
         props.append(Property(name="hash_patch:modeUnmapped", value=unmapped_mode))
+    if asset.finding_type != "OPERATION":
+        props.append(Property(name="hash_patch:findingType", value=asset.finding_type))
     for key in sorted(asset.properties):
         props.append(Property(name=f"hash_patch:property.{key}", value=asset.properties[key]))
     return props

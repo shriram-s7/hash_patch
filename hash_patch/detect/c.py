@@ -91,23 +91,25 @@ def _collect_matches(
     string_args: dict[str, dict[str, Any]],
     macro_arg_functions: set[str],
     string_arg_functions: set[str],
-) -> list[tuple[Any, Any, dict[str, Any]]]:
-    """Walk the AST and collect all matching call expressions.
-
-    Returns a list of tuples:
-        (position_node, call_node, rule_dict)
-    """
-    results: list[tuple[Any, Any, dict[str, Any]]] = []
+    crypto_references: dict[str, dict[str, Any]] | None = None,
+) -> Any:
+    """Walk the AST and collect matching call expressions (operations) and string literal references."""
+    op_results: list[tuple[Any, Any, dict[str, Any]]] = []
+    ref_results: list[tuple[Any, Any, dict[str, Any]]] = []
     _walk(
         root_node,
         functions,
         macro_args,
         string_args,
+        crypto_references or {},
         macro_arg_functions,
         string_arg_functions,
-        results,
+        op_results,
+        ref_results,
     )
-    return results
+    if crypto_references is not None:
+        return op_results, ref_results
+    return op_results
 
 
 def _walk(
@@ -115,9 +117,11 @@ def _walk(
     functions: dict[str, dict[str, Any]],
     macro_args: dict[str, dict[str, Any]],
     string_args: dict[str, dict[str, Any]],
+    crypto_references: dict[str, dict[str, Any]],
     macro_arg_functions: set[str],
     string_arg_functions: set[str],
-    results: list[tuple[Any, Any, dict[str, Any]]],
+    op_results: list[tuple[Any, Any, dict[str, Any]]],
+    ref_results: list[tuple[Any, Any, dict[str, Any]]],
 ) -> None:
     if node.type == "call_expression":
         _try_collect(
@@ -127,7 +131,13 @@ def _walk(
             string_args,
             macro_arg_functions,
             string_arg_functions,
-            results,
+            op_results,
+        )
+    elif node.type == "string_literal":
+        _try_collect_reference(
+            node,
+            crypto_references,
+            ref_results,
         )
     for child in node.children:
         _walk(
@@ -135,10 +145,40 @@ def _walk(
             functions,
             macro_args,
             string_args,
+            crypto_references,
             macro_arg_functions,
             string_arg_functions,
-            results,
+            op_results,
+            ref_results,
         )
+
+
+def _try_collect_reference(
+    node: Any,
+    crypto_references: dict[str, dict[str, Any]],
+    ref_results: list[tuple[Any, Any, dict[str, Any]]],
+) -> None:
+    # Check parent chain: must be in declaration, init_declarator, or return_statement,
+    # and must NOT be inside a call_expression or preprocessor directive
+    parent = node.parent
+    in_call = False
+    in_decl_or_ret = False
+    while parent:
+        if parent.type in ("preproc_include", "system_lib_string", "call_expression"):
+            in_call = True
+            break
+        if parent.type in ("init_declarator", "declaration", "return_statement"):
+            in_decl_or_ret = True
+        parent = parent.parent
+    if in_decl_or_ret and not in_call:
+        text = node.text.decode("utf-8", errors="replace").strip('"')
+        rule = crypto_references.get(text)
+        if rule is not None:
+            # Find enclosing statement or declaration for a clean snippet
+            stmt = node
+            while stmt.parent and stmt.parent.type not in ("translation_unit", "compound_statement"):
+                stmt = stmt.parent
+            ref_results.append((node, stmt, rule))
 
 
 def _try_collect(
@@ -210,6 +250,7 @@ class COpenSSLDetector(Detector):
         self._functions: dict[str, dict[str, Any]] = rules.get("functions", {})
         self._macro_args: dict[str, dict[str, Any]] = rules.get("macro_args", {})
         self._string_args: dict[str, dict[str, Any]] = rules.get("string_args", {})
+        self._crypto_references: dict[str, dict[str, Any]] = rules.get("crypto_references", {})
         self._macro_arg_functions: set[str] = set(rules.get("macro_arg_functions", []))
         self._string_arg_functions: set[str] = set(rules.get("string_arg_functions", []))
 
@@ -226,26 +267,28 @@ class COpenSSLDetector(Detector):
 
         Each asset carries Evidence with file path, 1-based line number,
         0-based column, byte offset of the target node, and a snippet
-        of the call expression.
+        of the call expression or reference declaration.
         """
         if not self.supports(target):
             return []
 
         source_bytes = target.read_bytes()
         tree = _PARSER.parse(source_bytes)  # type: ignore[union-attr]
-        matches = _collect_matches(
+        op_matches, ref_matches = _collect_matches(
             tree.root_node,
             self._functions,
             self._macro_args,
             self._string_args,
             self._macro_arg_functions,
             self._string_arg_functions,
+            self._crypto_references,
         )
 
         local: dict[str, CryptoAsset] = {}
         locator = str(target)
 
-        for pos_node, call_node, rule in matches:
+        # 1. Real library operations (OpenSSL / EVP calls)
+        for pos_node, call_node, rule in op_matches:
             is_unresolved = rule.get("unresolved", False)
             if is_unresolved:
                 canonical = "UNRESOLVED"
@@ -297,6 +340,65 @@ class COpenSSLDetector(Detector):
                 quantum_status=quantum_status,
                 oid=oid,
                 confidence=confidence,
+                finding_type="OPERATION",
+                properties=properties,
+                extra_id_seed=extra_id_seed,
+                evidence=[evidence],
+            )
+
+            asset_id = asset.id
+            if asset_id in local:
+                existing = local[asset_id]
+                seen = {e.key() for e in existing.evidence}
+                if evidence.key() not in seen:
+                    existing.evidence.append(evidence)
+            else:
+                local[asset_id] = asset
+
+        # 2. Standalone string literal references (CRYPTO_REFERENCE)
+        for pos_node, stmt_node, rule in ref_matches:
+            canonical = rule["canonical"]
+            primitive = _primitive_from_str(rule.get("primitive"))
+            parameter_set = rule.get("parameter_set")
+            mode = rule.get("mode")
+            quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
+            oid = rule.get("oid")
+            confidence = "confirmed"
+            properties = {"finding_type": "CRYPTO_REFERENCE"}
+            extra_id_seed = "CRYPTO_REFERENCE"
+
+            line = pos_node.start_point.row + 1
+            column = pos_node.start_point.column
+            byte_offset = pos_node.start_byte
+            snippet = stmt_node.text.decode("utf-8", errors="replace").strip()
+
+            evidence = Evidence(
+                source_type="source",
+                locator=locator,
+                line=line,
+                column=column,
+                byte_offset=byte_offset,
+                snippet=snippet,
+                detector_id=_DETECTOR_ID,
+                detector_version=_DETECTOR_VERSION,
+            )
+
+            asset_type = (
+                AssetType.PROTOCOL
+                if rule.get("primitive") == "protocol"
+                else AssetType.ALGORITHM
+            )
+
+            asset = CryptoAsset.create(
+                asset_type=asset_type,
+                name=canonical,
+                primitive=primitive,
+                parameter_set=parameter_set,
+                mode=mode,
+                quantum_status=quantum_status,
+                oid=oid,
+                confidence=confidence,
+                finding_type="CRYPTO_REFERENCE",
                 properties=properties,
                 extra_id_seed=extra_id_seed,
                 evidence=[evidence],

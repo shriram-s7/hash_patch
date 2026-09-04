@@ -931,3 +931,128 @@ string_args:
     mode: null
     quantum_status: broken-by-shor
     oid: "1.3.101.110"
+
+# -----------------------------------------------------------------------------
+# 4. Standalone string literal algorithm references (CRYPTO_REFERENCE finding type)
+# -----------------------------------------------------------------------------
+crypto_references:
+
+  "RSA":
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  "RSA-1024":
+    canonical: RSA
+    primitive: pke
+    parameter_set: "1024"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  "DSA":
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  "ECDSA":
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  "DH":
+    canonical: DH
+    primitive: key-agree
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.3.1"
+
+  "ECDH":
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  "SHA-1":
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  "SHA1":
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  "SHA256withRSA":
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.11"
+
+  "SHA1withRSA":
+    canonical: RSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.5"
+
+  "SHA256withDSA":
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "2.16.840.1.101.3.4.3.2"
+
+  "SHA256withECDSA":
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  "AES-CBC":
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: null
+    mode: cbc
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  "3DES":
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "168"
+    mode: cbc
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":
+    canonical: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    primitive: protocol
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: null
