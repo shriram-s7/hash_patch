@@ -14,6 +14,7 @@ Hash Patch constraints (enforced here):
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -347,99 +348,162 @@ class JavaJcaDetector(Detector):
         # Here we build a local dict first; the caller (cli.scan) uses
         # result.add_asset() which handles cross-file dedup.
         local: dict[str, CryptoAsset] = {}
-
         locator = str(target)
+        from hash_patch.detect.java_resolver import resolve_java_argument
 
-        for call in calls:
-            confidence: Confidence = "confirmed"
-            properties: dict[str, str] = {}
-            extra_id_seed: str | None = None
-
-            bc_class = call.get("bc_class")
-            if bc_class is not None:
-                # BouncyCastle lightweight API: `new ClassName(...)` — the
-                # class name alone (not a getInstance-style string literal)
-                # names the algorithm.
-                rule = self._bc_constructors.get(bc_class)
-                if rule is None:
-                    continue
-                canonical_name = rule["canonical"]
-                algo_node = call["type_node"]
-                inv_node = call["node"]
-            else:
-                qualified = f"{call['class_name']}.{call['method_name']}"
-                if qualified not in self._targets:
-                    continue  # not a JCA target method
-
-                algo_raw: str | None = call.get("algo_raw")
-                algo_node = call["algo_node"]
-                inv_node = call["node"]
-
-                lookup = _lookup_algo(algo_raw, self._algo_index) if algo_raw else None
-                if lookup is not None:
-                    canonical_name, rule = lookup
-                else:
-                    canonical_name = "UNRESOLVED"
-                    rule = None
-                    confidence = "LOW"
-                    properties = {
-                        "api": qualified,
-                        "resolution_path": "null",
-                    }
-                    extra_id_seed = qualified
-
+        def _emit(
+            canonical_name: str,
+            rule: dict[str, Any] | None,
+            conf: Confidence,
+            props: dict[str, str],
+            extra_seed: str | None,
+            t_node: Any,
+            i_node: Any,
+        ) -> None:
             if rule is not None:
-                primitive = _primitive_from_str(rule.get("primitive"))
-                parameter_set: str | None = rule.get("parameter_set")
-                quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
-                oid: str | None = rule.get("oid")
+                prim = _primitive_from_str(rule.get("primitive"))
+                param_set: str | None = rule.get("parameter_set")
+                q_status = _quantum_status_from_str(rule.get("quantum_status"))
+                o_id: str | None = rule.get("oid")
             else:
-                primitive = Primitive.UNKNOWN
-                parameter_set = None
-                quantum_status = QuantumStatus.UNKNOWN
-                oid = None
+                prim = Primitive.UNKNOWN
+                param_set = None
+                q_status = QuantumStatus.UNKNOWN
+                o_id = None
 
-            # line is 0-based in tree-sitter; convert to 1-based for humans.
-            line = algo_node.start_point.row + 1
-            column = algo_node.start_point.column
-            byte_offset = algo_node.start_byte
-            snippet = inv_node.text.decode("utf-8", errors="replace")
-
-            evidence = Evidence(
+            ev = Evidence(
                 source_type="source",
                 locator=locator,
-                line=line,
-                column=column,
-                byte_offset=byte_offset,
-                snippet=snippet,
+                line=t_node.start_point.row + 1,
+                column=t_node.start_point.column,
+                byte_offset=t_node.start_byte,
+                snippet=i_node.text.decode("utf-8", errors="replace"),
                 detector_id=_DETECTOR_ID,
                 detector_version=_DETECTOR_VERSION,
             )
 
-            # Derive the asset id from identity fields (deterministic, no uuid4).
-            asset = CryptoAsset.create(
+            ast = CryptoAsset.create(
                 asset_type=AssetType.ALGORITHM,
                 name=canonical_name,
-                primitive=primitive,
-                parameter_set=parameter_set,
+                primitive=prim,
+                parameter_set=param_set,
                 mode=None,
-                quantum_status=quantum_status,
-                oid=oid,
-                confidence=confidence,
-                properties=properties,
-                extra_id_seed=extra_id_seed,
-                evidence=[evidence],
+                quantum_status=q_status,
+                oid=o_id,
+                confidence=conf,
+                properties=props,
+                extra_id_seed=extra_seed,
+                evidence=[ev],
             )
 
-            asset_id = asset.id
-            if asset_id in local:
-                # Merge additional evidence into the existing asset.
-                existing = local[asset_id]
+            a_id = ast.id
+            if a_id in local:
+                existing = local[a_id]
                 seen_keys = {e.key() for e in existing.evidence}
-                if evidence.key() not in seen_keys:
-                    existing.evidence.append(evidence)
+                if ev.key() not in seen_keys:
+                    existing.evidence.append(ev)
+                for k, v in props.items():
+                    existing.properties.setdefault(k, v)
             else:
-                local[asset_id] = asset
+                local[a_id] = ast
+
+        for call in calls:
+            bc_class = call.get("bc_class")
+            if bc_class is not None:
+                rule = self._bc_constructors.get(bc_class)
+                if rule is None:
+                    continue
+                _emit(
+                    canonical_name=rule["canonical"],
+                    rule=rule,
+                    conf="confirmed",
+                    props={},
+                    extra_seed=None,
+                    t_node=call["type_node"],
+                    i_node=call["node"],
+                )
+            else:
+                qualified = f"{call['class_name']}.{call['method_name']}"
+                if qualified not in self._targets:
+                    continue
+
+                algo_raw: str | None = call.get("algo_raw")
+                algo_node = call["algo_node"]
+                inv_node = call["node"]
+                arg_node = call.get("arg_node")
+
+                if algo_raw is not None:
+                    lookup = _lookup_algo(algo_raw, self._algo_index)
+                    if lookup is not None:
+                        canonical_name, rule = lookup
+                        _emit(
+                            canonical_name=canonical_name,
+                            rule=rule,
+                            conf="confirmed",
+                            props={},
+                            extra_seed=None,
+                            t_node=algo_node,
+                            i_node=inv_node,
+                        )
+                    else:
+                        _emit(
+                            canonical_name="UNRESOLVED",
+                            rule=None,
+                            conf="LOW",
+                            props={"api": qualified, "resolution_path": "null"},
+                            extra_seed=qualified,
+                            t_node=algo_node,
+                            i_node=inv_node,
+                        )
+                else:
+                    resolutions = resolve_java_argument(arg_node, target)
+                    if not resolutions:
+                        _emit(
+                            canonical_name="UNRESOLVED",
+                            rule=None,
+                            conf="LOW",
+                            props={"api": qualified, "resolution_path": "null"},
+                            extra_seed=qualified,
+                            t_node=algo_node,
+                            i_node=inv_node,
+                        )
+                    for res in resolutions:
+                        lookup = _lookup_algo(res.algo_raw, self._algo_index) if res.algo_raw else None
+                        t_node = res.algo_node if res.algo_node is not None else algo_node
+                        if lookup is not None:
+                            canonical_name, rule = lookup
+                            props: dict[str, str] = {}
+                            if res.resolution_path:
+                                props["resolution_path"] = json.dumps(res.resolution_path)
+                            if res.branch_condition:
+                                props["branch_condition"] = res.branch_condition
+                            _emit(
+                                canonical_name=canonical_name,
+                                rule=rule,
+                                conf=res.confidence,  # type: ignore[arg-type]
+                                props=props,
+                                extra_seed=res.branch_condition,
+                                t_node=t_node,
+                                i_node=inv_node,
+                            )
+                        else:
+                            props = {
+                                "api": qualified,
+                                "resolution_path": json.dumps(res.resolution_path)
+                                if res.resolution_path
+                                else "null",
+                            }
+                            if res.branch_condition:
+                                props["branch_condition"] = res.branch_condition
+                            _emit(
+                                canonical_name="UNRESOLVED",
+                                rule=None,
+                                conf="LOW",
+                                props=props,
+                                extra_seed=f"{qualified}:{res.branch_condition or ''}",
+                                t_node=t_node,
+                                i_node=inv_node,
+                            )
 
         # Sort evidence within each asset for determinism.
         for asset in local.values():

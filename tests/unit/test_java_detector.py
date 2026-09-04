@@ -511,3 +511,134 @@ def test_object_creation_collected_with_matching_bc_classes() -> None:
     calls = _collect_jca_calls(tree.root_node, bc_classes=frozenset({"RSAKeyPairGenerator"}))
     assert len(calls) == 1
     assert calls[0]["bc_class"] == "RSAKeyPairGenerator"
+
+
+def test_java_constant_field_indirection(tmp_path: Path) -> None:
+    import json
+
+    consts_file = tmp_path / "AlgorithmConstants.java"
+    consts_file.write_text(
+        """package com.test;
+public final class AlgorithmConstants {
+    public static final String CIPHER_MODE = "AES/GCM/NoPadding";
+}
+""",
+        encoding="utf-8",
+    )
+    use_file = tmp_path / "UseConstant.java"
+    use_file.write_text(
+        """package com.test;
+import javax.crypto.Cipher;
+public class UseConstant {
+    public void encrypt() throws Exception {
+        Cipher c = Cipher.getInstance(AlgorithmConstants.CIPHER_MODE);
+    }
+}
+""",
+        encoding="utf-8",
+    )
+    detector = JavaJcaDetector()
+    assets = detector.detect(use_file)
+    assert len(assets) == 1
+    assert assets[0].name == "AES"
+    assert assets[0].confidence == "HIGH"
+    assert "resolution_path" in assets[0].properties
+    path = json.loads(assets[0].properties["resolution_path"])
+    assert any("AlgorithmConstants.CIPHER_MODE" in step for step in path)
+
+
+def test_java_map_lookup_indirection(tmp_path: Path) -> None:
+    policy_file = tmp_path / "CryptoPolicy.java"
+    policy_file.write_text(
+        """package com.test;
+import java.util.Map;
+import java.util.HashMap;
+public class CryptoPolicy {
+    private final Map<String, String> map = new HashMap<>();
+    public CryptoPolicy() {
+        map.put("strong", "AES/GCM/NoPadding");
+    }
+    public String algorithmFor(String profile) {
+        return map.get(profile);
+    }
+}
+""",
+        encoding="utf-8",
+    )
+    use_file = tmp_path / "UsePolicy.java"
+    use_file.write_text(
+        """package com.test;
+import javax.crypto.Cipher;
+public class UsePolicy {
+    public void run() throws Exception {
+        CryptoPolicy policy = new CryptoPolicy();
+        Cipher c = Cipher.getInstance(policy.algorithmFor("strong"));
+    }
+}
+""",
+        encoding="utf-8",
+    )
+    detector = JavaJcaDetector()
+    assets = detector.detect(use_file)
+    assert len(assets) == 1
+    assert assets[0].name == "AES"
+    assert assets[0].confidence == "HIGH"
+
+
+def test_java_parameter_passthrough_indirection(tmp_path: Path) -> None:
+    factory_file = tmp_path / "CipherFactory.java"
+    factory_file.write_text(
+        """package com.test;
+import javax.crypto.Cipher;
+public class CipherFactory {
+    public static Cipher create(String requested) throws Exception {
+        return Cipher.getInstance(requested);
+    }
+}
+""",
+        encoding="utf-8",
+    )
+    caller_file = tmp_path / "Caller.java"
+    caller_file.write_text(
+        """package com.test;
+public class Caller {
+    public void execute() throws Exception {
+        CipherFactory.create("AES/GCM/NoPadding");
+    }
+}
+""",
+        encoding="utf-8",
+    )
+    detector = JavaJcaDetector()
+    assets = detector.detect(factory_file)
+    assert len(assets) == 1
+    assert assets[0].name == "AES"
+    assert assets[0].confidence == "HIGH"
+
+
+def test_java_ternary_branch_indirection(tmp_path: Path) -> None:
+    ternary_file = tmp_path / "TernaryCrypto.java"
+    ternary_file.write_text(
+        """package com.test;
+import javax.crypto.KeyAgreement;
+public class TernaryCrypto {
+    public void derive(boolean legacy) throws Exception {
+        String algo = legacy ? "DH" : "ECDH";
+        KeyAgreement ka = KeyAgreement.getInstance(algo);
+    }
+}
+""",
+        encoding="utf-8",
+    )
+    detector = JavaJcaDetector()
+    assets = detector.detect(ternary_file)
+    assert len(assets) == 2
+    names = {a.name for a in assets}
+    assert names == {"DH", "ECDH"}
+    for a in assets:
+        assert a.confidence == "HIGH"
+        assert "branch_condition" in a.properties
+    conditions = {a.properties["branch_condition"] for a in assets}
+    assert "legacy == true" in conditions
+    assert "legacy == false" in conditions
+
