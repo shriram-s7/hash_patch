@@ -17,6 +17,7 @@ class ScanResult(BaseModel):
     assets: list[CryptoAsset] = Field(default_factory=list)
     scan_started_at: datetime
     tool_version: str
+    scanned_files: list[str] = Field(default_factory=list)
     # Pillar 3 (Blast Radius) findings — see hash_patch/analyze/blast_radius.py.
     # Not part of the CBOM document's own schema; the ones with a real
     # correlated CryptoAsset are also mirrored onto that asset's `properties`

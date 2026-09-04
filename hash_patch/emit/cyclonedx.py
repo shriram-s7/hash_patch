@@ -256,6 +256,14 @@ def to_cyclonedx(result: ScanResult) -> dict[str, Any]:
             )
         )
 
+    if result.scanned_files:
+        meta_props.append(
+            Property(
+                name="hash_patch:scanned_files",
+                value=json.dumps(result.scanned_files, sort_keys=True, separators=(",", ":")),
+            )
+        )
+
     metadata = BomMetaData(
         timestamp=result.scan_started_at,
         tools=ToolRepository(

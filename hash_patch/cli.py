@@ -274,6 +274,16 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
                 for asset in detector.detect(file_path):
                     result.add_asset(asset)
 
+    target_dir = path if path.is_dir() else path.parent
+    rel_scanned: list[str] = []
+    for f in scanned_files:
+        try:
+            rel = str(f.relative_to(target_dir)).replace("\\", "/")
+        except ValueError:
+            rel = str(f).replace("\\", "/")
+        rel_scanned.append(rel)
+    result.scanned_files = sorted(rel_scanned)
+
     # Reachability classification for Python/Java assets (Go/C keep the
     # model's default Reachability.UNKNOWN — see hash_patch/detect/go.py and
     # hash_patch/detect/c.py). Runs over the whole scanned file set so calls
