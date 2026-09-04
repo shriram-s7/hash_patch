@@ -138,24 +138,49 @@ def _quantum_status_from_str(value: str | None) -> QuantumStatus:
 # ---------------------------------------------------------------------------
 
 
-def _collect_calls(root_node: Any, bare_names: frozenset[str] = frozenset()) -> list[dict[str, Any]]:
-    """Walk the AST and return every call node that has an attribute receiver,
-    plus (only when `bare_names` is non-empty) every BARE call whose callee
-    identifier is a member of `bare_names` — e.g. `Box(sk, pk)` when "Box" is
-    in `bare_names`. Callers that omit `bare_names` (the default) get
-    EXACTLY the original attribute-call-only behavior — a bare call like
-    `print(...)` or `some_function(...)` is never collected, matching every
-    existing caller/test of this function unchanged.
+def _extract_aliases(root_node: Any) -> dict[str, list[tuple[Any, str | None]]]:
+    """Scan root_node for local variable assignments of crypto attribute references or conditionals."""
+    aliases: dict[str, list[tuple[Any, str | None]]] = {}
 
-    Each entry: {"obj": str, "attr": str, "call_node": Node, "attr_node": Node}
-      - obj:       the left-hand identifier text  (e.g. "hashes", "AES")
-      - attr:      the right-hand identifier text (e.g. "SHA256",  "new")
-      - call_node: the top-level `call` node (for snippet extraction)
-      - attr_node: the `attribute` node (for position extraction)
-    A bare-call entry instead has {"bare_call": str, "call_node": Node, "attr_node": Node}.
-    """
+    stack: list[tuple[Any, int]] = [(root_node, 0)]
+    while stack:
+        n, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if n.type == "assignment":
+            left = n.child_by_field_name("left")
+            right = n.child_by_field_name("right")
+            if left is None and n.children:
+                left = n.children[0]
+            if right is None and len(n.children) >= 3:
+                right = n.children[-1]
+            if left and right and left.type == "identifier":
+                var_name = left.text.decode("utf-8", errors="replace")
+                if right.type == "conditional_expression" and len(right.children) >= 5:
+                    conseq = right.children[0]
+                    cond = right.children[2]
+                    alt = right.children[4]
+                    cond_str = cond.text.decode("utf-8", errors="replace").strip()
+                    branches: list[tuple[Any, str | None]] = []
+                    if conseq.type == "attribute":
+                        branches.append((conseq, f"{cond_str} == true"))
+                    if alt.type == "attribute":
+                        branches.append((alt, f"{cond_str} == false"))
+                    if branches:
+                        aliases[var_name] = branches
+                elif right.type == "attribute":
+                    aliases[var_name] = [(right, None)]
+        children = n.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
+    return aliases
+
+
+def _collect_calls(root_node: Any, bare_names: frozenset[str] = frozenset()) -> list[dict[str, Any]]:
+    """Walk the AST and return every call node of interest."""
     results: list[dict[str, Any]] = []
-    _walk(root_node, results, bare_names)
+    aliases = _extract_aliases(root_node)
+    _walk(root_node, results, bare_names, aliases)
     return results
 
 
@@ -175,14 +200,19 @@ def _collect_calls(root_node: Any, bare_names: frozenset[str] = frozenset()) -> 
 _MAX_WALK_DEPTH = 500
 
 
-def _walk(node: Any, results: list[dict[str, Any]], bare_names: frozenset[str] = frozenset()) -> None:
+def _walk(
+    node: Any,
+    results: list[dict[str, Any]],
+    bare_names: frozenset[str] = frozenset(),
+    aliases: dict[str, list[tuple[Any, str | None]]] | None = None,
+) -> None:
     stack: list[tuple[Any, int]] = [(node, 0)]
     while stack:
         current, depth = stack.pop()
         if depth > _MAX_WALK_DEPTH:
             continue
         if current.type == "call":
-            _try_collect_call(current, results, bare_names)
+            _try_collect_call(current, results, bare_names, aliases)
             # Still recurse: calls can be nested (e.g. algorithm=hashes.SHA256())
         children = current.children
         if children:
@@ -235,7 +265,10 @@ def _string_literal_text(node: Any) -> str | None:
 
 
 def _try_collect_call(
-    call_node: Any, results: list[dict[str, Any]], bare_names: frozenset[str] = frozenset()
+    call_node: Any,
+    results: list[dict[str, Any]],
+    bare_names: frozenset[str] = frozenset(),
+    aliases: dict[str, list[tuple[Any, str | None]]] | None = None,
 ) -> None:
     """If call_node is an attribute-based call, append it to results."""
     # A qualifying call has an `attribute` child as its first named child.
@@ -245,16 +278,24 @@ def _try_collect_call(
             attr_node = child
             break
     if attr_node is None:
-        # No attribute receiver — a BARE call (e.g. `Box(sk, pk)`). Only
-        # collected when the callee identifier is one of `bare_names`
-        # (PyNaCl's Box/SecretBox/PrivateKey/SigningKey, per
-        # rules/python_crypto.yaml's `bare_constructors` table) — anything
-        # else (print(...), some_function(...)) is left uncollected exactly
-        # as before, per this function's original contract.
-        if bare_names and call_node.children and call_node.children[0].type == "identifier":
+        if call_node.children and call_node.children[0].type == "identifier":
             id_node = call_node.children[0]
             id_text = id_node.text.decode("utf-8", errors="replace")
-            if id_text in bare_names:
+            if aliases and id_text in aliases:
+                for target_attr_node, branch_cond in aliases[id_text]:
+                    named_targets = [c for c in target_attr_node.children if c.is_named]
+                    if len(named_targets) >= 2:
+                        t_obj = named_targets[0].text.decode("utf-8", errors="replace")
+                        t_attr = named_targets[-1].text.decode("utf-8", errors="replace")
+                        results.append({
+                            "obj": t_obj,
+                            "attr": t_attr,
+                            "call_node": call_node,
+                            "attr_node": id_node,
+                            "branch_condition": branch_cond,
+                        })
+                return
+            if bare_names and id_text in bare_names:
                 results.append({"bare_call": id_text, "call_node": call_node, "attr_node": id_node})
         return
 
@@ -301,23 +342,36 @@ def _try_collect_call(
                 if (
                     len(dm_named) >= 2
                     and dm_named[0].type == "identifier"
-                    and dm_named[0].text.decode("utf-8", errors="replace") == "hashlib"
                     and dm_named[-1].type == "identifier"
                 ):
                     results.append({
                         "special_lookup": dm_named[-1].text.decode("utf-8", errors="replace"),
-                        "lookup_table": "hashlib",
+                        "lookup_table": "hmac",
                         "call_node": call_node,
                         "attr_node": digestmod_arg,
                         "api": "hmac.new",
                     })
                     matched = True
+            elif digestmod_arg.type == "call":
+                for child in digestmod_arg.children:
+                    if child.type == "attribute":
+                        dm_named = list(child.named_children)
+                        if len(dm_named) >= 2 and dm_named[-1].type == "identifier":
+                            results.append({
+                                "special_lookup": dm_named[-1].text.decode("utf-8", errors="replace"),
+                                "lookup_table": "hmac",
+                                "call_node": call_node,
+                                "attr_node": digestmod_arg,
+                                "api": "hmac.new",
+                            })
+                            matched = True
+                            break
             else:
                 literal = _string_literal_text(digestmod_arg)
                 if literal:
                     results.append({
                         "special_lookup": literal,
-                        "lookup_table": "hashlib",
+                        "lookup_table": "hmac",
                         "call_node": call_node,
                         "attr_node": digestmod_arg,
                         "api": "hmac.new",
@@ -430,12 +484,19 @@ class PythonCryptoDetector(Detector):
                 if special_lookup is not None:
                     if call.get("lookup_table") == "jwt":
                         rule = self._jwt_algorithms.get(special_lookup.upper())
+                    elif call.get("lookup_table") == "hmac":
+                        rule = self._pyca.get("hmac", {}).get(special_lookup.upper())
                     else:
                         rule = self._pyca.get("hashlib", {}).get(special_lookup.upper())
                     if rule is None:
                         canonical = "UNRESOLVED"
                         confidence = "LOW"
-                        api_name = call.get("api", "hashlib.new" if call.get("lookup_table") != "jwt" else "jwt.encode")
+                        api_name = call.get(
+                            "api",
+                            "jwt.encode"
+                            if call.get("lookup_table") == "jwt"
+                            else ("hmac.new" if call.get("lookup_table") == "hmac" else "hashlib.new"),
+                        )
                         properties = {
                             "api": api_name,
                             "resolution_path": "null",
@@ -490,6 +551,10 @@ class PythonCryptoDetector(Detector):
                 detector_version=_DETECTOR_VERSION,
             )
 
+            if call.get("branch_condition"):
+                properties["branch_condition"] = call["branch_condition"]
+                extra_id_seed = call["branch_condition"]
+
             asset = CryptoAsset.create(
                 asset_type=AssetType.ALGORITHM,
                 name=canonical,
@@ -510,6 +575,8 @@ class PythonCryptoDetector(Detector):
                 seen = {e.key() for e in existing.evidence}
                 if evidence.key() not in seen:
                     existing.evidence.append(evidence)
+                for k, v in properties.items():
+                    existing.properties.setdefault(k, v)
             else:
                 local[asset_id] = asset
 

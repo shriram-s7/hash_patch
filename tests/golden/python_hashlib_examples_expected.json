@@ -99,14 +99,14 @@
       "type": "cryptographic-asset"
     },
     {
-      "bom-ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c",
+      "bom-ref": "crypto-asset:386f49e0082870b8182a4e375f4f5094",
       "cryptoProperties": {
         "algorithmProperties": {
           "parameterSetIdentifier": "256",
-          "primitive": "hash"
+          "primitive": "mac"
         },
         "assetType": "algorithm",
-        "oid": "2.16.840.1.101.3.4.2.1"
+        "oid": "1.2.840.113549.2.9"
       },
       "evidence": {
         "occurrences": [
@@ -118,7 +118,7 @@
           }
         ]
       },
-      "name": "SHA-256",
+      "name": "HMAC-SHA256",
       "properties": [
         {
           "name": "hash_patch:confidence",
@@ -152,7 +152,7 @@
       "ref": "crypto-asset:0b13c9801be32ec4dc7b39cc2e0fb7dc"
     },
     {
-      "ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c"
+      "ref": "crypto-asset:386f49e0082870b8182a4e375f4f5094"
     }
   ],
   "metadata": {
@@ -167,7 +167,7 @@
       ]
     }
   },
-  "serialNumber": "urn:uuid:58b894fd-f24f-54d9-b0fc-cf98ffd88813",
+  "serialNumber": "urn:uuid:0ae90361-94b3-5f69-83b6-7b5f88a91d91",
   "specVersion": "1.6",
   "version": 1
 }

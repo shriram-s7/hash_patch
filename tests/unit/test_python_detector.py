@@ -467,14 +467,14 @@ def test_hashlib_new_string_literal_detected(detector: PythonCryptoDetector) -> 
 def test_hmac_new_hashlib_digestmod_reference_detected(detector: PythonCryptoDetector) -> None:
     """hmac.new(secret, payload, hashlib.sha256) — the bare hashlib.sha256
     reference (not itself a call) passed as the digestmod argument must be
-    recognised as a SHA-256 hash-algorithm usage, weakened-by-grover. This
+    recognised as a HMAC-SHA256 mac usage, weakened-by-grover. This
     is the second real missed finding from the reproduction corpus
     (python/orchestration/app/crypto/wrappers.py)."""
     assets = detector.detect(HASHLIB_EXAMPLES_FIXTURE)
-    sha256_hits = _find_assets(assets, "SHA-256")
-    assert sha256_hits, f"hmac.new's hashlib.sha256 digestmod not detected. Got: {[a.name for a in assets]}"
-    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in sha256_hits)
-    snippets = [e.snippet for a in sha256_hits for e in a.evidence]
+    hmac_hits = _find_assets(assets, "HMAC-SHA256")
+    assert hmac_hits, f"hmac.new's hashlib.sha256 digestmod not detected. Got: {[a.name for a in assets]}"
+    assert all(a.quantum_status == QuantumStatus.WEAKENED_BY_GROVER for a in hmac_hits)
+    snippets = [e.snippet for a in hmac_hits for e in a.evidence]
     assert any("hmac.new" in s for s in snippets), snippets
 
 
@@ -636,3 +636,46 @@ def test_collect_calls_ignores_plain_function_calls() -> None:
     tree = parser.parse(src)
     calls = _collect_calls(tree.root_node)
     assert calls == [], f"Expected no attribute calls, got {calls}"
+
+
+def test_python_ternary_attribute_ref(tmp_path: Path) -> None:
+    f = tmp_path / "ternary_crypto.py"
+    f.write_text(
+        """import hashlib
+def compute(payload: bytes, legacy: bool = False) -> bytes:
+    algorithm = hashlib.sha1 if legacy else hashlib.sha256
+    return algorithm(payload).digest()
+""",
+        encoding="utf-8",
+    )
+    detector = PythonCryptoDetector()
+    assets = detector.detect(f)
+    assert len(assets) == 2
+    names = {a.name for a in assets}
+    assert names == {"SHA-1", "SHA-256"}
+    for a in assets:
+        assert "branch_condition" in a.properties
+        # Verify tagged to call site (line 4), not assignment (line 3)
+        assert all(ev.line == 4 for ev in a.evidence)
+    conditions = {a.properties["branch_condition"] for a in assets}
+    assert "legacy == true" in conditions
+    assert "legacy == false" in conditions
+
+
+def test_python_attribute_ref_as_bare_argument(tmp_path: Path) -> None:
+    f = tmp_path / "bare_hmac.py"
+    f.write_text(
+        """import hashlib
+import hmac
+def sign(secret: bytes, payload: bytes) -> bytes:
+    return hmac.new(secret, payload, hashlib.sha256).digest()
+""",
+        encoding="utf-8",
+    )
+    detector = PythonCryptoDetector()
+    assets = detector.detect(f)
+    assert len(assets) == 1
+    assert assets[0].name == "HMAC-SHA256"
+    assert assets[0].quantum_status == QuantumStatus.WEAKENED_BY_GROVER
+    assert any("hmac.new" in ev.snippet for ev in assets[0].evidence)
+

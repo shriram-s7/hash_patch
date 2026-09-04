@@ -533,6 +533,41 @@ pyca_modules:
       quantum_status: weakened-by-grover
       oid: null
 
+    SHA256:
+      canonical: HMAC-SHA256
+      primitive: mac
+      parameter_set: "256"
+      quantum_status: weakened-by-grover
+      oid: "1.2.840.113549.2.9"
+
+    SHA384:
+      canonical: HMAC-SHA384
+      primitive: mac
+      parameter_set: "384"
+      quantum_status: weakened-by-grover
+      oid: "1.2.840.113549.2.10"
+
+    SHA512:
+      canonical: HMAC-SHA512
+      primitive: mac
+      parameter_set: "512"
+      quantum_status: weakened-by-grover
+      oid: "1.2.840.113549.2.11"
+
+    SHA1:
+      canonical: HMAC-SHA1
+      primitive: mac
+      parameter_set: "160"
+      quantum_status: broken-classically
+      oid: "1.2.840.113549.2.7"
+
+    MD5:
+      canonical: HMAC-MD5
+      primitive: mac
+      parameter_set: "128"
+      quantum_status: broken-classically
+      oid: "1.2.840.113549.2.5"
+
   poly1305:
     Poly1305:
       canonical: Poly1305
