@@ -21,15 +21,50 @@ Hard grounding guarantees:
 
 from __future__ import annotations
 
+import logging
+import os
 from typing import Any
 
 import httpx
 
 from hash_patch.qa.query import NormalizedQuery
 
+logger = logging.getLogger(__name__)
+
 DEFAULT_MODEL = "llama3.2:3b"
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
-_REQUEST_TIMEOUT_SECONDS = 60.0
+# The desktop launcher manages a bundled Ollama runtime and points the backend
+# at it with HASH_PATCH_OLLAMA_URL. In plain dev mode this stays the default
+# local Ollama. Trailing slashes are stripped so callers can append /api/...
+# without producing double slashes.
+DEFAULT_OLLAMA_URL = os.environ.get("HASH_PATCH_OLLAMA_URL", "http://localhost:11434").rstrip("/")
+# A 3B CPU model needs more headroom than a dedicated GPU; the Q&A pipeline
+# still degrades gracefully to verified scan evidence if generation overruns.
+_REQUEST_TIMEOUT_SECONDS = float(os.environ.get("HASH_PATCH_OLLAMA_TIMEOUT", "600"))
+
+
+def resolve_ollama_url(explicit_url: str | None = None) -> str:
+    """Resolve the active Ollama endpoint URL.
+
+    Priority:
+    1. Explicit function argument.
+    2. HASH_PATCH_OLLAMA_URL environment variable.
+    3. Auto-detection: probe standard port 11434, then bundled desktop port 11436.
+    4. Fallback to http://localhost:11434.
+    """
+    if explicit_url:
+        return explicit_url.rstrip("/")
+    env_url = os.environ.get("HASH_PATCH_OLLAMA_URL")
+    if env_url:
+        return env_url.rstrip("/")
+    for candidate in ("http://localhost:11434", "http://127.0.0.1:11436"):
+        try:
+            resp = httpx.get(f"{candidate}/api/tags", timeout=0.5)
+            if resp.status_code == 200:
+                return candidate
+        except Exception:
+            continue
+    return DEFAULT_OLLAMA_URL
+
 
 REFUSAL_MESSAGE = "This isn't information I have from the current scan."
 
@@ -128,9 +163,13 @@ def serialize_evidence_package(
             f"{aggs.get('unknown_reachability', 0)} unknown reachability"
         )
     if "blast_radius_overflows" in aggs:
-        lines.append(f"- Blast Radius Memory Overflows: {aggs.get('blast_radius_overflows', 0)} buffers")
+        lines.append(
+            f"- Blast Radius Memory Overflows: {aggs.get('blast_radius_overflows', 0)} buffers"
+        )
     if "contradictions_count" in aggs:
-        lines.append(f"- Policy Contradictions: {aggs.get('contradictions_count', 0)} cross-layer divergences")
+        lines.append(
+            f"- Policy Contradictions: {aggs.get('contradictions_count', 0)} cross-layer divergences"
+        )
     if "exposure_state" in aggs:
         pct = aggs.get("percentage_of_operations")
         pct_s = f"{pct}%" if isinstance(pct, (int, float)) else "unknown"
@@ -139,19 +178,33 @@ def serialize_evidence_package(
             f"{aggs.get('count', 0)} findings ({pct_s} of operations)"
         )
     if "total_cost_days" in aggs:
-        lines.append(f"- Total Migration Effort: {aggs.get('total_cost_days', 0):.1f} engineer-days")
+        lines.append(
+            f"- Total Migration Effort: {aggs.get('total_cost_days', 0):.1f} engineer-days"
+        )
     if "top_candidate" in aggs and aggs.get("top_candidate"):
         lines.append(f"- #1 Authoritative Migration Priority: {aggs.get('top_candidate')}")
     if "intersection_count" in aggs:
         algos = ", ".join(aggs.get("intersected_algorithms", [])) or "None"
-        lines.append(f"- Cross-Pillar Deterministic Intersection: {aggs.get('intersection_count')} operational findings across: {algos}")
+        lines.append(
+            f"- Cross-Pillar Deterministic Intersection: {aggs.get('intersection_count')} operational findings across: {algos}"
+        )
         if aggs.get("prioritized_candidate"):
-            score_str = f" (Risk: {aggs.get('top_candidate_risk_score'):.2f})" if aggs.get('top_candidate_risk_score') is not None else ""
-            lines.append(f"- Authoritative Priority Candidate: {aggs.get('prioritized_candidate')}{score_str}")
+            score_str = (
+                f" (Risk: {aggs.get('top_candidate_risk_score'):.2f})"
+                if aggs.get("top_candidate_risk_score") is not None
+                else ""
+            )
+            lines.append(
+                f"- Authoritative Priority Candidate: {aggs.get('prioritized_candidate')}{score_str}"
+            )
         if aggs.get("top_dependency_asset"):
-            lines.append(f"- Most Downstream Dependencies: {aggs.get('top_dependency_asset')} ({aggs.get('top_dependency_count')} incoming callers/paths)")
+            lines.append(
+                f"- Most Downstream Dependencies: {aggs.get('top_dependency_asset')} ({aggs.get('top_dependency_count')} incoming callers/paths)"
+            )
         if aggs.get("unknown_reachability_count"):
-            lines.append(f"- Reachability Uncertainty: {aggs.get('unknown_reachability_count')} findings have UNKNOWN reachability (do NOT classify as internal)")
+            lines.append(
+                f"- Reachability Uncertainty: {aggs.get('unknown_reachability_count')} findings have UNKNOWN reachability (do NOT classify as internal)"
+            )
 
     # 3. Target Entities / Query Scope
     if query:
@@ -208,17 +261,23 @@ def serialize_evidence_package(
     references = getattr(pkg, "references", []) or []
     if references:
         lines.append("\n=== CRYPTO_REFERENCE RECORDS (STATIC / NON-OPERATIONAL) ===")
-        lines.append("Note: These are static string constants or comments. They are NOT executing crypto operations and carry zero operational risk.")
+        lines.append(
+            "Note: These are static string constants or comments. They are NOT executing crypto operations and carry zero operational risk."
+        )
         for r in references[:8]:
             loc = r.evidence[0].display_location if r.evidence else "unknown"
-            lines.append(f"- Reference: {r.name} at {loc} (ID: {r.id}, non-operational string occurrence)")
+            lines.append(
+                f"- Reference: {r.name} at {loc} (ID: {r.id}, non-operational string occurrence)"
+            )
 
     # 6. Call Graph Relationships
     relationships = getattr(pkg, "relationships", []) or []
     if relationships:
         lines.append("\n=== CALL GRAPH & RELATIONSHIPS (Pillar 1) ===")
         for e in relationships[:8]:
-            lines.append(f"- Call: {e.source_name} calls {e.target_name} at {e.locator}:{e.line or 'unknown'} (confidence: {e.confidence})")
+            lines.append(
+                f"- Call: {e.source_name} calls {e.target_name} at {e.locator}:{e.line or 'unknown'} (confidence: {e.confidence})"
+            )
 
     # 7. Migration Candidates & Optimizer Plan
     migration = getattr(pkg, "migration", {}) or {}
@@ -250,9 +309,21 @@ def serialize_evidence_package(
         for s in sens[:5]:
             asset_name = getattr(s, "asset_name", None) or getattr(s, "name", "Asset")
             years = getattr(s, "years", None) or getattr(s, "shelf_life_years", None) or 0
-            category = getattr(s, "category", None) or getattr(s, "shelf_life_category", None) or "default"
-            stat = f" | Statutory Basis: {s.statutory_basis}" if getattr(s, "statutory_basis", None) else ""
-            note = f" | Mosca: {s.mosca_note}" if getattr(s, "mosca_note", None) else (f" | Mosca: {s.shelf_life_note}" if getattr(s, "shelf_life_note", None) else "")
+            category = (
+                getattr(s, "category", None) or getattr(s, "shelf_life_category", None) or "default"
+            )
+            stat = (
+                f" | Statutory Basis: {s.statutory_basis}"
+                if getattr(s, "statutory_basis", None)
+                else ""
+            )
+            note = (
+                f" | Mosca: {s.mosca_note}"
+                if getattr(s, "mosca_note", None)
+                else (
+                    f" | Mosca: {s.shelf_life_note}" if getattr(s, "shelf_life_note", None) else ""
+                )
+            )
             lines.append(
                 f"- Asset {asset_name} ({category}): {years} years retention required{stat}{note}"
             )
@@ -262,7 +333,9 @@ def serialize_evidence_package(
     if contradictions:
         lines.append("\n=== POLICY CONTRADICTIONS & DIVERGENCES (Pillar 4) ===")
         for c in contradictions[:4]:
-            lines.append(f"- Contradiction: {c.id} ({c.kind}) — Declared: {c.declared_algorithm} vs Implemented: {c.implemented_algorithm}")
+            lines.append(
+                f"- Contradiction: {c.id} ({c.kind}) — Declared: {c.declared_algorithm} vs Implemented: {c.implemented_algorithm}"
+            )
 
     joined = "\n".join(lines)
     if len(joined) > max_chars:
@@ -370,11 +443,14 @@ def ask_ollama(
     context: str,
     conversation_history: list[dict[str, str]] | None = None,
     model: str = DEFAULT_MODEL,
-    base_url: str = DEFAULT_OLLAMA_URL,
+    base_url: str | None = None,
     evidence_package: Any | None = None,
     query: NormalizedQuery | None = None,
 ) -> str:
     """Send one grounded question to the local Ollama model with structured EvidencePackage and context."""
+    # Resolve base URL dynamically to ensure any environment changes are respected
+    resolved_base_url = resolve_ollama_url(base_url)
+
     # 1. Conversation history formatting (last 2 exchanges)
     history_str = ""
     if conversation_history:
@@ -411,7 +487,7 @@ def ask_ollama(
 
     try:
         response = httpx.post(
-            f"{base_url}/api/generate",
+            f"{resolved_base_url}/api/generate",
             json={
                 "model": model,
                 "system": SYSTEM_PROMPT,
@@ -420,6 +496,7 @@ def ask_ollama(
                 "options": {
                     "temperature": 0.1,
                     "top_p": 0.9,
+                    "num_ctx": 4096,
                 },
             },
             timeout=_REQUEST_TIMEOUT_SECONDS,
@@ -431,6 +508,45 @@ def ask_ollama(
             # Fallback if model generates empty output
             return f"[Grounded Scan Evidence]\n\n{context}"
         return ans
-    except httpx.HTTPError:
+    except httpx.HTTPStatusError as exc:
+        code = exc.response.status_code
+        if code == 404:
+            logger.warning(
+                "Ollama returned 404 for model '%s' at %s (model not installed or not ready)",
+                model,
+                resolved_base_url,
+            )
+        else:
+            logger.warning(
+                "Ollama HTTP error %s for model '%s' at %s: %s",
+                code,
+                model,
+                resolved_base_url,
+                exc.response.text[:200],
+            )
+        return f"[Local Ollama model unavailable — showing verified scan evidence]\n\n{context}"
+    except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+        logger.warning(
+            "Could not connect to Ollama runtime at %s: %s",
+            resolved_base_url,
+            exc,
+        )
+        return f"[Local Ollama model unavailable — showing verified scan evidence]\n\n{context}"
+    except httpx.TimeoutException as exc:
+        logger.warning(
+            "Ollama query timed out after %ss for model '%s' at %s: %s",
+            _REQUEST_TIMEOUT_SECONDS,
+            model,
+            resolved_base_url,
+            exc,
+        )
+        return f"[Local Ollama model unavailable — showing verified scan evidence]\n\n{context}"
+    except httpx.HTTPError as exc:
+        logger.warning(
+            "Ollama request error for model '%s' at %s: %s",
+            model,
+            resolved_base_url,
+            exc,
+        )
         # Graceful degradation per Requirement 17: return verified deterministic context
         return f"[Local Ollama model unavailable — showing verified scan evidence]\n\n{context}"

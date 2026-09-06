@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -21,10 +23,22 @@ from hash_patch.qa.registry import GLOBAL_SCAN_REGISTRY, ScanRecord
 # source code, not for serving arbitrary large files.
 _MAX_FILE_CONTENT_BYTES = 5 * 1024 * 1024
 
-ALLOWED_ORIGINS = [
+# Same list of allowed origins the dev servers use, PLUS "null" — the origin an
+# Electron window exposes when the renderer is loaded from file:// — so the
+# packaged desktop builder can talk to this service. Overridable with
+# HASH_PATCH_ALLOWED_ORIGINS (comma-separated) when embedded elsewhere.
+_DEFAULT_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
+    "null",
+]
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("HASH_PATCH_ALLOWED_ORIGINS", ",".join(_DEFAULT_ALLOWED_ORIGINS)).split(
+        ","
+    )
+    if o.strip()
 ]
 
 app = FastAPI(
@@ -84,6 +98,50 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+# ---------------------------------------------------------------------------
+# Ollama availability (Q&A only). The Ask pipeline degrades gracefully on its
+# own; this endpoint gives the UI a clear, non-crashing status line when the
+# local model is not available. It never participates in scanning.
+# ---------------------------------------------------------------------------
+_ollama_status: dict[str, Any] = {"checked_at": 0.0}
+_OLLAMA_STATUS_CACHE_SECONDS = 5.0
+
+
+@app.get("/api/ollama-status")
+def ollama_status() -> dict[str, Any]:
+    from hash_patch.qa.ollama_client import DEFAULT_MODEL, resolve_ollama_url
+
+    ollama_url = resolve_ollama_url()
+    now = time.monotonic()
+    if now - _ollama_status.get("checked_at", 0.0) > _OLLAMA_STATUS_CACHE_SECONDS:
+        available = False
+        model_available = False
+        try:
+            resp = httpx.get(f"{ollama_url}/api/tags", timeout=2.0)
+            if resp.status_code == 200:
+                available = True
+                models = resp.json().get("models", [])
+                model_available = any(
+                    m.get("name") == DEFAULT_MODEL or m.get("name", "").startswith(DEFAULT_MODEL)
+                    for m in models
+                )
+        except httpx.HTTPError:
+            pass
+        _ollama_status.update(
+            available=available,
+            model_available=model_available,
+            checked_at=now,
+        )
+
+    return {
+        "available": bool(_ollama_status.get("available")),
+        "model": DEFAULT_MODEL,
+        "model_available": bool(_ollama_status.get("model_available")),
+        "ollama_url": ollama_url,
+        "service": "hash-patch",
+    }
+
+
 @app.post("/api/scan")
 def scan_directory(req: ScanRequest) -> dict[str, Any]:
     """Scan a local directory and return the resulting CycloneDX 1.6 CBOM directly."""
@@ -95,6 +153,7 @@ def scan_directory(req: ScanRequest) -> dict[str, Any]:
     if not target_path.exists():
         raise HTTPException(status_code=400, detail=f"Path does not exist: {raw_path}")
     from hash_patch.detect.container.formats import probe_container_target
+
     if target_path.is_file():
         if not probe_container_target(target_path):
             raise HTTPException(status_code=400, detail=f"Path is not a directory: {raw_path}")
@@ -115,7 +174,9 @@ def scan_directory(req: ScanRequest) -> dict[str, Any]:
 @app.get("/api/file-content")
 def file_content(
     path: str = Query(..., description="Absolute path of the file to read"),
-    root: str = Query(..., description="Absolute path of the scan target directory this file must be under"),
+    root: str = Query(
+        ..., description="Absolute path of the scan target directory this file must be under"
+    ),
 ) -> dict[str, str]:
     """Return the real content of a file from the local filesystem, for the
     Repository tab's code viewer.
@@ -147,7 +208,9 @@ def file_content(
         raise HTTPException(status_code=404, detail=f"File not found: {raw_path}") from exc
 
     if path_resolved != root_resolved and root_resolved not in path_resolved.parents:
-        raise HTTPException(status_code=403, detail="Requested path is outside the scanned target directory.")
+        raise HTTPException(
+            status_code=403, detail="Requested path is outside the scanned target directory."
+        )
 
     if not path_resolved.is_file():
         raise HTTPException(status_code=400, detail=f"Not a file: {raw_path}")
@@ -230,7 +293,9 @@ def ask_about_scan(req: AskRequest) -> AskResponse:
         if record is None:
             # If client provided cbom as fallback alongside scan_id, register it
             if req.cbom is not None:
-                record = GLOBAL_SCAN_REGISTRY.register_scan(req.cbom, plan=req.plan, scan_id=req.scan_id)
+                record = GLOBAL_SCAN_REGISTRY.register_scan(
+                    req.cbom, plan=req.plan, scan_id=req.scan_id
+                )
             else:
                 raise HTTPException(
                     status_code=404,
@@ -282,16 +347,20 @@ def ask_about_scan(req: AskRequest) -> AskResponse:
             scan_id=record.scan_id,
         )
 
-    try:
-        answer = ask_ollama(
-            question,
-            result.context or "",
-            conversation_history=req.conversation_history,
-            evidence_package=result.evidence_package,
-            query=result.query,
-        )
-    except httpx.HTTPError:
+    status = ollama_status()
+    if not (status.get("available") and status.get("model_available")):
         answer = f"[Local Ollama model unavailable — showing verified scan evidence]\n\n{result.context or ''}"
+    else:
+        try:
+            answer = ask_ollama(
+                question,
+                result.context or "",
+                conversation_history=req.conversation_history,
+                evidence_package=result.evidence_package,
+                query=result.query,
+            )
+        except httpx.HTTPError:
+            answer = f"[Local Ollama model unavailable — showing verified scan evidence]\n\n{result.context or ''}"
 
     if session:
         pq = result.query or QueryAnalyzer.parse(question, set(result.matched_findings), session)

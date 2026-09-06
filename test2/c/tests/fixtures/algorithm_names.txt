@@ -1,0 +1,19 @@
+This fixture is documentation data, not executable source.
+
+Algorithms seen in historical partner material:
+RSA
+ECDSA
+ECDH
+DH
+DSA
+Ed25519
+AES-256-GCM
+AES-256-CBC
+MD5
+SHA-1
+SHA-256
+HMAC-SHA256
+PBKDF2
+ML-KEM-768
+TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+X.509
