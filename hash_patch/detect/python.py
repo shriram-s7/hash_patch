@@ -46,6 +46,7 @@ except Exception:  # noqa: BLE001 -- graceful degradation if the native parser f
 from hash_patch.detect.base import Detector, registry
 from hash_patch.model.assets import (
     AssetType,
+    Confidence,
     CryptoAsset,
     Primitive,
     QuantumStatus,
@@ -162,13 +163,13 @@ def _extract_aliases(root_node: Any) -> dict[str, list[tuple[Any, str | None]]]:
                     alt = right.children[4]
                     cond_str = cond.text.decode("utf-8", errors="replace").strip()
                     branches: list[tuple[Any, str | None]] = []
-                    if conseq.type == "attribute":
+                    if conseq.type in ("attribute", "string"):
                         branches.append((conseq, f"{cond_str} == true"))
-                    if alt.type == "attribute":
+                    if alt.type in ("attribute", "string"):
                         branches.append((alt, f"{cond_str} == false"))
                     if branches:
                         aliases[var_name] = branches
-                elif right.type == "attribute":
+                elif right.type in ("attribute", "string"):
                     aliases[var_name] = [(right, None)]
         children = n.children
         if children:
@@ -324,6 +325,32 @@ def _try_collect_call(
                 "attr_node": name_arg,
                 "api": "hashlib.new",
             })
+        elif name_arg is not None and name_arg.type == "identifier" and aliases and name_arg.text.decode("utf-8", errors="replace") in aliases:
+            name_text = name_arg.text.decode("utf-8", errors="replace")
+            for target_node, branch_cond in aliases[name_text]:
+                if target_node.type == "string":
+                    t_lit = _string_literal_text(target_node)
+                    if t_lit:
+                        results.append({
+                            "special_lookup": t_lit,
+                            "lookup_table": "hashlib",
+                            "call_node": call_node,
+                            "attr_node": target_node,
+                            "api": "hashlib.new",
+                            "branch_condition": branch_cond,
+                        })
+                elif target_node.type == "attribute":
+                    t_named = [c for c in target_node.children if c.is_named]
+                    if len(t_named) >= 2:
+                        t_attr = t_named[-1].text.decode("utf-8", errors="replace")
+                        results.append({
+                            "special_lookup": t_attr,
+                            "lookup_table": "hashlib",
+                            "call_node": call_node,
+                            "attr_node": target_node,
+                            "api": "hashlib.new",
+                            "branch_condition": branch_cond,
+                        })
         else:
             results.append({
                 "unresolved": True,
@@ -414,6 +441,74 @@ def _try_collect_call(
     })
 
 
+_REFERENCE_CONTAINER_TYPES = frozenset(
+    {"assignment", "return_statement", "dictionary", "pair", "list", "tuple", "set"}
+)
+_REFERENCE_EXCLUDED_ANCESTOR_TYPES = frozenset(
+    {"call", "argument_list", "import_statement", "import_from_statement", "aliased_import", "comment"}
+)
+
+
+def _collect_crypto_references(
+    root_node: Any, crypto_references: dict[str, dict[str, Any]]
+) -> list[tuple[Any, Any, dict[str, Any]]]:
+    """Find standalone string literal nodes matching a known algorithm/protocol
+    name that are never passed as an argument to any call — only assigned to
+    a variable/constant, dictionary/list value, or returned.
+    """
+    if not crypto_references:
+        return []
+    results: list[tuple[Any, Any, dict[str, Any]]] = []
+    stack: list[tuple[Any, int]] = [(root_node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > 256:
+            continue
+        if current.type == "string":
+            _try_collect_reference(current, crypto_references, results)
+        children = current.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
+    return results
+
+
+def _try_collect_reference(
+    node: Any,
+    crypto_references: dict[str, dict[str, Any]],
+    results: list[tuple[Any, Any, dict[str, Any]]],
+) -> None:
+    parent = node.parent
+    child = node
+    in_call = False
+    in_container = False
+    while parent:
+        if parent.type in _REFERENCE_EXCLUDED_ANCESTOR_TYPES:
+            in_call = True
+            break
+        if parent.type == "pair" and parent.child_by_field_name("key") is child:
+            in_call = True
+            break
+        if parent.type in _REFERENCE_CONTAINER_TYPES:
+            in_container = True
+        child = parent
+        parent = parent.parent
+    if in_container and not in_call:
+        raw = node.text.decode("utf-8", errors="replace")
+        text = raw.strip("\"' \t\r\n")
+        if not text:
+            return
+        rule = crypto_references.get(text)
+        if rule is None:
+            from hash_patch.detect.canonical_registry import lookup_canonical_algorithm
+
+            rule = lookup_canonical_algorithm(text)
+        if rule is not None:
+            stmt = node
+            while stmt.parent and stmt.parent.type not in ("module", "block"):
+                stmt = stmt.parent
+            results.append((node, stmt, rule))
+
+
 # ---------------------------------------------------------------------------
 # Detector class
 # ---------------------------------------------------------------------------
@@ -422,8 +517,8 @@ def _try_collect_call(
 class PythonCryptoDetector(Detector):
     """Detects PyCA `cryptography` and pycryptodome API calls in Python files.
 
-    All algorithm knowledge is loaded from rules/python_crypto.yaml.
-    No algorithm names are hardcoded in this class.
+    All algorithm knowledge is loaded from rules/python_crypto.yaml and the
+    shared canonical registry. No algorithm names are hardcoded in this class.
     """
 
     detector_id: str = _DETECTOR_ID
@@ -439,6 +534,9 @@ class PythonCryptoDetector(Detector):
         self._bare_constructors: dict[str, dict[str, Any]] = _build_bare_constructor_index(rules)
         # Pattern D index: {"HS256" -> rule, ...} for jwt.encode(algorithm=...)
         self._jwt_algorithms: dict[str, dict[str, Any]] = _build_jwt_algorithm_index(rules)
+        from hash_patch.detect.canonical_registry import get_canonical_registry
+
+        self._crypto_references: dict[str, dict[str, Any]] = get_canonical_registry()
 
     def supports(self, target: Path) -> bool:
         return _TREE_SITTER_AVAILABLE and target.is_file() and target.suffix.lower() == ".py"
@@ -580,6 +678,55 @@ class PythonCryptoDetector(Detector):
             else:
                 local[asset_id] = asset
 
+        # Standalone string literal references (CRYPTO_REFERENCE)
+        ref_matches = _collect_crypto_references(tree.root_node, self._crypto_references)
+        for pos_node, stmt_node, rule in ref_matches:
+            primitive = _primitive_from_str(rule.get("primitive"))
+            quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
+            ref_asset_type = (
+                AssetType.PROTOCOL if rule.get("primitive") == "protocol" else AssetType.ALGORITHM
+            )
+
+            line = pos_node.start_point.row + 1
+            column = pos_node.start_point.column
+            byte_offset = pos_node.start_byte
+            snippet = stmt_node.text.decode("utf-8", errors="replace").strip()
+
+            evidence = Evidence(
+                source_type="source",
+                locator=locator,
+                line=line,
+                column=column,
+                byte_offset=byte_offset,
+                snippet=snippet,
+                detector_id=_DETECTOR_ID,
+                detector_version=_DETECTOR_VERSION,
+            )
+
+            ref_asset = CryptoAsset.create(
+                asset_type=ref_asset_type,
+                name=rule["canonical"],
+                primitive=primitive,
+                parameter_set=rule.get("parameter_set"),
+                mode=rule.get("mode"),
+                quantum_status=quantum_status,
+                oid=rule.get("oid"),
+                confidence="confirmed",
+                finding_type="CRYPTO_REFERENCE",
+                properties={"finding_type": "CRYPTO_REFERENCE"},
+                extra_id_seed="CRYPTO_REFERENCE",
+                evidence=[evidence],
+            )
+
+            ref_id = ref_asset.id
+            if ref_id in local:
+                existing = local[ref_id]
+                seen = {e.key() for e in existing.evidence}
+                if evidence.key() not in seen:
+                    existing.evidence.append(evidence)
+            else:
+                local[ref_id] = ref_asset
+
         for asset in local.values():
             asset.evidence.sort(key=lambda e: e.key())
 
@@ -608,6 +755,13 @@ class PythonCryptoDetector(Detector):
         entry = self._pycryptodome.get(key)
         if entry is not None:
             return entry
+
+        # Pattern C: Fallback to shared canonical registry
+        from hash_patch.detect.canonical_registry import lookup_canonical_algorithm
+
+        c_rule = lookup_canonical_algorithm(attr) or lookup_canonical_algorithm(obj)
+        if c_rule is not None:
+            return c_rule
 
         return None
 

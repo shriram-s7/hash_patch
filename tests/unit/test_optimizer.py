@@ -168,20 +168,24 @@ def test_optimizer_diverges_from_naive_at_the_documented_demo_budget() -> None:
     value somewhere (not just "never loses" trivially).
 
     docs/OPTIMISER.md's worked example (budget=5.0, parallelism=1, 11
-    candidates) predates the coverage-gap-audit fixtures added across
+    candidates) predates both the coverage-gap-audit fixtures added across
     testdata/python, testdata/java, testdata/go, and testdata/c (see
-    docs/COVERAGE.md) — those legitimately add more BROKEN_BY_SHOR
-    candidates (13 total now), which shifted the exact budget at which
-    greedy and naive diverge from 5.0 to 6.5/7.0. `budget_days` here was
-    updated to match; `test_optimizer_never_worse_than_naive_across_
-    budget_sweep_on_real_corpus` above already independently confirms
-    greedy is never worse than naive across the WHOLE swept range, so
-    this test's only job — proving the divergence property is real
-    somewhere, not just "never loses" trivially — still holds.
+    docs/COVERAGE.md) and the introduction of the CRYPTO_REFERENCE finding
+    type (a string literal that merely looks like an algorithm name, never
+    passed to a crypto call, is never a migration candidate — see
+    hash_patch/analyze/cbom_reader.py::read_candidates). Together those
+    legitimately changed the BROKEN_BY_SHOR *operation* candidate count
+    (15 now), which shifted the exact budget at which greedy and naive
+    diverge to 7.5/8.0. `budget_days` here was updated to match;
+    `test_optimizer_never_worse_than_naive_across_budget_sweep_on_real_corpus`
+    above already independently confirms greedy is never worse than naive
+    across the WHOLE swept range, so this test's only job — proving the
+    divergence property is real somewhere, not just "never loses" trivially
+    — still holds.
     """
     candidates = _scan_testdata_to_candidates()
-    greedy = schedule_greedy(candidates, budget_days=7.0, parallelism=1)
-    naive = schedule_naive(candidates, budget_days=7.0, parallelism=1)
+    greedy = schedule_greedy(candidates, budget_days=7.5, parallelism=1)
+    naive = schedule_naive(candidates, budget_days=7.5, parallelism=1)
     assert greedy.eliminated_risk > naive.eliminated_risk
 
 
@@ -266,7 +270,15 @@ def test_read_candidates_excludes_non_broken_by_shor() -> None:
     doc = to_cyclonedx(result)
     candidates, excluded = read_candidates(doc)
 
-    shor_count = sum(1 for a in result.assets if a.quantum_status.value == "broken-by-shor")
+    # A CRYPTO_REFERENCE (a string literal that merely looks like an
+    # algorithm name, never passed to a crypto call) is never a migration
+    # candidate even when its quantum_status happens to be broken-by-shor —
+    # there is no real crypto operation behind it to migrate.
+    shor_count = sum(
+        1
+        for a in result.assets
+        if a.quantum_status.value == "broken-by-shor" and a.finding_type == "OPERATION"
+    )
     assert len(candidates) == shor_count
     assert excluded == len(result.assets) - shor_count
     assert excluded > 0, "expected some non-broken-by-shor assets in testdata/ to exercise the filter"

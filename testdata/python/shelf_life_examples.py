@@ -28,11 +28,27 @@ otherwise merge multiple call sites' evidence onto one asset):
      rule, this must resolve to whichever of {aadhaar, financial_account}
      has the LONGER shelf_life_years in ontology/data_sensitivity.yaml — the
      test reads those actual numbers rather than assuming which one wins.
+
+  4. protect_pan() — MD5.new(pan): REGRESSION for a confirmed false
+     NEGATIVE (found on test2/python/freight_api/customer_crypto.py's real
+     protect_pan(pan)). The bare `call_argument` candidate "pan" must match
+     the `pan` category's now-widened bare "pan" pattern (a short pattern,
+     so ontology.py requires it to match as its own token — see
+     ontology/data_sensitivity.yaml's own comment on this) -> category
+     "pan".
+
+  5. protect_health_note() — SHA1.new(payload): REGRESSION for the same
+     confirmed false-negative class (test2's real protect_health_note()).
+     Neither the call argument ("payload") nor any dataclass field is
+     crypto-suggestive; the ONLY signal is the enclosing FUNCTION name
+     itself ("protect_health_note", an `enclosing_function` candidate)
+     matching the health_record category's now-widened "health_note"
+     pattern -> category "health_record".
 """
 
 from dataclasses import dataclass
 
-from Crypto.Hash import SHA3_256, SHA256, SHA512
+from Crypto.Hash import MD5, SHA1, SHA3_256, SHA256, SHA512
 
 
 def hash_national_id(aadhaar_bytes):
@@ -53,3 +69,13 @@ class CustomerRecord:
     def hash_record(self, record_bytes):
         digest = SHA3_256.new(record_bytes)
         return digest.hexdigest()
+
+
+def protect_pan(pan):
+    digest = MD5.new(pan)
+    return digest.hexdigest()
+
+
+def protect_health_note(payload):
+    digest = SHA1.new(payload)
+    return digest.hexdigest()

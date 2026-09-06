@@ -61,7 +61,11 @@ from typing import Any
 import yaml
 
 from hash_patch.detect.blast_radius.c_buffers import CBufferBlastRadiusDetector
+from hash_patch.detect.blast_radius.go_buffers import GoBufferBlastRadiusDetector
+from hash_patch.detect.blast_radius.java_buffers import JavaBufferBlastRadiusDetector
 from hash_patch.detect.blast_radius.names import NamePattern, load_name_patterns, match_name_pattern
+from hash_patch.detect.blast_radius.output_sizes import match_algorithm_output_size
+from hash_patch.detect.blast_radius.python_buffers import PythonBufferBlastRadiusDetector
 from hash_patch.detect.blast_radius.sql_ddl import SqlDdlBlastRadiusDetector
 from hash_patch.model.assets import CryptoAsset, Primitive, QuantumStatus
 from hash_patch.model.blast_radius import BlastRadiusFinding, SizeConstraint
@@ -315,10 +319,18 @@ def compute_blast_radius(
     # with two unrelated crypto operations (e.g. RSA signing + Ed25519
     # keygen) from cross-attributing each other's buffers.
     for constraint in size_constraints:
-        match = match_name_pattern(constraint.name, name_patterns)
-        if match is None:
-            continue
-        _, name_field = match
+        name_field = constraint.inferred_field
+        if name_field is None:
+            match = match_name_pattern(constraint.name, name_patterns)
+            if match is not None:
+                _, name_field = match
+        if name_field is None:
+            for asset in shor_assets:
+                if _line_distance(asset, constraint) is not None:
+                    matched = match_algorithm_output_size(asset.name, constraint.declared_bytes)
+                    if matched is not None:
+                        name_field = matched
+                        break
         if name_field is None:
             continue  # e.g. privkey/cert/digest/hash -> no PQC field to compare
 
@@ -404,17 +416,27 @@ def _finding_sort_key(finding: BlastRadiusFinding) -> tuple[str, str, int, str]:
 
 
 def collect_size_constraints(scanned_files: Sequence[Path]) -> list[SizeConstraint]:
-    """Run the blast-radius detectors (C buffers, SQL DDL) over every file
-    in `scanned_files` that they support. Not routed through
-    hash_patch.detect.registry — see hash_patch/detect/blast_radius/__init__.py.
+    """Run the blast-radius detectors (C, Go, Java, and Python buffers; SQL
+    DDL) over every file in `scanned_files` that they support. Not routed
+    through hash_patch.detect.registry — see
+    hash_patch/detect/blast_radius/__init__.py.
     """
     c_detector = CBufferBlastRadiusDetector()
+    go_detector = GoBufferBlastRadiusDetector()
+    java_detector = JavaBufferBlastRadiusDetector()
+    python_detector = PythonBufferBlastRadiusDetector()
     sql_detector = SqlDdlBlastRadiusDetector()
 
     results: list[SizeConstraint] = []
     for file_path in scanned_files:
         if c_detector.supports(file_path):
             results.extend(c_detector.detect(file_path))
+        if go_detector.supports(file_path):
+            results.extend(go_detector.detect(file_path))
+        if java_detector.supports(file_path):
+            results.extend(java_detector.detect(file_path))
+        if python_detector.supports(file_path):
+            results.extend(python_detector.detect(file_path))
         if sql_detector.supports(file_path):
             results.extend(sql_detector.detect(file_path))
     return results
@@ -431,3 +453,44 @@ def run_blast_radius(
     if not size_constraints:
         return []
     return compute_blast_radius(crypto_assets, size_constraints)
+
+
+def blast_radius_diagnostics(
+    crypto_assets: Sequence[CryptoAsset], scanned_files: Sequence[Path]
+) -> dict[str, int]:
+    """Stats about one blast-radius run, for `hash-patch scan --verbose` (see
+    hash_patch/cli.py). Exists to make "ran and genuinely found nothing" and
+    "crashed" distinguishable from the CLI without reading source: if this
+    pillar raises, `run_blast_radius` propagates the exception uncaught (no
+    try/except anywhere on this path — see hash_patch/cli.py::run_scan) and
+    the CLI shows a traceback instead of a clean summary line; this function
+    is only ever reached when the run genuinely completed.
+    """
+    size_constraints = collect_size_constraints(scanned_files)
+    shor_candidates = [a for a in crypto_assets if a.quantum_status == QuantumStatus.BROKEN_BY_SHOR]
+    findings = run_blast_radius(crypto_assets, scanned_files)
+    return {
+        "size_constraints_found": len(size_constraints),
+        "broken_by_shor_candidates": len(shor_candidates),
+        "findings": len(findings),
+    }
+
+
+def blast_radius_explanation(
+    scanned_files: Sequence[Path], findings: Sequence[BlastRadiusFinding]
+) -> str:
+    """Explain blast-radius results honestly based on actual scanned file composition.
+    Never claims pure-Python or zero expected overflows when C/Go/Java/SQL files are present.
+    """
+    exts = {f.suffix.lower() for f in scanned_files}
+    has_fixed_buffer_lang = bool(exts.intersection({".c", ".h", ".cpp", ".cc", ".go", ".java", ".sql"}))
+    is_pure_python = bool(exts) and exts == {".py"}
+
+    if findings:
+        return f"Detected {len(findings)} fixed-size buffer or database column overflow(s) under post-quantum algorithm replacement."
+    if has_fixed_buffer_lang:
+        return "Blast-radius analysis ran across scanned C, Go, Java, and/or SQL sources, and detected no static buffer overflows or column truncations under post-quantum replacement."
+    if is_pure_python:
+        return "Blast-radius analysis identifies fixed-size memory buffers and database column widths that will overflow when replaced with larger post-quantum keys or ciphertexts. Pure-Python codebases allocate dynamically at runtime, so static buffer overflows are not applicable and zero static overflows are expected."
+    return "Blast-radius analysis ran and found no fixed-size memory buffers or database column constraints that would overflow when classical cryptographic values are replaced with post-quantum equivalents."
+

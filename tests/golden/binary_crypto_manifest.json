@@ -1,0 +1,257 @@
+{
+  "description": "Golden manifest for Phase 2 binary crypto scanning",
+  "fixtures": {
+    "testdata/binary_crypto/elf/crypto_server.elf": {
+      "binaryFormat": "ELF",
+      "architecture": "x86_64",
+      "expected_findings": [
+        {
+          "name": "OpenSSL/libcrypto",
+          "evidenceType": "linked_library",
+          "observedValue": "libcrypto.so.3",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "unknown",
+          "operation": "library_linkage",
+          "quantumStatus": "unknown",
+          "reachability": "unknown",
+          "verificationScope": "linked_library_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "RSA",
+          "evidenceType": "symbol",
+          "observedValue": "RSA_public_encrypt",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "RSA",
+          "operation": "encrypt",
+          "quantumStatus": "broken-by-shor",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "RSA",
+          "evidenceType": "symbol",
+          "observedValue": "RSA_private_decrypt",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "RSA",
+          "operation": "decrypt",
+          "quantumStatus": "broken-by-shor",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "ECDSA",
+          "evidenceType": "symbol",
+          "observedValue": "ECDSA_sign",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "ECDSA",
+          "operation": "signature",
+          "quantumStatus": "broken-by-shor",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "AES",
+          "evidenceType": "symbol",
+          "observedValue": "AES_encrypt",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "AES",
+          "operation": "encrypt",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "AES",
+          "evidenceType": "algorithm_string",
+          "observedValue": "AES-256-GCM",
+          "library": "unknown",
+          "algorithm": "AES",
+          "operation": "string_constant",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        },
+        {
+          "name": "Kyber",
+          "evidenceType": "algorithm_string",
+          "observedValue": "Kyber",
+          "library": "unknown",
+          "algorithm": "Kyber",
+          "operation": "string_constant",
+          "quantumStatus": "quantum-safe",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        },
+        {
+          "name": "SHA-256",
+          "evidenceType": "algorithm_string",
+          "observedValue": "SHA-256",
+          "library": "unknown",
+          "algorithm": "SHA-256",
+          "operation": "string_constant",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        },
+        {
+          "name": "Embedded-Certificate",
+          "evidenceType": "certificate",
+          "observedValue": "PEM Certificate",
+          "library": "unknown",
+          "algorithm": "X.509",
+          "operation": "certificate_storage",
+          "quantumStatus": "unknown",
+          "reachability": "unknown",
+          "verificationScope": "embedded_certificate_observation",
+          "confidence": "confirmed"
+        }
+      ]
+    },
+    "testdata/binary_crypto/pe/crypto_service.exe": {
+      "binaryFormat": "PE",
+      "architecture": "x86_64",
+      "expected_findings": [
+        {
+          "name": "AES",
+          "evidenceType": "symbol",
+          "observedValue": "BCryptEncrypt",
+          "library": "Windows-CNG/bcrypt.dll",
+          "algorithm": "AES",
+          "operation": "encrypt",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "AES",
+          "evidenceType": "symbol",
+          "observedValue": "BCryptDecrypt",
+          "library": "Windows-CNG/bcrypt.dll",
+          "algorithm": "AES",
+          "operation": "decrypt",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "AES",
+          "evidenceType": "algorithm_string",
+          "observedValue": "AES-128-CBC",
+          "library": "unknown",
+          "algorithm": "AES",
+          "operation": "string_constant",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        },
+        {
+          "name": "RSA",
+          "evidenceType": "algorithm_string",
+          "observedValue": "RSA-2048",
+          "library": "unknown",
+          "algorithm": "RSA",
+          "operation": "string_constant",
+          "quantumStatus": "broken-by-shor",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        }
+      ]
+    },
+    "testdata/binary_crypto/macho/crypto_tool.dylib": {
+      "binaryFormat": "Mach-O",
+      "architecture": "x86_64",
+      "expected_findings": [
+        {
+          "name": "OpenSSL/libcrypto",
+          "evidenceType": "linked_library",
+          "observedValue": "libcrypto.dylib",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "unknown",
+          "operation": "library_linkage",
+          "quantumStatus": "unknown",
+          "reachability": "unknown",
+          "verificationScope": "linked_library_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "RSA",
+          "evidenceType": "symbol",
+          "observedValue": "RSA_public_encrypt",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "RSA",
+          "operation": "encrypt",
+          "quantumStatus": "broken-by-shor",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "ECDSA",
+          "evidenceType": "symbol",
+          "observedValue": "ECDSA_sign",
+          "library": "OpenSSL/libcrypto",
+          "algorithm": "ECDSA",
+          "operation": "signature",
+          "quantumStatus": "broken-by-shor",
+          "reachability": "unknown",
+          "verificationScope": "static_binary_observation",
+          "confidence": "confirmed"
+        },
+        {
+          "name": "ML-KEM-768",
+          "evidenceType": "algorithm_string",
+          "observedValue": "ML-KEM-768",
+          "library": "unknown",
+          "algorithm": "ML-KEM-768",
+          "operation": "string_constant",
+          "quantumStatus": "quantum-safe",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        },
+        {
+          "name": "ChaCha20-Poly1305",
+          "evidenceType": "algorithm_string",
+          "observedValue": "ChaCha20-Poly1305",
+          "library": "unknown",
+          "algorithm": "ChaCha20-Poly1305",
+          "operation": "string_constant",
+          "quantumStatus": "weakened-by-grover",
+          "reachability": "unknown",
+          "verificationScope": "embedded_string_observation",
+          "confidence": "low"
+        }
+      ]
+    },
+    "testdata/binary_crypto/malformed/empty.bin": {
+      "expected_findings": []
+    },
+    "testdata/binary_crypto/malformed/truncated_elf.elf": {
+      "expected_findings": []
+    },
+    "testdata/binary_crypto/malformed/corrupt_pe.exe": {
+      "expected_findings": []
+    },
+    "testdata/binary_crypto/malformed/random_noise.bin": {
+      "expected_findings": []
+    },
+    "testdata/binary_crypto/negative/benign_binary.elf": {
+      "expected_findings": []
+    },
+    "testdata/binary_crypto/negative/prompt_injection.bin": {
+      "expected_findings": []
+    }
+  }
+}

@@ -40,3 +40,9 @@ bench.json
 eval_results/
 
 ui_fixtures/
+
+# Scratch & temporary artifacts
+scratch/
+test1/
+test2/
+corpus_scan_output.json

@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-CostSource = Literal["blast_radius", "default"]
+CostSource = Literal["blast_radius", "call_sites", "default"]
 ScheduleOrdering = Literal["greedy_risk_density", "naive_risk_only"]
 
 

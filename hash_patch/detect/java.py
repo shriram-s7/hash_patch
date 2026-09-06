@@ -36,6 +36,7 @@ except Exception:  # noqa: BLE001 -- graceful degradation if the native parser f
 from hash_patch.detect.base import Detector, registry
 from hash_patch.model.assets import (
     AssetType,
+    Confidence,
     CryptoAsset,
     Primitive,
     QuantumStatus,
@@ -86,6 +87,15 @@ def _build_algo_index(rules: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {name.upper(): entry for name, entry in raw.items()}
 
 
+def _build_crypto_references(rules: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return {literal_text -> rule} for standalone string-literal references from shared registry."""
+    from hash_patch.detect.canonical_registry import get_canonical_registry
+
+    refs = dict(get_canonical_registry())
+    refs.update(rules.get("crypto_references", {}))
+    return refs
+
+
 def _primitive_from_str(value: str | None) -> Primitive:
     """Map a YAML primitive string to Primitive enum, defaulting to UNKNOWN."""
     if value is None:
@@ -117,6 +127,74 @@ def _extract_string_fragment(string_literal_node: Any) -> str | None:
         if child.type == "string_fragment":
             return child.text.decode("utf-8", errors="replace")
     return None
+
+
+_REFERENCE_CONTAINER_TYPES = frozenset(
+    {"variable_declarator", "local_variable_declaration", "field_declaration", "return_statement"}
+)
+_REFERENCE_EXCLUDED_ANCESTOR_TYPES = frozenset(
+    {"method_invocation", "argument_list", "object_creation_expression", "import_declaration", "package_declaration"}
+)
+
+
+def _collect_crypto_references(
+    root_node: Any,
+    crypto_references: dict[str, dict[str, Any]],
+    consumed_offsets: set[int] | None = None,
+) -> list[tuple[Any, Any, dict[str, Any]]]:
+    """Find standalone string_literal nodes matching a known algorithm/protocol
+    name that are never passed as an argument to any call (JCA or otherwise) —
+    only assigned to a variable/field or returned. Same rationale as
+    hash_patch/detect/c.py's `_try_collect_reference`.
+    """
+    if not crypto_references:
+        return []
+    results: list[tuple[Any, Any, dict[str, Any]]] = []
+    stack: list[tuple[Any, int]] = [(root_node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if current.type == "string_literal":
+            _try_collect_reference(current, crypto_references, results, consumed_offsets=consumed_offsets)
+        children = current.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
+    return results
+
+
+def _try_collect_reference(
+    node: Any,
+    crypto_references: dict[str, dict[str, Any]],
+    results: list[tuple[Any, Any, dict[str, Any]]],
+    consumed_offsets: set[int] | None = None,
+) -> None:
+    if consumed_offsets and node.start_byte in consumed_offsets:
+        return
+    parent = node.parent
+    in_call = False
+    in_container = False
+    while parent:
+        if parent.type in _REFERENCE_EXCLUDED_ANCESTOR_TYPES:
+            in_call = True
+            break
+        if parent.type in _REFERENCE_CONTAINER_TYPES:
+            in_container = True
+        parent = parent.parent
+    if in_container and not in_call:
+        text = _extract_string_fragment(node)
+        if text is None:
+            return
+        rule = crypto_references.get(text)
+        if rule is None:
+            from hash_patch.detect.canonical_registry import lookup_canonical_algorithm
+
+            rule = lookup_canonical_algorithm(text)
+        if rule is not None:
+            stmt = node
+            while stmt.parent and stmt.parent.type not in ("program", "class_body", "block"):
+                stmt = stmt.parent
+            results.append((node, stmt, rule))
 
 
 def _collect_jca_calls(root_node: Any, bc_classes: frozenset[str] = frozenset()) -> list[dict[str, Any]]:
@@ -271,7 +349,15 @@ def _lookup_algo(algo_raw: str, index: dict[str, dict[str, Any]]) -> tuple[str, 
 
     Normalisation steps (all driven by the index, not hardcoded names):
     1. Exact uppercase match.
-    2. Strip everything after the first "/" (transformation-string suffix).
+    2. Split a JCA transformation string "Algorithm/Mode/Padding" (e.g.
+       "AES/GCM/NoPadding") on "/" and look up the algorithm segment — but,
+       unlike a bare compound-name split, the mode segment is never
+       discarded: two different modes of the same algorithm (AES/GCM vs
+       AES/CBC) are two different crypto assets, not the same one, so the
+       returned rule carries `mode` overridden from the transformation
+       string itself (this is generic JCA transformation-string structure,
+       not an algorithm-specific fact, so it is parsed here rather than
+       enumerated per-algorithm in rules/java_jca.yaml).
     3. Strip everything after "With" (compound signature algo, e.g.
        "SHA256WithRSAEncryption") — try both halves in order: right-of-With
        first (the signing algorithm), then left-of-With.
@@ -281,10 +367,17 @@ def _lookup_algo(algo_raw: str, index: dict[str, dict[str, Any]]) -> tuple[str, 
     if key in index:
         return algo_raw, index[key]
 
-    # Step 2: strip "/" suffix  (e.g. "AES/GCM/NoPadding" → "AES")
-    slash_key = key.split("/")[0]
+    # Step 2: JCA transformation string  (e.g. "AES/GCM/NoPadding")
+    slash_parts = key.split("/")
+    slash_key = slash_parts[0]
     if slash_key != key and slash_key in index:
-        return slash_key, index[slash_key]
+        base_rule = index[slash_key]
+        mode_segment = slash_parts[1] if len(slash_parts) >= 2 else ""
+        if mode_segment:
+            rule_with_mode = dict(base_rule)
+            rule_with_mode["mode"] = mode_segment.lower()
+            return slash_key, rule_with_mode
+        return slash_key, base_rule
 
     # Step 3a/3b: split on "With"  (e.g. "SHA256WithRSAEncryption")
     parts = _WITH_RE.split(key, maxsplit=1)
@@ -300,6 +393,12 @@ def _lookup_algo(algo_raw: str, index: dict[str, dict[str, Any]]) -> tuple[str, 
         for candidate in (left,):
             if candidate in index:
                 return candidate, index[candidate]
+
+    from hash_patch.detect.canonical_registry import lookup_canonical_algorithm
+
+    c_rule = lookup_canonical_algorithm(algo_raw)
+    if c_rule is not None:
+        return c_rule["canonical"], c_rule
 
     return None
 
@@ -324,6 +423,7 @@ class JavaJcaDetector(Detector):
         self._targets: frozenset[str] = _build_target_set(rules)
         self._algo_index: dict[str, dict[str, Any]] = _build_algo_index(rules)
         self._bc_constructors: dict[str, dict[str, Any]] = _build_bc_constructor_index(rules)
+        self._crypto_references: dict[str, dict[str, Any]] = _build_crypto_references(rules)
 
     def supports(self, target: Path) -> bool:
         """Return True for .java files (when tree-sitter is available)."""
@@ -349,6 +449,7 @@ class JavaJcaDetector(Detector):
         # result.add_asset() which handles cross-file dedup.
         local: dict[str, CryptoAsset] = {}
         locator = str(target)
+        consumed_offsets: set[int] = set()
         from hash_patch.detect.java_resolver import resolve_java_argument
 
         def _emit(
@@ -365,11 +466,13 @@ class JavaJcaDetector(Detector):
                 param_set: str | None = rule.get("parameter_set")
                 q_status = _quantum_status_from_str(rule.get("quantum_status"))
                 o_id: str | None = rule.get("oid")
+                mode: str | None = rule.get("mode")
             else:
                 prim = Primitive.UNKNOWN
                 param_set = None
                 q_status = QuantumStatus.UNKNOWN
                 o_id = None
+                mode = None
 
             ev = Evidence(
                 source_type="source",
@@ -387,7 +490,7 @@ class JavaJcaDetector(Detector):
                 name=canonical_name,
                 primitive=prim,
                 parameter_set=param_set,
-                mode=None,
+                mode=mode,
                 quantum_status=q_status,
                 oid=o_id,
                 confidence=conf,
@@ -469,7 +572,23 @@ class JavaJcaDetector(Detector):
                         )
                     for res in resolutions:
                         lookup = _lookup_algo(res.algo_raw, self._algo_index) if res.algo_raw else None
-                        t_node = res.algo_node if res.algo_node is not None else algo_node
+                        # A resolved node's tree-sitter position is only
+                        # meaningful when paired with the file it was
+                        # actually parsed from. `locator` below is always
+                        # `target` (this file) — so a resolution whose
+                        # algo_node came from a DIFFERENT file (parameter
+                        # passthrough can cross into other files; see
+                        # java_resolver.py's `algo_file`) must never have
+                        # its row/column used here, or the emitted Evidence
+                        # would claim a line number that is only valid in a
+                        # different file's coordinate space. Fall back to
+                        # the original in-file call argument node instead —
+                        # still accurate, just less granular.
+                        if res.algo_node is not None and res.algo_file in (None, target):
+                            consumed_offsets.add(res.algo_node.start_byte)
+                            t_node = res.algo_node
+                        else:
+                            t_node = algo_node
                         if lookup is not None:
                             canonical_name, rule = lookup
                             props: dict[str, str] = {}
@@ -504,6 +623,54 @@ class JavaJcaDetector(Detector):
                                 t_node=t_node,
                                 i_node=inv_node,
                             )
+
+        # Standalone string literal references (CRYPTO_REFERENCE) — a literal
+        # that looks like an algorithm/cipher-suite name but is never passed
+        # to any call (JCA or otherwise) in this file.
+        ref_matches = _collect_crypto_references(
+            tree.root_node, self._crypto_references, consumed_offsets=consumed_offsets
+        )
+        for pos_node, stmt_node, rule in ref_matches:
+            primitive = _primitive_from_str(rule.get("primitive"))
+            quantum_status = _quantum_status_from_str(rule.get("quantum_status"))
+            ref_asset_type = (
+                AssetType.PROTOCOL if rule.get("primitive") == "protocol" else AssetType.ALGORITHM
+            )
+
+            ev = Evidence(
+                source_type="source",
+                locator=locator,
+                line=pos_node.start_point.row + 1,
+                column=pos_node.start_point.column,
+                byte_offset=pos_node.start_byte,
+                snippet=stmt_node.text.decode("utf-8", errors="replace").strip(),
+                detector_id=_DETECTOR_ID,
+                detector_version=_DETECTOR_VERSION,
+            )
+
+            ref_asset = CryptoAsset.create(
+                asset_type=ref_asset_type,
+                name=rule["canonical"],
+                primitive=primitive,
+                parameter_set=rule.get("parameter_set"),
+                mode=rule.get("mode"),
+                quantum_status=quantum_status,
+                oid=rule.get("oid"),
+                confidence="confirmed",
+                finding_type="CRYPTO_REFERENCE",
+                properties={"finding_type": "CRYPTO_REFERENCE"},
+                extra_id_seed="CRYPTO_REFERENCE",
+                evidence=[ev],
+            )
+
+            ref_id = ref_asset.id
+            if ref_id in local:
+                existing = local[ref_id]
+                seen_keys = {e.key() for e in existing.evidence}
+                if ev.key() not in seen_keys:
+                    existing.evidence.append(ev)
+            else:
+                local[ref_id] = ref_asset
 
         # Sort evidence within each asset for determinism.
         for asset in local.values():

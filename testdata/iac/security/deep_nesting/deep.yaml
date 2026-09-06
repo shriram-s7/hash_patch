@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deeply-nested
+spec:
+  selector:
+    matchLabels:
+      app: deeply-nested
+  template:
+    metadata:
+      labels:
+        app: deeply-nested
+    spec:
+      containers:
+      - name: app
+        image: app:latest
+        env:
+        - name: LEVEL_0
+          value: "level_0"
+        - name: LEVEL_1
+          value: "level_1"
+        - name: LEVEL_2
+          value: "level_2"
+        - name: LEVEL_3
+          value: "level_3"
+        - name: LEVEL_4
+          value: "level_4"
+        - name: LEVEL_5
+          value: "level_5"
+        - name: LEVEL_6
+          value: "level_6"
+        - name: LEVEL_7
+          value: "level_7"
+        - name: LEVEL_8
+          value: "level_8"
+        - name: LEVEL_9
+          value: "level_9"
+        - name: LEVEL_10
+          value: "level_10"
+        - name: LEVEL_11
+          value: "level_11"
+        - name: LEVEL_12
+          value: "level_12"
+        - name: LEVEL_13
+          value: "level_13"
+        - name: LEVEL_14
+          value: "level_14"
+        - name: LEVEL_15
+          value: "level_15"
+        - name: LEVEL_16
+          value: "level_16"
+        - name: LEVEL_17
+          value: "level_17"
+        - name: LEVEL_18
+          value: "level_18"
+        - name: LEVEL_19
+          value: "level_19"
+        - name: LEVEL_20
+          value: "level_20"
+        - name: LEVEL_21
+          value: "level_21"
+        - name: LEVEL_22
+          value: "level_22"
+        - name: LEVEL_23
+          value: "level_23"
+        - name: LEVEL_24
+          value: "level_24"
+        - name: LEVEL_25
+          value: "level_25"
+        - name: LEVEL_26
+          value: "level_26"
+        - name: LEVEL_27
+          value: "level_27"
+        - name: LEVEL_28
+          value: "level_28"
+        - name: LEVEL_29
+          value: "level_29"
+        - name: LEVEL_30
+          value: "level_30"
+        - name: LEVEL_31
+          value: "level_31"
+        - name: LEVEL_32
+          value: "level_32"
+        - name: LEVEL_33
+          value: "level_33"
+        - name: LEVEL_34
+          value: "level_34"
+        - name: LEVEL_35
+          value: "level_35"
+        - name: LEVEL_36
+          value: "level_36"
+        - name: LEVEL_37
+          value: "level_37"
+        - name: LEVEL_38
+          value: "level_38"
+        - name: LEVEL_39
+          value: "level_39"
+        - name: LEVEL_40
+          value: "level_40"
+        - name: LEVEL_41
+          value: "level_41"
+        - name: LEVEL_42
+          value: "level_42"
+        - name: LEVEL_43
+          value: "level_43"
+        - name: LEVEL_44
+          value: "level_44"
+        - name: LEVEL_45
+          value: "level_45"
+        - name: LEVEL_46
+          value: "level_46"
+        - name: LEVEL_47
+          value: "level_47"
+        - name: LEVEL_48
+          value: "level_48"
+        - name: LEVEL_49
+          value: "level_49"
+        - name: LEVEL_50
+          value: "level_50"

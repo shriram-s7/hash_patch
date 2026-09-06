@@ -104,6 +104,7 @@ def test_deeply_nested_expression_file_scans_without_crashing(tmp_path: Path) ->
         capture_output=True,
         text=True,
         encoding="utf-8",
+        errors="replace",
         timeout=60,
         check=False,
     )
@@ -141,6 +142,7 @@ def test_vendored_pyca_files_scan_without_crashing(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
         encoding="utf-8",
+        errors="replace",
         timeout=60,
         check=False,
     )
@@ -168,6 +170,7 @@ def test_vendored_pyca_files_scan_repeatedly_without_crashing(tmp_path: Path) ->
             capture_output=True,
             text=True,
             encoding="utf-8",
+        errors="replace",
             timeout=60,
             check=False,
         )

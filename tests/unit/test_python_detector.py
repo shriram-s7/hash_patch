@@ -156,11 +156,18 @@ def test_does_not_support_non_py_file(detector: PythonCryptoDetector, tmp_path: 
 # ---------------------------------------------------------------------------
 
 
-def test_negative_fixture_produces_no_assets(negative_assets: list[CryptoAsset]) -> None:
-    """RSA/AES/MD5 in comments, plain strings, and non-crypto calls must yield 0 assets."""
-    assert negative_assets == [], (
-        f"Expected 0 assets from negative fixture, got: {[a.name for a in negative_assets]}"
+def test_negative_fixture_produces_no_operation_assets(negative_assets: list[CryptoAsset]) -> None:
+    """RSA/AES/MD5 in comments, plain strings, and non-crypto calls must never
+    produce an OPERATION finding (no crypto API call anywhere in this file). Standalone
+    literals not passed to any call (like algorithm = "RSA" or return "MD5") are
+    legitimately CRYPTO_REFERENCE findings — a structurally different finding type.
+    """
+    operation_assets = [a for a in negative_assets if a.finding_type == "OPERATION"]
+    assert operation_assets == [], (
+        f"Expected 0 OPERATION assets from negative fixture, got: {[a.name for a in operation_assets]}"
     )
+    for a in negative_assets:
+        assert a.finding_type == "CRYPTO_REFERENCE"
 
 
 # ---------------------------------------------------------------------------

@@ -72,7 +72,22 @@ categories:
 
   pan:
     category_name: pan
+    # "pan" is listed bare (a real engineer very often just writes
+    # `protect_pan(pan)`, not the more formal `pan_number`/`pan_card` — see
+    # test2/python/freight_api/customer_crypto.py's real
+    # protect_pan(pan)/customer_pan()). Bare "pan" alone would ordinarily be
+    # too collision-prone for a raw-substring pattern (it embeds inside
+    # "expand"/"span"/"japan"/"pandas" — and "expand" is itself common
+    # CRYPTO terminology, e.g. HKDF-Expand/"expand_key", making this a real
+    # risk for THIS tool specifically, not a hypothetical one). It is safe
+    # here only because hash_patch/detect/shelf_life/ontology.py's
+    # `match_categories` requires a pattern this short to match as its own
+    # delimited TOKEN (`_SHORT_PATTERN_MAX_LEN`), never merely embedded
+    # inside a longer word — confirmed via this project's own grep-based
+    # sanity sweep of test1/test2/testdata before adding it (see
+    # docs/SHELF_LIFE.md).
     name_patterns:
+      - pan
       - pan_number
       - pannumber
       - pan_card
@@ -89,12 +104,26 @@ categories:
 
   health_record:
     category_name: health_record
+    # "health_note"/"clinical"/"clinical_summary" are the natural shorter
+    # forms a real engineer actually writes instead of the more formal
+    # "health_record"/"medical_record" — confirmed via test2's real
+    # protect_health_note()/health_note (Python) and
+    # encryptClinicalSummary() (Java, SensitiveStore.java). All are
+    # long enough (>3 chars as a standalone word or embedded phrase) to
+    # keep plain-substring matching without the short-pattern token
+    # requirement "pan" needed above — "clinical"/"health_note" do not
+    # meaningfully embed inside unrelated words the way "pan" does.
     name_patterns:
       - diagnosis
       - medical_record
       - medicalrecord
       - health_record
       - healthrecord
+      - health_note
+      - healthnote
+      - clinical_summary
+      - clinicalsummary
+      - clinical
       - patient_history
       - patienthistory
       - prescription
@@ -137,8 +166,33 @@ categories:
 
   biometric:
     category_name: biometric
+    # "fingerprint" is deliberately NOT listed as a bare pattern. It is
+    # heavily overloaded in security-engineering naming: a "fingerprint" is
+    # extremely commonly just a short hash used to identify or verify
+    # something (a certificate fingerprint, a partner/key fingerprint) —
+    # nothing to do with biological biometric data. Confirmed false
+    # positives on this exact bare pattern: Java `partnerFingerprint()`
+    # (an MD5 digest of a partner identifier, test2's LegacyGateway.java)
+    # and `fingerprint()` (a SHA-1 digest, test2's PolicyDigest.java) — both
+    # hash-naming-convention methods, matched purely because "fingerprint"
+    # is a substring of their names, with zero actual biometric content
+    # nearby. Instead, only compound patterns naming a biometric fingerprint
+    # ARTIFACT (a scan/image/template/sensor reading) are listed — these
+    # require the identifier to actually describe biometric fingerprint
+    # DATA, not merely reuse the word as a hash-naming metaphor. The
+    # unambiguous "biometric" pattern below (and iris/face/retina) already
+    # covers any other biometric-data identifier without this ambiguity.
     name_patterns:
-      - fingerprint
+      - fingerprint_scan
+      - fingerprintscan
+      - fingerprint_image
+      - fingerprintimage
+      - fingerprint_template
+      - fingerprinttemplate
+      - fingerprint_data
+      - fingerprintdata
+      - fingerprint_sensor
+      - fingerprintsensor
       - iris_scan
       - irisscan
       - biometric
@@ -159,14 +213,29 @@ categories:
 
   generic_pii:
     category_name: generic_pii
+    # Audit pass (same session that widened pan/health_record): "phone" and
+    # "dob" are the natural short forms a real engineer writes at least as
+    # often as the formal "phone_number"/"date_of_birth" already listed
+    # here — mirrors this category's own existing "email" precedent (bare,
+    # not "email_address"). "phone" is a normal-length word with low
+    # embedding risk (it isn't a common substring of unrelated identifiers
+    # the way "pan" is) and keeps plain-substring matching. "dob" is a
+    # 3-letter acronym and therefore short-pattern token-matched (see
+    # `_SHORT_PATTERN_MAX_LEN` in ontology.py), the same safeguard applied
+    # to "pan" above. Bare "name"/"address" remain deliberately NOT listed
+    # here — both are far too overloaded in ordinary code (every object has
+    # a "name"; "address" means memory/IP address at least as often as
+    # postal) to add safely even with the token-boundary safeguard.
     name_patterns:
       - email
       - phone_number
       - phonenumber
+      - phone
       - full_name
       - fullname
       - date_of_birth
       - dateofbirth
+      - dob
       - postal_address
       - postaladdress
       - home_address

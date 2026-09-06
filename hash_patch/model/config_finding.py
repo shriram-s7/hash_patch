@@ -41,3 +41,29 @@ class ContradictionFinding(BaseModel):
     deployed_config: TlsConfigFinding
     description: str
     severity: Literal["high", "medium"]
+
+
+class AlgorithmDivergenceFinding(BaseModel):
+    """A different kind of Pillar 4 contradiction: a policy/dispatch function
+    within a package DECLARES (via a returned string/constant that resolves
+    to a known algorithm name) that a call path uses algorithm family
+    `declared_algorithm`, but the crypto API call actually reached along that
+    same, unguarded control-flow path invokes `implemented_algorithm` — a
+    different family. See hash_patch/analyze/algorithm_contradictions.py for
+    the full method and its honesty caveats (same-package correlation only,
+    call-reachability via direct textual call-site matching, not full
+    interprocedural dataflow).
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str
+    declared_algorithm: str
+    implemented_algorithm: str
+    declaring_function: str
+    declaring_branch_condition: str | None
+    declaring_evidence: Evidence
+    call_site_function: str
+    call_site_evidence: Evidence
+    description: str
+    severity: Literal["high", "medium"] = "high"

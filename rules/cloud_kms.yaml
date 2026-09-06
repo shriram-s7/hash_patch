@@ -1,0 +1,143 @@
+# rules/cloud_kms.yaml
+#
+# Phase 1: Cloud KMS/HSM CLIENT-SIDE USAGE detection
+# (hash_patch/detect/cloud_kms/). This detects code that CALLS a cloud
+# key-management/HSM service client -- it can NEVER verify what the cloud
+# provider actually does on the other side of that API call (which
+# algorithm it uses, how the key is protected, whether it's PQC-migrated
+# already). Every finding this produces carries
+# hash_patch:property.cloudKey.verificationScope = "client_call_only" for
+# exactly this reason. See CLAUDE.md's "Cloud KMS" section.
+#
+# Hash Patch constraint (same as every other detector): no SDK class name,
+# method name, or provider identity is hardcoded in Python -- it all lives
+# here, so a differently-organized real codebase using the same SDKs is
+# still detected correctly, not just a fixture built to match the detector.
+#
+# ===========================================================================
+# client_constructors (per language)
+# ===========================================================================
+# Recognizes a call that CONSTRUCTS a cloud KMS/HSM client object -- never a
+# finding by itself (constructing a client with no further operation call is
+# exactly the "imports the SDK but never calls it" negative case this phase
+# must NOT flag, mirroring the reference-vs-operation discipline already
+# established for source detectors). `match` is the call's own "object.attr"
+# (Python) / bare class name (Java/Go) shape. `first_arg_literal`, when
+# present, additionally requires the call's first argument to be exactly
+# this string literal (boto3.client("kms") is a KMS client; boto3.client("s3")
+# is not -- both share the same `boto3.client` shape).
+#
+# ===========================================================================
+# operations
+# ===========================================================================
+# The shared set of KMS/HSM operation method names this phase extracts
+# VERBATIM from the call site -- never invented, never defaulted. Shared
+# across providers/languages since the operation vocabulary (encrypt/
+# decrypt/sign/verify/generate-a-data-key/create-a-key/re-encrypt/wrap/
+# unwrap) is the same shape across AWS/GCP/Azure's KMS APIs, just spelled
+# snake_case (Python), camelCase (Java), or PascalCase (Go) -- all three
+# spellings are listed so whichever language's naming convention a file
+# uses still matches. Membership is exact-case by design (see the archive
+# of the same decision made for reference detection: normalizing case here
+# would let an obviously-unrelated method like "VerifyResponse" masquerade
+# as a KMS operation).
+operations:
+  - encrypt
+  - decrypt
+  - sign
+  - verify
+  - generate_data_key
+  - generateDataKey
+  - generateDataKeyPair
+  - create_key
+  - createKey
+  - re_encrypt
+  - reEncrypt
+  - wrap_key
+  - wrapKey
+  - unwrap_key
+  - unwrapKey
+  - get_public_key
+  - getPublicKey
+  - asymmetric_decrypt
+  - asymmetricDecrypt
+  - asymmetric_sign
+  - asymmetricSign
+  - Encrypt
+  - Decrypt
+  - Sign
+  - Verify
+  - GenerateDataKey
+  - GenerateDataKeyPair
+  - CreateKey
+  - ReEncrypt
+  - WrapKey
+  - UnwrapKey
+  - GetPublicKey
+  - AsymmetricDecrypt
+  - AsymmetricSign
+
+python:
+  client_constructors:
+    - provider: aws
+      sdk: boto3
+      match: boto3.client
+      first_arg_literal: kms
+    - provider: aws
+      sdk: boto3
+      match: boto3.resource
+      first_arg_literal: kms
+    - provider: gcp
+      sdk: google-cloud-kms
+      match: kms.KeyManagementServiceClient
+    - provider: gcp
+      sdk: google-cloud-kms
+      match: KeyManagementServiceClient
+    - provider: azure
+      sdk: azure-keyvault-keys
+      match: CryptographyClient
+    - provider: azure
+      sdk: azure-keyvault-keys
+      match: KeyClient
+
+java:
+  # Java construction is usually multi-step (a static factory or builder
+  # chain: `KmsClient.builder()...build()`, `AWSKMSClientBuilder.standard()
+  # ...build()`), so `match` here is checked against the RIGHT-HAND SIDE
+  # TEXT of the variable's initializer as a substring (mirrors the level of
+  # sophistication hash_patch/detect/java_resolver.py's own best-effort,
+  # no-full-type-system matching already uses elsewhere) rather than a
+  # single call-node shape.
+  client_constructors:
+    - provider: aws
+      sdk: aws-sdk-java-v2
+      match: KmsClient
+    - provider: aws
+      sdk: aws-sdk-java-v1
+      match: AWSKMSClient
+    - provider: gcp
+      sdk: google-cloud-kms
+      match: KeyManagementServiceClient
+    - provider: azure
+      sdk: azure-keyvault-keys
+      match: CryptographyClient
+    - provider: azure
+      sdk: azure-keyvault-keys
+      match: KeyClient
+
+go:
+  # Go construction is a single call, matched the same way as Python
+  # (selector_expression shape: package.Function(...)).
+  client_constructors:
+    - provider: aws
+      sdk: aws-sdk-go
+      match: kms.New
+    - provider: aws
+      sdk: aws-sdk-go-v2
+      match: kms.NewFromConfig
+    - provider: gcp
+      sdk: cloud.google.com/go/kms/apiv1
+      match: kms.NewKeyManagementClient
+    - provider: azure
+      sdk: azure-sdk-for-go
+      match: azkeys.NewClient

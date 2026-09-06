@@ -1,0 +1,1729 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "crypto-asset:101bcce7f05a3c275cbf697888ae0b6e",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "1024",
+          "primitive": "pke"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 39, \"snippet\": \"static const char *retired_algorithm = \\\"RSA-1024\\\";\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "c/legacy-security/src/retired.c",
+            "offset": 60
+          },
+          {
+            "additionalContext": "{\"column\": 24, \"snippet\": \"const (\\n    DocumentationOnly = \\\"RSA-1024\\\"\\n    Retired = \\\"3DES\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "go/edge-gateway/internal/legacy/old_profile.go",
+            "offset": 48
+          }
+        ]
+      },
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "pke"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 51, \"snippet\": \"Signature.getInstance(new CryptoPolicy().algorithmFor(profile))\", \"source_type\": \"source\"}",
+            "line": 9,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/LegacyVerifier.java",
+            "offset": 319
+          },
+          {
+            "additionalContext": "{\"column\": 37, \"snippet\": \"Signature.getInstance(requested)\", \"source_type\": \"source\"}",
+            "line": 10,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/SignerFactory.java",
+            "offset": 447
+          },
+          {
+            "additionalContext": "{\"column\": 44, \"snippet\": \"Signature.getInstance(\\\"SHA1withRSA\\\")\", \"source_type\": \"source\"}",
+            "line": 6,
+            "location": "java/payment-platform/src/main/java/com/adversarial/legacy/DeadCrypto.java",
+            "offset": 207
+          }
+        ]
+      },
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "HIGH"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "[\"new CryptoPolicy().algorithmFor(\\\"legacy-partner\\\") -> AlgorithmId.LEGACY_SIGN -> \\\"SHA1withRSA\\\"\", \"AlgorithmId.LEGACY_SIGN -> \\\"SHA1withRSA\\\"\"]"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "live-internal"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:38435f2a193778cac5f677a669b3b766",
+      "cryptoProperties": {
+        "assetType": "protocol"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"return \\\"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "c/embedded-gateway/src/tls/profile.c",
+            "offset": 64
+          },
+          {
+            "additionalContext": "{\"column\": 35, \"snippet\": \"return \\\"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256\\\";\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "java/payment-platform/src/main/java/com/adversarial/tls/PartnerTlsProfile.java",
+            "offset": 155
+          }
+        ]
+      },
+      "name": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:386f49e0082870b8182a4e375f4f5094",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "mac"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.2.9"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 37, \"snippet\": \"hmac.new(secret, payload, hashlib.sha256)\", \"source_type\": \"source\"}",
+            "line": 10,
+            "location": "python/orchestration/app/crypto/wrappers.py",
+            "offset": 355
+          }
+        ]
+      },
+      "name": "HMAC-SHA256",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:39bc4804986f71f6d455b9c1a133f8a7",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "160",
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.5"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 22, \"snippet\": \"const (\\n    AuthSignature = \\\"SHA256-RSA\\\"\\n    LegacySignature = \\\"SHA1-RSA\\\"\\n    EllipticSignature = \\\"ECDSA\\\"\\n    Exchange = \\\"ECDH\\\"\\n    LegacyExchange = \\\"DH\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "go/edge-gateway/internal/crypto/policy.go",
+            "offset": 79
+          }
+        ]
+      },
+      "name": "RSASSA-PKCS1v15",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:4433a193717c4b3492fa28eea569bd3d",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "112",
+          "primitive": "block-cipher"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.3.7"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 14, \"snippet\": \"const (\\n    DocumentationOnly = \\\"RSA-1024\\\"\\n    Retired = \\\"3DES\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "go/edge-gateway/internal/legacy/old_profile.go",
+            "offset": 73
+          }
+        ]
+      },
+      "name": "3DES",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-classically"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:459b2285861ece9045c1ac51ef6abf75",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "160",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.14.3.2.26"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 23, \"snippet\": \"const char *sha1 = \\\"SHA-1\\\";\", \"source_type\": \"source\"}",
+            "line": 20,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 471
+          },
+          {
+            "additionalContext": "{\"column\": 34, \"snippet\": \"static const char *retired_hash = \\\"SHA1\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "c/legacy-security/src/retired.c",
+            "offset": 106
+          }
+        ]
+      },
+      "name": "SHA-1",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-classically"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.2.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"sha256.Sum256(transcript)\", \"source_type\": \"source\"}",
+            "line": 18,
+            "location": "go/edge-gateway/internal/crypto/exchange.go",
+            "offset": 384
+          },
+          {
+            "additionalContext": "{\"column\": 14, \"snippet\": \"sha256.Sum256(req.Payload)\", \"source_type\": \"source\"}",
+            "line": 25,
+            "location": "go/edge-gateway/internal/crypto/signer.go",
+            "offset": 686
+          },
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"hashlib.sha256(value.encode())\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "python/data_pipeline/crypto/token_normalizer.py",
+            "offset": 137
+          }
+        ]
+      },
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "go-crypto,python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:4d5cecfde02cce899204ef46ca854069",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "mode": "cbc",
+          "primitive": "block-cipher"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 43, \"snippet\": \"Cipher.getInstance(AlgorithmId.LEGACY_CIPHER)\", \"source_type\": \"source\"}",
+            "line": 18,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/EnvelopeCipher.java",
+            "offset": 688
+          },
+          {
+            "additionalContext": "{\"column\": 38, \"snippet\": \"Cipher.getInstance(\\\"AES/CBC/PKCS5Padding\\\")\", \"source_type\": \"source\"}",
+            "line": 9,
+            "location": "java/payment-platform/src/main/java/com/adversarial/legacy/ArchiveDecryptor.java",
+            "offset": 325
+          }
+        ]
+      },
+      "name": "AES",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "HIGH"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "[\"AlgorithmId.LEGACY_CIPHER -> \\\"AES/CBC/PKCS5Padding\\\"\"]"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:55ac66686ac8b20e7849a341bd4ac14f",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "key-agree"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.3.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 15, \"snippet\": \"return \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 15,
+            "location": "c/crypto-core/src/crypto/bridge.c",
+            "offset": 441
+          },
+          {
+            "additionalContext": "{\"column\": 28, \"snippet\": \"static const char *legacy = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 105
+          },
+          {
+            "additionalContext": "{\"column\": 21, \"snippet\": \"const (\\n    AuthSignature = \\\"SHA256-RSA\\\"\\n    LegacySignature = \\\"SHA1-RSA\\\"\\n    EllipticSignature = \\\"ECDSA\\\"\\n    Exchange = \\\"ECDH\\\"\\n    LegacyExchange = \\\"DH\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 8,
+            "location": "go/edge-gateway/internal/crypto/policy.go",
+            "offset": 165
+          },
+          {
+            "additionalContext": "{\"column\": 54, \"snippet\": \"public static final String LEGACY_KEY_AGREEMENT = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 7,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/AlgorithmId.java",
+            "offset": 349
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p16/node_16.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p28/node_28.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p4/node_4.java",
+            "offset": 114
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p40/node_40.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"DH\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p52/node_52.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"DH\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p10/node_10.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"DH\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p22/node_22.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"DH\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p34/node_34.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"DH\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p46/node_46.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"DH\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p58/node_58.py",
+            "offset": 10
+          }
+        ]
+      },
+      "name": "DH",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,go-crypto,java-jca,python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:56449d163c8beaf9d1467e267c52abc1",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.11"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 20, \"snippet\": \"const (\\n    AuthSignature = \\\"SHA256-RSA\\\"\\n    LegacySignature = \\\"SHA1-RSA\\\"\\n    EllipticSignature = \\\"ECDSA\\\"\\n    Exchange = \\\"ECDH\\\"\\n    LegacyExchange = \\\"DH\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "go/edge-gateway/internal/crypto/policy.go",
+            "offset": 44
+          }
+        ]
+      },
+      "name": "RSASSA-PKCS1v15",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:5713967d713438b44e80eeb871ead0ce",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.10040.4.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 22, \"snippet\": \"const char *dsa = \\\"DSA\\\";\", \"source_type\": \"source\"}",
+            "line": 18,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 408
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA256withDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p11/node_11.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA256withDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p23/node_23.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA256withDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p35/node_35.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA256withDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p47/node_47.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA256withDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p59/node_59.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA256withDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p17/node_17.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA256withDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p29/node_29.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA256withDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p41/node_41.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA256withDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p5/node_5.go",
+            "offset": 28
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA256withDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p53/node_53.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 15, \"snippet\": \"var Profiles = map[string]string{\\n    \\\"default\\\": \\\"RSA\\\",\\n    \\\"legacy\\\":  \\\"DSA\\\",\\n    \\\"elliptic\\\": \\\"ECDSA\\\",\\n}\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "go/signing-service/internal/compat/registry.go",
+            "offset": 87
+          }
+        ]
+      },
+      "name": "DSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:7f5d89f04d4fa6cdbcaf3daa7e611677",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "key-agree"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.3.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 18, \"snippet\": \"KeyAgreement.getInstance(algorithm)\", \"source_type\": \"source\"}",
+            "line": 11,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/KeyAgreementEngine.java",
+            "offset": 345
+          }
+        ]
+      },
+      "name": "DH",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "HIGH"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.branch_condition",
+          "value": "compatibility == true"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "[\"AlgorithmId.LEGACY_KEY_AGREEMENT -> \\\"DH\\\"\"]"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:a954c3b733265530c0442bc7a3cc1723",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.10045.4.3.2"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 24, \"snippet\": \"const char *ecdsa = \\\"ECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 19,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 439
+          },
+          {
+            "additionalContext": "{\"column\": 24, \"snippet\": \"const (\\n    AuthSignature = \\\"SHA256-RSA\\\"\\n    LegacySignature = \\\"SHA1-RSA\\\"\\n    EllipticSignature = \\\"ECDSA\\\"\\n    Exchange = \\\"ECDH\\\"\\n    LegacyExchange = \\\"DH\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 6,
+            "location": "go/edge-gateway/internal/crypto/policy.go",
+            "offset": 114
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"var Profiles = map[string]string{\\n    \\\"default\\\": \\\"RSA\\\",\\n    \\\"legacy\\\":  \\\"DSA\\\",\\n    \\\"elliptic\\\": \\\"ECDSA\\\",\\n}\", \"source_type\": \"source\"}",
+            "line": 6,
+            "location": "go/signing-service/internal/compat/registry.go",
+            "offset": 110
+          },
+          {
+            "additionalContext": "{\"column\": 41, \"snippet\": \"public static final String EC_SIGN = \\\"SHA256withECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/AlgorithmId.java",
+            "offset": 221
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p20/node_20.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p32/node_32.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p44/node_44.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p56/node_56.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p8/node_8.java",
+            "offset": 114
+          },
+          {
+            "additionalContext": "{\"column\": 31, \"snippet\": \"static final String CERT = \\\"ECDSA\\\";\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "java/payment-platform/src/test/java/com/adversarial/CryptoFixture.java",
+            "offset": 193
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withECDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p14/node_14.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withECDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p2/node_2.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withECDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p26/node_26.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withECDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p38/node_38.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withECDSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p50/node_50.py",
+            "offset": 10
+          }
+        ]
+      },
+      "name": "ECDSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,go-crypto,java-jca,python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:ad8e8651a2c74cb5f54faf9e30d3c143",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "key-agree"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.132.1.12"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"return \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 17,
+            "location": "c/crypto-core/src/crypto/bridge.c",
+            "offset": 464
+          },
+          {
+            "additionalContext": "{\"column\": 28, \"snippet\": \"static const char *modern = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 69
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p15/node_15.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p27/node_27.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p3/node_3.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p39/node_39.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p51/node_51.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 27, \"snippet\": \"const char *exchange = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 5,
+            "location": "c/crypto-core/tests/test_vectors.c",
+            "offset": 111
+          },
+          {
+            "additionalContext": "{\"column\": 15, \"snippet\": \"const (\\n    AuthSignature = \\\"SHA256-RSA\\\"\\n    LegacySignature = \\\"SHA1-RSA\\\"\\n    EllipticSignature = \\\"ECDSA\\\"\\n    Exchange = \\\"ECDH\\\"\\n    LegacyExchange = \\\"DH\\\"\\n)\", \"source_type\": \"source\"}",
+            "line": 7,
+            "location": "go/edge-gateway/internal/crypto/policy.go",
+            "offset": 137
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"ECDH\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p21/node_21.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"ECDH\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p33/node_33.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"ECDH\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p45/node_45.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"ECDH\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p57/node_57.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"ECDH\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p9/node_9.go",
+            "offset": 28
+          },
+          {
+            "additionalContext": "{\"column\": 47, \"snippet\": \"public static final String KEY_AGREEMENT = \\\"ECDH\\\";\", \"source_type\": \"source\"}",
+            "line": 6,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/AlgorithmId.java",
+            "offset": 287
+          }
+        ]
+      },
+      "name": "ECDH",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,go-crypto,java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:b1eea4833fab0a4ab9a471e4e320d15a",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "mode": "gcm",
+          "primitive": "block-cipher"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 43, \"snippet\": \"Cipher.getInstance(AlgorithmId.STORE_CIPHER)\", \"source_type\": \"source\"}",
+            "line": 10,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/EnvelopeCipher.java",
+            "offset": 325
+          }
+        ]
+      },
+      "name": "AES",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "HIGH"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "[\"AlgorithmId.STORE_CIPHER -> \\\"AES/GCM/NoPadding\\\"\"]"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "live-internal"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:bdc87372b8f00626f2576f5b18e26de7",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "160",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.14.3.2.26"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"algorithm(payload)\", \"source_type\": \"source\"}",
+            "line": 7,
+            "location": "python/orchestration/app/crypto/wrappers.py",
+            "offset": 240
+          }
+        ]
+      },
+      "name": "SHA-1",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.branch_condition",
+          "value": "legacy == true"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-classically"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "live-internal"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:c6c4573013ca7fd7b4e9f90f985a685e",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "key-agree"
+        },
+        "assetType": "algorithm",
+        "oid": "1.3.132.1.12"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 18, \"snippet\": \"KeyAgreement.getInstance(algorithm)\", \"source_type\": \"source\"}",
+            "line": 12,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/KeyAgreementEngine.java",
+            "offset": 396
+          }
+        ]
+      },
+      "name": "ECDH",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "HIGH"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.branch_condition",
+          "value": "compatibility == false"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "[\"AlgorithmId.KEY_AGREEMENT -> \\\"ECDH\\\"\"]"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:dce8d5bd0680d60601ce46773e6eb72b",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "parameterSetIdentifier": "256",
+          "primitive": "hash"
+        },
+        "assetType": "algorithm",
+        "oid": "2.16.840.1.101.3.4.2.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"algorithm(payload)\", \"source_type\": \"source\"}",
+            "line": 7,
+            "location": "python/orchestration/app/crypto/wrappers.py",
+            "offset": 240
+          }
+        ]
+      },
+      "name": "SHA-256",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.branch_condition",
+          "value": "legacy == false"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "weakened-by-grover"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "live-internal"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:e50bcd8baa77888a6c96b4b56e757045",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.11"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 31, \"snippet\": \"static const char *signature = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 6,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 142
+          },
+          {
+            "additionalContext": "{\"column\": 22, \"snippet\": \"const char *rsa = \\\"RSA\\\";\", \"source_type\": \"source\"}",
+            "line": 17,
+            "location": "c/crypto-core/src/crypto/dispatch.c",
+            "offset": 379
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p19/node_19.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p31/node_31.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p43/node_43.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p55/node_55.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 29, \"snippet\": \"static const char *profile = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "c/crypto-core/src/generated/p7/node_7.c",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 28, \"snippet\": \"const char *algorithm = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "c/crypto-core/tests/test_vectors.c",
+            "offset": 69
+          },
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"return \\\"RSA\\\";\", \"source_type\": \"source\"}",
+            "line": 8,
+            "location": "c/embedded-gateway/src/tls/profile.c",
+            "offset": 162
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA1withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p1/node_1.go",
+            "offset": 28
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA1withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p13/node_13.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA1withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p25/node_25.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA1withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p37/node_37.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 16, \"snippet\": \"const profile = \\\"SHA1withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "go/edge-gateway/internal/generated/p49/node_49.go",
+            "offset": 29
+          },
+          {
+            "additionalContext": "{\"column\": 15, \"snippet\": \"var Profiles = map[string]string{\\n    \\\"default\\\": \\\"RSA\\\",\\n    \\\"legacy\\\":  \\\"DSA\\\",\\n    \\\"elliptic\\\": \\\"ECDSA\\\",\\n}\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "go/signing-service/internal/compat/registry.go",
+            "offset": 65
+          },
+          {
+            "additionalContext": "{\"column\": 38, \"snippet\": \"public static final String SIGN = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 3,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/AlgorithmId.java",
+            "offset": 103
+          },
+          {
+            "additionalContext": "{\"column\": 45, \"snippet\": \"public static final String LEGACY_SIGN = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/AlgorithmId.java",
+            "offset": 165
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p12/node_12.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p24/node_24.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p36/node_36.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p48/node_48.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 42, \"snippet\": \"private static final String PROFILE = \\\"SHA256withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/main/java/com/adversarial/generated/p60/node_60.java",
+            "offset": 116
+          },
+          {
+            "additionalContext": "{\"column\": 47, \"snippet\": \"return \\\"RSA\\\";\", \"source_type\": \"source\"}",
+            "line": 10,
+            "location": "java/payment-platform/src/main/java/com/adversarial/tls/PartnerTlsProfile.java",
+            "offset": 457
+          },
+          {
+            "additionalContext": "{\"column\": 33, \"snippet\": \"static final String SAMPLE = \\\"SHA1withRSA\\\";\", \"source_type\": \"source\"}",
+            "line": 4,
+            "location": "java/payment-platform/src/test/java/com/adversarial/CryptoFixture.java",
+            "offset": 147
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p18/node_18.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p30/node_30.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p42/node_42.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p54/node_54.py",
+            "offset": 10
+          },
+          {
+            "additionalContext": "{\"column\": 10, \"snippet\": \"PROFILE = \\\"SHA256withRSA\\\"\", \"source_type\": \"source\"}",
+            "line": 1,
+            "location": "python/orchestration/app/generated/p6/node_6.py",
+            "offset": 10
+          }
+        ]
+      },
+      "name": "RSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "c-openssl,go-crypto,java-jca,python-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:findingType",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:property.finding_type",
+          "value": "CRYPTO_REFERENCE"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.10045.4.3.2"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 37, \"snippet\": \"Signature.getInstance(requested)\", \"source_type\": \"source\"}",
+            "line": 10,
+            "location": "java/payment-platform/src/main/java/com/adversarial/crypto/SignerFactory.java",
+            "offset": 447
+          }
+        ]
+      },
+      "name": "ECDSA",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "HIGH"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "java-jca"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:property.resolution_path",
+          "value": "[\"SignerFactory.create(requested) <- SignerFactory.create(selected)\", \"policy.algorithmFor(\\\"partner-auth\\\") -> AlgorithmId.EC_SIGN -> \\\"SHA256withECDSA\\\"\", \"AlgorithmId.EC_SIGN -> \\\"SHA256withECDSA\\\"\"]"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "live-internal"
+        }
+      ],
+      "type": "cryptographic-asset"
+    },
+    {
+      "bom-ref": "crypto-asset:ff501610bede0dfb8dca790fd05c6ee2",
+      "cryptoProperties": {
+        "algorithmProperties": {
+          "primitive": "signature"
+        },
+        "assetType": "algorithm",
+        "oid": "1.2.840.113549.1.1.1"
+      },
+      "evidence": {
+        "occurrences": [
+          {
+            "additionalContext": "{\"column\": 11, \"snippet\": \"rsa.SignPKCS1v15(rand.Reader, key, 0, digest[:])\", \"source_type\": \"source\"}",
+            "line": 26,
+            "location": "go/edge-gateway/internal/crypto/signer.go",
+            "offset": 724
+          }
+        ]
+      },
+      "name": "RSASSA-PKCS1v15",
+      "properties": [
+        {
+          "name": "hash_patch:confidence",
+          "value": "confirmed"
+        },
+        {
+          "name": "hash_patch:detectorId",
+          "value": "go-crypto"
+        },
+        {
+          "name": "hash_patch:detectorVersion",
+          "value": "0.1.0"
+        },
+        {
+          "name": "hash_patch:quantumStatus",
+          "value": "broken-by-shor"
+        },
+        {
+          "name": "hash_patch:reachability",
+          "value": "unknown"
+        }
+      ],
+      "type": "cryptographic-asset"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "crypto-asset:101bcce7f05a3c275cbf697888ae0b6e"
+    },
+    {
+      "ref": "crypto-asset:2b23217f4c605672f3ad9c7d021aabde"
+    },
+    {
+      "ref": "crypto-asset:38435f2a193778cac5f677a669b3b766"
+    },
+    {
+      "ref": "crypto-asset:386f49e0082870b8182a4e375f4f5094"
+    },
+    {
+      "ref": "crypto-asset:39bc4804986f71f6d455b9c1a133f8a7"
+    },
+    {
+      "ref": "crypto-asset:4433a193717c4b3492fa28eea569bd3d"
+    },
+    {
+      "ref": "crypto-asset:459b2285861ece9045c1ac51ef6abf75"
+    },
+    {
+      "ref": "crypto-asset:45ccb45674487af0a38a4b9419e8c70c"
+    },
+    {
+      "ref": "crypto-asset:4d5cecfde02cce899204ef46ca854069"
+    },
+    {
+      "ref": "crypto-asset:55ac66686ac8b20e7849a341bd4ac14f"
+    },
+    {
+      "ref": "crypto-asset:56449d163c8beaf9d1467e267c52abc1"
+    },
+    {
+      "ref": "crypto-asset:5713967d713438b44e80eeb871ead0ce"
+    },
+    {
+      "ref": "crypto-asset:7f5d89f04d4fa6cdbcaf3daa7e611677"
+    },
+    {
+      "ref": "crypto-asset:a954c3b733265530c0442bc7a3cc1723"
+    },
+    {
+      "ref": "crypto-asset:ad8e8651a2c74cb5f54faf9e30d3c143"
+    },
+    {
+      "ref": "crypto-asset:b1eea4833fab0a4ab9a471e4e320d15a"
+    },
+    {
+      "ref": "crypto-asset:bdc87372b8f00626f2576f5b18e26de7"
+    },
+    {
+      "ref": "crypto-asset:c6c4573013ca7fd7b4e9f90f985a685e"
+    },
+    {
+      "ref": "crypto-asset:dce8d5bd0680d60601ce46773e6eb72b"
+    },
+    {
+      "ref": "crypto-asset:e50bcd8baa77888a6c96b4b56e757045"
+    },
+    {
+      "ref": "crypto-asset:e5bcd1ead55f50ea14953af1d9165643"
+    },
+    {
+      "ref": "crypto-asset:ff501610bede0dfb8dca790fd05c6ee2"
+    }
+  ],
+  "metadata": {
+    "properties": [
+      {
+        "name": "hash_patch:contradiction.algo-contradiction-9595baeea11e86f9",
+        "value": "{\"callSiteFunction\":\"Sign\",\"callSiteLine\":26,\"callSiteLocator\":\"d:\\\\CBOM-SIH\\\\hash_patch\\\\test1\\\\go\\\\edge-gateway\\\\internal\\\\crypto\\\\signer.go\",\"declaredAlgorithm\":\"ECDSA\",\"declaringBranchCondition\":\"partner == \\\"ec-partner\\\"\",\"declaringFunction\":\"SignatureFamily\",\"declaringLine\":6,\"declaringLocator\":\"d:\\\\CBOM-SIH\\\\hash_patch\\\\test1\\\\go\\\\edge-gateway\\\\internal\\\\crypto\\\\policy.go\",\"description\":\"SignatureFamily (declares ECDSA at d:\\\\CBOM-SIH\\\\hash_patch\\\\test1\\\\go\\\\edge-gateway\\\\internal\\\\crypto\\\\policy.go:6) is called from Sign, which invokes RSASSA-PKCS1v15 at d:\\\\CBOM-SIH\\\\hash_patch\\\\test1\\\\go\\\\edge-gateway\\\\internal\\\\crypto\\\\signer.go:26 on that same, unguarded path \\u2014 the implementation does not match what the policy declares.\",\"id\":\"algo-contradiction-9595baeea11e86f9\",\"implementedAlgorithm\":\"RSASSA-PKCS1v15\",\"severity\":\"high\"}"
+      },
+      {
+        "name": "hash_patch:scanned_files",
+        "value": "[\"README.md\",\"c/crypto-core/include/bridge.h\",\"c/crypto-core/src/crypto/bridge.c\",\"c/crypto-core/src/crypto/dispatch.c\",\"c/crypto-core/src/generated/p11/node_11.c\",\"c/crypto-core/src/generated/p15/node_15.c\",\"c/crypto-core/src/generated/p19/node_19.c\",\"c/crypto-core/src/generated/p23/node_23.c\",\"c/crypto-core/src/generated/p27/node_27.c\",\"c/crypto-core/src/generated/p3/node_3.c\",\"c/crypto-core/src/generated/p31/node_31.c\",\"c/crypto-core/src/generated/p35/node_35.c\",\"c/crypto-core/src/generated/p39/node_39.c\",\"c/crypto-core/src/generated/p43/node_43.c\",\"c/crypto-core/src/generated/p47/node_47.c\",\"c/crypto-core/src/generated/p51/node_51.c\",\"c/crypto-core/src/generated/p55/node_55.c\",\"c/crypto-core/src/generated/p59/node_59.c\",\"c/crypto-core/src/generated/p7/node_7.c\",\"c/crypto-core/tests/test_vectors.c\",\"c/embedded-gateway/src/tls/profile.c\",\"c/legacy-security/src/retired.c\",\"docs/cross_language_contracts.md\",\"docs/expected_inventory.md\",\"go/edge-gateway/cmd/gateway/main.go\",\"go/edge-gateway/internal/crypto/exchange.go\",\"go/edge-gateway/internal/crypto/policy.go\",\"go/edge-gateway/internal/crypto/signer.go\",\"go/edge-gateway/internal/generated/p1/node_1.go\",\"go/edge-gateway/internal/generated/p13/node_13.go\",\"go/edge-gateway/internal/generated/p17/node_17.go\",\"go/edge-gateway/internal/generated/p21/node_21.go\",\"go/edge-gateway/internal/generated/p25/node_25.go\",\"go/edge-gateway/internal/generated/p29/node_29.go\",\"go/edge-gateway/internal/generated/p33/node_33.go\",\"go/edge-gateway/internal/generated/p37/node_37.go\",\"go/edge-gateway/internal/generated/p41/node_41.go\",\"go/edge-gateway/internal/generated/p45/node_45.go\",\"go/edge-gateway/internal/generated/p49/node_49.go\",\"go/edge-gateway/internal/generated/p5/node_5.go\",\"go/edge-gateway/internal/generated/p53/node_53.go\",\"go/edge-gateway/internal/generated/p57/node_57.go\",\"go/edge-gateway/internal/generated/p9/node_9.go\",\"go/edge-gateway/internal/legacy/old_profile.go\",\"go/edge-gateway/internal/routing/dispatch.go\",\"go/key-service/internal/keyflow/store.go\",\"go/signing-service/internal/compat/registry.go\",\"java/payment-platform/src/main/java/com/adversarial/auth/AuthenticationGateway.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/AlgorithmId.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/CryptoPolicy.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/EnvelopeCipher.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/IdentitySigner.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/KeyAgreementEngine.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/LegacyVerifier.java\",\"java/payment-platform/src/main/java/com/adversarial/crypto/SignerFactory.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p12/node_12.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p16/node_16.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p20/node_20.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p24/node_24.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p28/node_28.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p32/node_32.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p36/node_36.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p4/node_4.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p40/node_40.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p44/node_44.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p48/node_48.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p52/node_52.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p56/node_56.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p60/node_60.java\",\"java/payment-platform/src/main/java/com/adversarial/generated/p8/node_8.java\",\"java/payment-platform/src/main/java/com/adversarial/legacy/ArchiveDecryptor.java\",\"java/payment-platform/src/main/java/com/adversarial/legacy/DeadCrypto.java\",\"java/payment-platform/src/main/java/com/adversarial/payments/PaymentWorkflow.java\",\"java/payment-platform/src/main/java/com/adversarial/tls/PartnerTlsProfile.java\",\"java/payment-platform/src/test/java/com/adversarial/CryptoFixture.java\",\"python/data_pipeline/crypto/token_normalizer.py\",\"python/migration_tools/compat/selector.py\",\"python/orchestration/app/crypto/registry.py\",\"python/orchestration/app/crypto/signing.py\",\"python/orchestration/app/crypto/wrappers.py\",\"python/orchestration/app/generated/p10/node_10.py\",\"python/orchestration/app/generated/p14/node_14.py\",\"python/orchestration/app/generated/p18/node_18.py\",\"python/orchestration/app/generated/p2/node_2.py\",\"python/orchestration/app/generated/p22/node_22.py\",\"python/orchestration/app/generated/p26/node_26.py\",\"python/orchestration/app/generated/p30/node_30.py\",\"python/orchestration/app/generated/p34/node_34.py\",\"python/orchestration/app/generated/p38/node_38.py\",\"python/orchestration/app/generated/p42/node_42.py\",\"python/orchestration/app/generated/p46/node_46.py\",\"python/orchestration/app/generated/p50/node_50.py\",\"python/orchestration/app/generated/p54/node_54.py\",\"python/orchestration/app/generated/p58/node_58.py\",\"python/orchestration/app/generated/p6/node_6.py\",\"python/orchestration/app/legacy/comments_only.py\",\"python/orchestration/app/workflows/archive.py\",\"python/orchestration/app/workflows/payment.py\"]"
+      }
+    ],
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "Hash Patch",
+          "type": "application",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "specVersion": "1.6",
+  "version": 1
+}

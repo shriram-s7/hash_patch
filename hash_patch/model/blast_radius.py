@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from hash_patch.model.evidence import Evidence
 
 SizeConstraintKind = Literal["stack_buffer", "heap_alloc", "db_column"]
-BlastRadiusLanguage = Literal["c", "sql"]
+BlastRadiusLanguage = Literal["c", "sql", "go", "java", "python"]
 Severity = Literal["low", "medium", "high", "critical"]
 
 
@@ -34,6 +34,7 @@ class SizeConstraint(BaseModel):
     declared_bytes: int
     evidence: list[Evidence] = Field(default_factory=list)
     language: BlastRadiusLanguage
+    inferred_field: Literal["signature", "pubkey", "ciphertext"] | None = None
 
 
 class BlastRadiusFinding(BaseModel):

@@ -1,0 +1,22 @@
+# Generated many resources test
+resource "aws_lb" "lb_0" { name = "lb-0" }
+resource "aws_lb" "lb_1" { name = "lb-1" }
+resource "aws_lb" "lb_2" { name = "lb-2" }
+resource "aws_lb" "lb_3" { name = "lb-3" }
+resource "aws_lb" "lb_4" { name = "lb-4" }
+resource "aws_lb" "lb_5" { name = "lb-5" }
+resource "aws_lb" "lb_6" { name = "lb-6" }
+resource "aws_lb" "lb_7" { name = "lb-7" }
+resource "aws_lb" "lb_8" { name = "lb-8" }
+resource "aws_lb" "lb_9" { name = "lb-9" }
+resource "aws_lb" "lb_10" { name = "lb-10" }
+resource "aws_lb" "lb_11" { name = "lb-11" }
+resource "aws_lb" "lb_12" { name = "lb-12" }
+resource "aws_lb" "lb_13" { name = "lb-13" }
+resource "aws_lb" "lb_14" { name = "lb-14" }
+resource "aws_lb" "lb_15" { name = "lb-15" }
+resource "aws_lb" "lb_16" { name = "lb-16" }
+resource "aws_lb" "lb_17" { name = "lb-17" }
+resource "aws_lb" "lb_18" { name = "lb-18" }
+resource "aws_lb" "lb_19" { name = "lb-19" }
+resource "aws_lb" "lb_20" { name = "lb-20" }

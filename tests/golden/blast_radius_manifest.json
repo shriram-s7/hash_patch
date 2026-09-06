@@ -33,5 +33,29 @@
       "scenario": "VARCHAR(512) signature column vs ML-DSA-65 signature (3309B), via the db_column name-pattern-only fallback"
     }
   ],
-  "sql_no_fire_column": "metadata"
+  "sql_no_fire_column": "metadata",
+  "python": [
+    {
+      "name": "signature_buf",
+      "declared_bytes": 256,
+      "line": 35,
+      "overflow_sign": 1,
+      "scenario": "RSA-2048 signature (256B classically, jwt.encode(algorithm='RS256')) vs ML-DSA-65 signature (3309B) -- NAME-PATTERN correlation ('signature_buf' matches the 'signature' name pattern directly)"
+    },
+    {
+      "name": "outbox",
+      "declared_bytes": 512,
+      "line": 49,
+      "overflow_sign": 1,
+      "scenario": "same RSA-2048 signature, but the 512-byte buffer name ('outbox') matches no name pattern -- correlated purely via DATA-FLOW (outbox[:len(signature)] = signature) -- must still fire since 512B < ML-DSA-65's 3309B"
+    },
+    {
+      "name": "reply",
+      "declared_bytes": 8192,
+      "line": 60,
+      "overflow_sign": 0,
+      "scenario": "same DATA-FLOW correlation as 'outbox', but generously sized at 8192B -- even ML-DSA-65's 3309B signature fits, so this must NOT fire"
+    }
+  ],
+  "python_unresolved_name": "scratch"
 }

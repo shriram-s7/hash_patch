@@ -6,7 +6,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from hash_patch.model.assets import CryptoAsset
 from hash_patch.model.blast_radius import BlastRadiusFinding
-from hash_patch.model.config_finding import ContradictionFinding, TlsConfigFinding
+from hash_patch.model.config_finding import (
+    AlgorithmDivergenceFinding,
+    ContradictionFinding,
+    TlsConfigFinding,
+)
 from hash_patch.model.shelf_life import ShelfLifeFinding
 
 
@@ -33,6 +37,15 @@ class ScanResult(BaseModel):
     # hash_patch/analyze/contradictions.py and docs/CONTRADICTIONS.md.
     tls_config_findings: list[TlsConfigFinding] = Field(default_factory=list)
     contradiction_findings: list[ContradictionFinding] = Field(default_factory=list)
+    # Also Pillar 4, but a different contradiction shape: a policy/dispatch
+    # function's declared algorithm name diverges from what a reachable
+    # crypto call actually invokes — see
+    # hash_patch/analyze/algorithm_contradictions.py. Emitted under the same
+    # `hash_patch:contradiction.<id>` CBOM property namespace as
+    # contradiction_findings (see hash_patch/emit/cyclonedx.py), so the UI's
+    # existing contradiction count/list picks these up without needing a
+    # separate code path.
+    algorithm_divergence_findings: list[AlgorithmDivergenceFinding] = Field(default_factory=list)
 
     def add_asset(self, asset: CryptoAsset) -> None:
         """Add an asset, merging into an existing one with the same id.

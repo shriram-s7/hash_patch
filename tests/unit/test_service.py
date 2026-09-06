@@ -138,6 +138,59 @@ def test_optimize_cbom_without_timestamp_returns_400(client: TestClient) -> None
     assert "detail" in body
 
 
+def test_file_content_returns_real_source(client: TestClient) -> None:
+    target_file = REPO_ROOT / "testdata" / "python" / "hashlib_examples.py"
+    response = client.get(
+        "/api/file-content",
+        params={"path": str(target_file), "root": str(REPO_ROOT / "testdata" / "python")},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["content"] == target_file.read_text(encoding="utf-8", errors="replace")
+
+
+def test_file_content_rejects_path_outside_root(client: TestClient) -> None:
+    outside_file = REPO_ROOT / "pyproject.toml"
+    response = client.get(
+        "/api/file-content",
+        params={"path": str(outside_file), "root": str(REPO_ROOT / "testdata" / "python")},
+    )
+    assert response.status_code == 403
+
+
+def test_file_content_rejects_traversal_outside_root(client: TestClient) -> None:
+    root = REPO_ROOT / "testdata" / "python"
+    traversal_path = str(root / ".." / ".." / "pyproject.toml")
+    response = client.get(
+        "/api/file-content",
+        params={"path": traversal_path, "root": str(root)},
+    )
+    assert response.status_code == 403
+
+
+def test_file_content_nonexistent_file_returns_404(client: TestClient) -> None:
+    root = REPO_ROOT / "testdata" / "python"
+    response = client.get(
+        "/api/file-content",
+        params={"path": str(root / "does_not_exist.py"), "root": str(root)},
+    )
+    assert response.status_code == 404
+
+
+def test_file_content_directory_path_returns_400(client: TestClient) -> None:
+    root = REPO_ROOT / "testdata" / "python"
+    response = client.get(
+        "/api/file-content",
+        params={"path": str(root), "root": str(root)},
+    )
+    assert response.status_code == 400
+
+
+def test_file_content_missing_params_returns_422(client: TestClient) -> None:
+    response = client.get("/api/file-content", params={"path": str(REPO_ROOT / "pyproject.toml")})
+    assert response.status_code == 422
+
+
 def test_cors_headers_allowed_origins(client: TestClient) -> None:
     for allowed_origin in ["http://localhost:5173", "http://localhost:5174"]:
         resp = client.get("/api/health", headers={"Origin": allowed_origin})

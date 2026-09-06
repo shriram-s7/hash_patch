@@ -12,6 +12,12 @@ out exactly the `hash_patch:` properties P1/P2/P3 already attached —
 `hash_patch:property.blastRadius.<kind>.<name>.<line>` free-form properties
 — never re-deriving or inventing any of them. See CLAUDE.md's "Output
 format" -> "Field mapping" for the exact property shapes this reads back.
+
+Also reads the component's own `evidence.occurrences` array length (a
+required, real field per CLAUDE.md hard constraint #3 -- never invented
+here) as the call-site count `hash_patch/analyze/risk_score.py`'s cost
+model falls back to when there is no blast-radius figure; see that
+module's docstring.
 """
 
 from __future__ import annotations
@@ -160,6 +166,24 @@ def read_candidates(doc: dict[str, Any]) -> tuple[list[OptimizerCandidate], int]
         if component.get("type") != "cryptographic-asset":
             continue
         props = _property_map(component)
+        # Only a real, observed crypto OPERATION is a migration candidate.
+        # `hash_patch:findingType` is only ever emitted for a NON-default
+        # finding_type (see emit/cyclonedx.py::_asset_properties), so its
+        # absence means "OPERATION". Anything else — CRYPTO_REFERENCE (a
+        # string literal that merely looks like an algorithm name, never
+        # passed to a crypto call; see CLAUDE.md's "Name" section and
+        # hash_patch/detect/c.py's `_try_collect_reference`), or a parsed
+        # CERTIFICATE finding (hash_patch/detect/certificates.py — a real
+        # crypto artefact, but not yet wired into Pillar 5's cost model,
+        # which assumes a source call site with real evidence-occurrence
+        # counts; see that module's docstring) — is excluded here. An
+        # allowlist (not a CRYPTO_REFERENCE-only denylist) so a future new
+        # finding_type is excluded by default until deliberately opted in,
+        # rather than silently becoming a migration candidate.
+        finding_type = _get_prop(props, "findingType")
+        if finding_type is not None and finding_type != "OPERATION":
+            excluded += 1
+            continue
         quantum_status = _parse_quantum_status(_get_prop(props, "quantumStatus"))
         if not is_migration_candidate(quantum_status):
             excluded += 1
@@ -169,7 +193,8 @@ def read_candidates(doc: dict[str, Any]) -> tuple[list[OptimizerCandidate], int]
         shelf_life_years, shelf_life_category = _shelf_life_from_properties(props)
         magnitude, is_default = estimate_shelf_life_magnitude(shelf_life_years)
         blast_radius_days = _blast_radius_effort_days(props)
-        cost_days, cost_source = estimate_cost_days(blast_radius_days)
+        occurrence_count = len(component.get("evidence", {}).get("occurrences") or [])
+        cost_days, cost_source = estimate_cost_days(blast_radius_days, occurrence_count)
         risk = compute_risk_score(reachability, shelf_life_years)
 
         candidates.append(

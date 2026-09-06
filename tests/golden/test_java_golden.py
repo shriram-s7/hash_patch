@@ -149,11 +149,14 @@ def test_golden_cbom_validates_against_cyclonedx_schema() -> None:
 
 
 def test_golden_has_expected_asset_count() -> None:
-    """The fixture contains known algorithm calls; we expect 7 unique assets."""
+    """The fixture contains known algorithm calls; we expect 8 unique assets."""
     doc = _build_doc()
-    # RSA, AES, MD5, SHA-1, EC, ECDSA, SHA-256
-    assert len(doc["components"]) == 7, (
-        f"Expected 7 unique crypto assets, got {len(doc['components'])}: "
+    # RSA, AES (mode=None, KeyGenerator.getInstance("AES")),
+    # AES (mode=gcm, Cipher.getInstance("AES/GCM/NoPadding")), MD5, SHA-1,
+    # EC, ECDSA, SHA-256 — a JCA transformation string's mode is part of the
+    # asset's identity, so the two AES calls are two distinct assets.
+    assert len(doc["components"]) == 8, (
+        f"Expected 8 unique crypto assets, got {len(doc['components'])}: "
         f"{[c['name'] for c in doc['components']]}"
     )
 

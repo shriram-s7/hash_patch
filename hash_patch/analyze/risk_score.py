@@ -65,11 +65,29 @@ Cost estimation
 `estimate_cost_days` uses a real Pillar 3 `estimated_effort_days` figure
 (summed across every blast-radius finding correlated to this asset — an
 asset can have more than one size-constraint overflow to fix) when one
-exists; otherwise a flat, documented default
-(`DEFAULT_COST_DAYS_NO_BLAST_RADIUS`), explicitly flagged via the
-`cost_source` field on `OptimizerCandidate`
-(hash_patch/model/optimizer.py) rather than being indistinguishable from a
-real blast-radius-derived figure.
+exists.
+
+Blast-radius findings only ever come from C/SQL (see
+hash_patch/analyze/blast_radius.py's module docstring), so for every
+Python/Java/Go migration candidate — i.e. most real-world corpora — that
+figure is never present. Falling straight to a single flat constant in that
+case would make `cost_days` (and therefore risk-density, and therefore the
+optimiser's whole reason to differ from a naive risk-only ordering) a
+no-op: see docs/OPTIMISER.md. Instead, the second-best real complexity
+signal already sitting in every emitted CBOM is used: the NUMBER OF
+EVIDENCE OCCURRENCES (call sites) hash_patch's own evidence rule already
+requires for every asset (CLAUDE.md hard constraint #3) — an algorithm
+called from five places in the codebase genuinely costs more engineer-days
+to migrate than the same algorithm called from exactly one place (more
+call sites to update, more surrounding tests to touch, more chance of a
+missed call site). This is `cost_source = "call_sites"`.
+
+Only when NEITHER a real blast-radius figure NOR any evidence-occurrence
+count is available at all does this fall back to the flat, documented
+default (`DEFAULT_COST_DAYS_NO_BLAST_RADIUS`) — `cost_source = "default"`.
+All three cases are explicitly flagged via the `cost_source` field on
+`OptimizerCandidate` (hash_patch/model/optimizer.py) rather than being
+indistinguishable from each other.
 """
 
 from __future__ import annotations
@@ -104,11 +122,25 @@ _REACHABILITY_WEIGHTS: dict[Reachability, float] = {
 DEFAULT_SHELF_LIFE_YEARS_NO_DATA = 5
 
 # Flat placeholder migration cost (engineer-days) used ONLY when no
-# Pillar 3 blast-radius finding is correlated to this asset at all. Chosen
-# to match hash_patch/analyze/blast_radius.py's own
-# `_estimate_effort_days` base case (0.5 days) for consistency across
-# pillars -- see docs/OPTIMISER.md.
+# Pillar 3 blast-radius finding AND no evidence-occurrence count is
+# available at all. Chosen to match hash_patch/analyze/blast_radius.py's
+# own `_estimate_effort_days` base case (0.5 days) for consistency across
+# pillars -- see docs/OPTIMISER.md. This also doubles as the single-call-
+# site cost floor in the call-sites path below, so a finding with exactly
+# one occurrence costs the same as the old flat constant did.
 DEFAULT_COST_DAYS_NO_BLAST_RADIUS = 0.5
+
+# Extra engineer-days added per ADDITIONAL evidence occurrence (call site)
+# beyond the first, when no real blast-radius figure exists -- see this
+# module's docstring. Deliberately smaller than blast-radius's own
+# db_column increment (0.5): a call site is cheaper to touch than a schema
+# migration, but more of them still means more engineer-days.
+CALL_SITE_COST_INCREMENT_DAYS = 0.25
+
+# Cap on the call-sites-derived cost, so a utility function with dozens of
+# call sites doesn't produce an implausibly large single-finding estimate
+# that would dominate every schedule -- see docs/OPTIMISER.md.
+MAX_CALL_SITE_COST_DAYS = 3.0
 
 
 def is_migration_candidate(quantum_status: QuantumStatus) -> bool:
@@ -144,13 +176,27 @@ def compute_risk_score(reachability: Reachability, shelf_life_years: int | None)
     return magnitude * reachability_multiplier(reachability)
 
 
-def estimate_cost_days(blast_radius_effort_days: float | None) -> tuple[float, str]:
-    """Returns (cost_days, cost_source). `cost_source` is "blast_radius"
-    when a real Pillar 3 figure (summed across that asset's blast-radius
-    findings) was supplied, or "default" when
-    DEFAULT_COST_DAYS_NO_BLAST_RADIUS was used instead -- see this module's
-    docstring.
+def estimate_cost_days(
+    blast_radius_effort_days: float | None,
+    evidence_occurrence_count: int | None = None,
+) -> tuple[float, str]:
+    """Returns (cost_days, cost_source).
+
+    - "blast_radius": a real Pillar 3 figure (summed across that asset's
+      blast-radius findings) was supplied.
+    - "call_sites": no blast-radius figure, but this asset carries at least
+      one real evidence occurrence -- cost scales with how many call sites
+      there are to migrate (`CALL_SITE_COST_INCREMENT_DAYS` per occurrence
+      beyond the first, capped at `MAX_CALL_SITE_COST_DAYS`). A single-
+      occurrence finding costs exactly `DEFAULT_COST_DAYS_NO_BLAST_RADIUS`.
+    - "default": neither of the above was available at all.
+
+    See this module's docstring for why call-site count is used here.
     """
     if blast_radius_effort_days is not None and blast_radius_effort_days > 0:
         return blast_radius_effort_days, "blast_radius"
+    if evidence_occurrence_count is not None and evidence_occurrence_count > 0:
+        extra_sites = evidence_occurrence_count - 1
+        days = DEFAULT_COST_DAYS_NO_BLAST_RADIUS + CALL_SITE_COST_INCREMENT_DAYS * extra_sites
+        return min(days, MAX_CALL_SITE_COST_DAYS), "call_sites"
     return DEFAULT_COST_DAYS_NO_BLAST_RADIUS, "default"

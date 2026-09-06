@@ -49,6 +49,20 @@ class QuantumStatus(str, Enum):
     QUANTUM_SAFE = "quantum-safe"
     BROKEN_CLASSICALLY = "broken-classically"
     UNKNOWN = "unknown"
+    # A cloud KMS/HSM client-side operation call (hash_patch/detect/
+    # cloud_kms/) reveals NOTHING about which algorithm the cloud provider
+    # actually uses server-side -- that is provider-side configuration,
+    # invisible to static analysis of the calling code. Deliberately
+    # distinct from every other status above (never guessed as
+    # broken-by-shor/weakened-by-grover/quantum-safe/broken-classically,
+    # and distinct from UNKNOWN too -- UNKNOWN means "we don't know yet but
+    # could in principle", this means "this is architecturally not
+    # observable from here at all"). Never a migration candidate (Pillar 5)
+    # and never a blast-radius candidate (Pillar 3) -- both pillars only
+    # ever consider BROKEN_BY_SHOR assets, so this status excludes cloud-key
+    # findings from both automatically, with no separate exclusion logic
+    # needed. See CLAUDE.md's "Cloud KMS" section.
+    ALGORITHM_OPAQUE = "algorithm-opaque-provider-managed"
 
 
 class Reachability(str, Enum):

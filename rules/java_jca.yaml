@@ -425,3 +425,46 @@ bc_constructors:
     parameter_set: "255"
     quantum_status: broken-by-shor
     oid: "1.3.101.110"
+
+# -----------------------------------------------------------------------------
+# Standalone string literal algorithm references (CRYPTO_REFERENCE finding type)
+#
+# A string literal that merely LOOKS like an algorithm/cipher-suite name — e.g.
+# returned by a getter, assigned to a field, never passed as an argument to any
+# recognized JCA/JCE call anywhere in the file — is a reference to that name,
+# not an observed crypto operation. Same schema and same rationale as
+# rules/c_openssl.yaml's crypto_references section.
+# -----------------------------------------------------------------------------
+crypto_references:
+
+  "RSA":
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  "DSA":
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  "ECDSA":
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256":
+    canonical: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    primitive: protocol
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: null

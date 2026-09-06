@@ -10,7 +10,9 @@ from typing import Annotated
 import typer
 
 from hash_patch import __version__
+from hash_patch.analyze.algorithm_contradictions import compute_algorithm_contradictions
 from hash_patch.analyze.blast_radius import (
+    blast_radius_diagnostics,
     is_inferred_finding,
     primitive_for_replacement,
     run_blast_radius,
@@ -25,11 +27,17 @@ from hash_patch.analyze.reachability import (
 from hash_patch.analyze.shelf_life import run_shelf_life
 from hash_patch.detect import registry  # triggers side-effect detector registration
 from hash_patch.detect.base import Detector
+from hash_patch.detect.certificates import detect_certificates
+from hash_patch.detect.iac import apply_iac_enrichment, scan_iac_directory
 from hash_patch.emit import render_cbom_json, to_cyclonedx, validate_cbom
 from hash_patch.model.assets import AssetType, CryptoAsset, QuantumStatus
 from hash_patch.model.benchmark import RecommendationFinding
 from hash_patch.model.blast_radius import BlastRadiusFinding
-from hash_patch.model.config_finding import ContradictionFinding, TlsConfigFinding
+from hash_patch.model.config_finding import (
+    AlgorithmDivergenceFinding,
+    ContradictionFinding,
+    TlsConfigFinding,
+)
 from hash_patch.model.findings import ScanResult
 from hash_patch.model.optimizer import OptimizationReport
 from hash_patch.model.shelf_life import ShelfLifeFinding
@@ -63,9 +71,16 @@ def _shelf_life_summary(findings: list[ShelfLifeFinding]) -> str:
     return f"{len(findings)} shelf-life findings (longest: {longest.shelf_life_years} years, {longest.category})"
 
 
-def _contradictions_summary(findings: list[ContradictionFinding]) -> str:
-    high_count = sum(1 for f in findings if f.severity == "high")
-    return f"{len(findings)} cross-layer contradictions found ({high_count} high severity)"
+def _contradictions_summary(
+    findings: list[ContradictionFinding],
+    divergence_findings: list[AlgorithmDivergenceFinding] | None = None,
+) -> str:
+    divergence_findings = divergence_findings or []
+    total = len(findings) + len(divergence_findings)
+    high_count = sum(1 for f in findings if f.severity == "high") + sum(
+        1 for f in divergence_findings if f.severity == "high"
+    )
+    return f"{total} cross-layer contradictions found ({high_count} high severity)"
 
 
 def _recommendation_property(finding: RecommendationFinding) -> tuple[str, str]:
@@ -264,6 +279,17 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
         tool_version=tool_version,
     )
 
+    from hash_patch.detect.container.formats import probe_container_target
+    from hash_patch.detect.container.scanner import scan_container_image
+
+    container_fmt = probe_container_target(path)
+    if container_fmt:
+        c_res = scan_container_image(path, reference_date=result.scan_started_at.date())
+        for asset in c_res.assets:
+            result.add_asset(asset)
+        result.scanned_files = sorted(c_res.scanned_container_files)
+        return result
+
     detectors: list[Detector] = registry.detectors()
     scanned_files: list[Path] = []
 
@@ -283,6 +309,15 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
             rel = str(f).replace("\\", "/")
         rel_scanned.append(rel)
     result.scanned_files = sorted(rel_scanned)
+
+    # Certificate file parsing (.pem/.crt/.cer/.der/.p12/.pfx): a NEW,
+    # INDEPENDENT pipeline stage, not a language source detector -- see
+    # hash_patch/detect/certificates.py's module docstring. reference_date
+    # is scan_started_at.date(), the one wall-clock read CLAUDE.md permits
+    # (same source shelf-life inference below already uses), never a fresh
+    # clock read inside the certificate module itself.
+    for cert_asset in detect_certificates(scanned_files, result.scan_started_at.date()):
+        result.add_asset(cert_asset)
 
     # Reachability classification for Python/Java assets (Go/C keep the
     # model's default Reachability.UNKNOWN — see hash_patch/detect/go.py and
@@ -332,6 +367,23 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     target_root = path if path.is_dir() else path.parent
     result.contradiction_findings = run_contradiction_analysis(tls_findings, target_root=target_root)
 
+    # Pillar 4, second kind: a policy/dispatch function's declared algorithm
+    # name diverging from what a reachable crypto call actually invokes
+    # (Go only for now — see hash_patch/analyze/algorithm_contradictions.py's
+    # module docstring for scope and honesty caveats). A different
+    # correlation shape than the TLS contradictions above, so a separate
+    # entry point and result list, but emitted under the same
+    # `hash_patch:contradiction.<id>` CBOM property namespace.
+    result.algorithm_divergence_findings = compute_algorithm_contradictions(result.assets, scanned_files)
+
+    # Phase 4 (IaC / Deployment Topology Enrichment): scan for Kubernetes
+    # manifests and Terraform configurations in the target directory, then
+    # correlate container image findings with workloads/services/ingresses
+    # to enrich cryptographic findings with deployment exposure evidence.
+    if path.is_dir():
+        iac_result = scan_iac_directory(path)
+        apply_iac_enrichment(result.assets, iac_result)
+
     return result
 
 
@@ -356,6 +408,17 @@ def scan(
             help="Path to a benchmark report JSON to cite real measured latencies and sizes.",
         ),
     ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            help=(
+                "Print per-pillar diagnostics (e.g. blast-radius size-constraint and "
+                "BROKEN_BY_SHOR-candidate counts) so a zero-finding result is legible as "
+                "'ran, found nothing' rather than indistinguishable from a silent failure."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Scan PATH for cryptographic assets and emit a CycloneDX 1.6 CBOM.
 
@@ -385,10 +448,23 @@ def scan(
                 typer.echo(f"schema validation error: {error}", err=True)
             raise typer.Exit(code=1)
 
+    if verbose:
+        target_dir = path if path.is_dir() else path.parent
+        abs_scanned_files = [target_dir / f for f in result.scanned_files]
+        diag = blast_radius_diagnostics(result.assets, abs_scanned_files)
+        typer.echo(
+            "blast-radius diagnostics: "
+            f"{diag['size_constraints_found']} size constraint(s) found in scanned files, "
+            f"{diag['broken_by_shor_candidates']} BROKEN_BY_SHOR candidate asset(s), "
+            f"{diag['findings']} correlated finding(s)"
+        )
+
     summary = _quantum_status_summary(result)
     blast_radius_summary = _blast_radius_summary(result.blast_radius_findings)
     shelf_life_summary = _shelf_life_summary(result.shelf_life_findings)
-    contradictions_summary = _contradictions_summary(result.contradiction_findings)
+    contradictions_summary = _contradictions_summary(
+        result.contradiction_findings, result.algorithm_divergence_findings
+    )
     if output is not None:
         output.write_text(render_cbom_json(doc), encoding="utf-8")
         typer.echo(f"wrote CBOM to {output}; {summary}")

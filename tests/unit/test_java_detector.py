@@ -143,12 +143,20 @@ def test_does_not_support_directory(detector: JavaJcaDetector) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_negative_fixture_produces_no_assets(negative_assets: list[CryptoAsset]) -> None:
-    """RSA in comments / unrelated strings must not produce any CryptoAsset."""
-    assert negative_assets == [], (
-        f"Expected 0 assets from negative fixture, got: "
-        f"{[a.name for a in negative_assets]}"
+def test_negative_fixture_produces_no_operation_assets(negative_assets: list[CryptoAsset]) -> None:
+    """RSA in comments / unrelated strings must never produce an OPERATION
+    finding (no crypto API call anywhere in this file). The one exact,
+    standalone "RSA" literal (assigned to a local variable, never passed to
+    any call) is legitimately a CRYPTO_REFERENCE — a structurally different,
+    lower-severity finding type — not silently dropped and not an OPERATION.
+    """
+    operation_assets = [a for a in negative_assets if a.finding_type == "OPERATION"]
+    assert operation_assets == [], (
+        f"Expected 0 OPERATION assets from negative fixture, got: "
+        f"{[a.name for a in operation_assets]}"
     )
+    for a in negative_assets:
+        assert a.finding_type == "CRYPTO_REFERENCE"
 
 
 # ---------------------------------------------------------------------------
@@ -180,11 +188,19 @@ def test_rsa_has_two_evidence_entries(positive_assets: list[CryptoAsset]) -> Non
 
 
 def test_aes_detected(positive_assets: list[CryptoAsset]) -> None:
-    asset = _find_asset(positive_assets, "AES")
-    assert asset is not None, "AES not found in detected assets"
-    assert asset.quantum_status == QuantumStatus(_expected_quantum_status("AES"))
-    # Two calls: KeyGenerator.getInstance("AES") + Cipher.getInstance("AES/GCM/NoPadding")
-    assert len(asset.evidence) == 2
+    # Two distinct AES calls in the fixture, with two distinct modes — a JCA
+    # transformation string's mode is part of the crypto asset's identity,
+    # never discarded (AES/GCM and plain AES/ECB-default are different
+    # assets, not the same one with two evidence occurrences):
+    #   KeyGenerator.getInstance("AES")             -> mode=None
+    #   Cipher.getInstance("AES/GCM/NoPadding")      -> mode="gcm"
+    aes_assets = [a for a in positive_assets if a.name.upper() == "AES"]
+    assert len(aes_assets) == 2, f"expected 2 distinct AES assets (by mode), got {len(aes_assets)}"
+    modes = {a.mode for a in aes_assets}
+    assert modes == {None, "gcm"}
+    for asset in aes_assets:
+        assert asset.quantum_status == QuantumStatus(_expected_quantum_status("AES"))
+        assert len(asset.evidence) == 1
 
 
 def test_md5_detected(positive_assets: list[CryptoAsset]) -> None:

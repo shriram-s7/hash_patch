@@ -35,6 +35,7 @@ except Exception:  # noqa: BLE001 -- graceful degradation if the native parser f
 from hash_patch.detect.base import Detector, registry
 from hash_patch.model.assets import (
     AssetType,
+    Confidence,
     CryptoAsset,
     Primitive,
     QuantumStatus,
@@ -173,6 +174,10 @@ def _try_collect_reference(
     if in_decl_or_ret and not in_call:
         text = node.text.decode("utf-8", errors="replace").strip('"')
         rule = crypto_references.get(text)
+        if rule is None:
+            from hash_patch.detect.canonical_registry import lookup_canonical_algorithm
+
+            rule = lookup_canonical_algorithm(text)
         if rule is not None:
             # Find enclosing statement or declaration for a clean snippet
             stmt = node
@@ -197,32 +202,64 @@ def _try_collect(
         fn_text = fn_node.text.decode("utf-8", errors="replace")
         rule = functions.get(fn_text)
         if rule is not None:
-            results.append((fn_node, call_node, rule))
+            effective_rule = dict(rule)
+            if fn_text == "EVP_RSA_gen" and effective_rule.get("parameter_set") is None and args_node:
+                for child in args_node.children:
+                    if child.type == "number_literal":
+                        raw_num = child.text.decode("utf-8", errors="replace").rstrip("uUlL")
+                        try:
+                            effective_rule["parameter_set"] = str(int(raw_num, 0))
+                            break
+                        except ValueError:
+                            pass
+            results.append((fn_node, call_node, effective_rule))
 
-        if args_node:
-            if fn_text in macro_arg_functions:
-                m_matched = False
+        is_macro_fn = fn_text in macro_arg_functions
+        is_string_fn = fn_text in string_arg_functions
+
+        if args_node and (is_macro_fn or is_string_fn):
+            matched = False
+
+            # Extract integer parameter if present for EVP_PKEY_Q_keygen (e.g. 2048 in EVP_PKEY_Q_keygen(NULL, "DH", 2048))
+            int_param: str | None = None
+            if fn_text == "EVP_PKEY_Q_keygen":
+                for child in args_node.children:
+                    if child.type == "number_literal":
+                        raw_num = child.text.decode("utf-8", errors="replace").rstrip("uUlL")
+                        try:
+                            int_param = str(int(raw_num, 0))
+                            break
+                        except ValueError:
+                            pass
+
+            if is_macro_fn:
                 for child in args_node.children:
                     if child.type == "identifier":
                         id_text = child.text.decode("utf-8", errors="replace")
                         m_rule = macro_args.get(id_text)
                         if m_rule is not None:
-                            results.append((child, call_node, m_rule))
-                            m_matched = True
-                if not m_matched:
-                    results.append((args_node, call_node, {"canonical": "UNRESOLVED", "unresolved": True, "api": fn_text}))
+                            effective_rule = dict(m_rule)
+                            if effective_rule.get("parameter_set") is None and int_param is not None:
+                                effective_rule["parameter_set"] = int_param
+                            results.append((child, call_node, effective_rule))
+                            matched = True
 
-            if fn_text in string_arg_functions:
-                s_matched = False
+            if is_string_fn and not matched:
                 for child in args_node.children:
                     if child.type == "string_literal":
                         str_text = child.text.decode("utf-8", errors="replace").strip('"')
                         s_rule = string_args.get(str_text)
                         if s_rule is not None:
-                            results.append((child, call_node, s_rule))
-                            s_matched = True
-                if not s_matched:
-                    results.append((args_node, call_node, {"canonical": "UNRESOLVED", "unresolved": True, "api": fn_text}))
+                            effective_rule = dict(s_rule)
+                            if effective_rule.get("parameter_set") is None and int_param is not None:
+                                effective_rule["parameter_set"] = int_param
+                            results.append((child, call_node, effective_rule))
+                            matched = True
+
+            if not matched:
+                results.append(
+                    (args_node, call_node, {"canonical": "UNRESOLVED", "unresolved": True, "api": fn_text})
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -237,10 +274,12 @@ class COpenSSLDetector(Detector):
     instantiation time. No algorithm names are hardcoded in this class.
     """
 
-    # Reachability classification (hash_patch/analyze/reachability.py) is only
-    # wired up for Python and Java; C is out of scope for now, so assets from
-    # this detector keep the model's default CryptoAsset.reachability = UNKNOWN
-    # rather than risk a wrong (unsafe) classification from an unbuilt call graph.
+    # Reachability classification (hash_patch/analyze/reachability.py) is wired
+    # up for Python, Java, and C/C++ (via hash_patch/analyze/callgraph.py's
+    # build_c_call_graph). An asset whose evidence is confined to a header
+    # (.h/.hpp/...) still keeps the model's default CryptoAsset.reachability =
+    # UNKNOWN, since headers only ever contain declarations, never a function
+    # body to walk a call graph from.
 
     detector_id: str = _DETECTOR_ID
     detector_version: str = _DETECTOR_VERSION
@@ -250,7 +289,10 @@ class COpenSSLDetector(Detector):
         self._functions: dict[str, dict[str, Any]] = rules.get("functions", {})
         self._macro_args: dict[str, dict[str, Any]] = rules.get("macro_args", {})
         self._string_args: dict[str, dict[str, Any]] = rules.get("string_args", {})
-        self._crypto_references: dict[str, dict[str, Any]] = rules.get("crypto_references", {})
+        from hash_patch.detect.canonical_registry import get_canonical_registry
+
+        self._crypto_references: dict[str, dict[str, Any]] = dict(get_canonical_registry())
+        self._crypto_references.update(rules.get("crypto_references", {}))
         self._macro_arg_functions: set[str] = set(rules.get("macro_arg_functions", []))
         self._string_arg_functions: set[str] = set(rules.get("string_arg_functions", []))
 

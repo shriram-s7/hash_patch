@@ -53,6 +53,16 @@ def tag_python_entrypoints(
     return tagged
 
 
+def tag_c_entrypoints(functions: list[FunctionInfo], config: dict[str, Any]) -> set[FunctionId]:
+    """C has no decorator/annotation convention to match against, so this
+    is deliberately just the structural `main()` rule -- mirroring
+    Python's `main_function_names` above. See rules/entrypoints.yaml.
+    """
+    cfg = config.get("c", {}) or {}
+    main_function_names = set(cfg.get("main_function_names", []))
+    return {fn.id for fn in functions if fn.id.simple_name in main_function_names}
+
+
 def tag_java_entrypoints(functions: list[FunctionInfo], config: dict[str, Any]) -> set[FunctionId]:
     cfg = config.get("java", {}) or {}
     class_annotation_names = set(cfg.get("class_annotation_names", []))

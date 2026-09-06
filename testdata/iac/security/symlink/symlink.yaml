@@ -1,0 +1,19 @@
+# Symlink test - this would require actual filesystem symlinks
+# The test should verify that symlinks outside the scan root are not followed
+# This is a placeholder for the test infrastructure
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test
+spec:
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      containers:
+      - name: test
+        image: test:latest

@@ -35,6 +35,25 @@ import java.security.MessageDigest;
  *      has the LONGER shelf_life_years in ontology/data_sensitivity.yaml —
  *      the test reads those actual numbers rather than assuming which one
  *      wins.
+ *
+ *   4. partnerFingerprint() — MessageDigest.getInstance("MD5"): a
+ *      REGRESSION fixture for a confirmed false positive (found on
+ *      test2/java/.../LegacyGateway.java's real partnerFingerprint()
+ *      method). "Fingerprint" here is the common security-engineering
+ *      sense — a short hash used to identify/verify something — with zero
+ *      biometric data involved. ontology/data_sensitivity.yaml's
+ *      `biometric` category previously listed a bare "fingerprint"
+ *      pattern that matched this method NAME alone; it now only matches a
+ *      biometric fingerprint ARTIFACT (scan/image/template/sensor), so
+ *      this must produce NO ShelfLifeFinding at all.
+ *
+ *   5. encryptClinicalSummary() — MessageDigest.getInstance("SHA-384"): a
+ *      REGRESSION fixture for a confirmed false NEGATIVE (found on
+ *      test2/java/.../SensitiveStore.java's real encryptClinicalSummary()
+ *      method). The only signal is the enclosing method NAME itself
+ *      ("encryptClinicalSummary", an `enclosing_function` candidate)
+ *      matching the health_record category's now-widened "clinical"
+ *      pattern -> category "health_record".
  */
 public class ShelfLifeExamples {
 
@@ -47,6 +66,18 @@ public class ShelfLifeExamples {
     public String cacheTempValue(String tempCacheValue) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
         digest.update(tempCacheValue.getBytes());
+        return bytesToHex(digest.digest());
+    }
+
+    public String partnerFingerprint(String accountId) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        digest.update(accountId.getBytes());
+        return bytesToHex(digest.digest());
+    }
+
+    public String encryptClinicalSummary(String summary) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-384");
+        digest.update(summary.getBytes());
         return bytesToHex(digest.digest());
     }
 

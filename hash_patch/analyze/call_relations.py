@@ -7,9 +7,9 @@ re-parsing the file set: two findings are related if the function enclosing
 one evidence occurrence of the first has a DIRECT (one-hop, not transitive)
 caller/callee edge to the function enclosing an evidence occurrence of the
 second, per the same name-resolved call graph
-(hash_patch/analyze/callgraph.py) used for reachability. Only Python and Java
-evidence participates — Go/C are out of scope for the call graph entirely
-(see docs/REACHABILITY.md).
+(hash_patch/analyze/callgraph.py) used for reachability. Python, Java, and
+C/C++ evidence all participate — Go is out of scope for the call graph
+entirely (see docs/REACHABILITY.md).
 """
 
 from __future__ import annotations

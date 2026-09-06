@@ -69,5 +69,37 @@
       "expected": "unknown",
       "scenario": "Cipher.getInstance(\"DES\") inside a method reachable only via an unresolved Map<String, Runnable> dispatch"
     }
+  ],
+  "c": [
+    {
+      "algorithm": "SHA-512",
+      "locator_suffix": "reachability_live_external.c",
+      "expected": "live-external",
+      "scenario": "SHA512_Init() inside a helper called directly from main(), C's tagged entry point"
+    },
+    {
+      "algorithm": "SHA3-256",
+      "locator_suffix": "reachability_live_internal.c",
+      "expected": "live-internal",
+      "scenario": "EVP_sha3_256() inside a helper called from an ordinary (non-main) function"
+    },
+    {
+      "algorithm": "SHA-384",
+      "locator_suffix": "reachability_inert.c",
+      "expected": "inert",
+      "scenario": "SHA384_Init() inside a helper whose only caller is testdata/c/tests/test_reachability_inert.c"
+    },
+    {
+      "algorithm": "SHA3-512",
+      "locator_suffix": "reachability_unknown_dynamic.c",
+      "expected": "unknown",
+      "scenario": "EVP_sha3_512() inside a helper reachable only via an unresolved function-pointer table lookup (dispatch_table[idx]())"
+    },
+    {
+      "algorithm": "RSA",
+      "locator_suffix": "blast_radius_reachable_chain.c",
+      "expected": "live-external",
+      "scenario": "RSA_sign() in sign_leaf(), reached via main -> sign_entry -> sign_middle -> sign_leaf in a 3-hop call chain; sign_leaf's 256-byte signature buffer also fires a Pillar-3 blast-radius finding, so this fixture also intersects the blast-radius shockwave view with real call-graph data"
+    }
   ]
 }

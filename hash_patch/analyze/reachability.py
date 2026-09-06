@@ -1,9 +1,9 @@
 """hash_patch/analyze/reachability.py — reachability classification.
 
-Classifies every CryptoAsset found by the Python and Java detectors as
-LIVE_EXTERNAL, LIVE_INTERNAL, INERT, or UNKNOWN, by walking the call graph
-(hash_patch/analyze/callgraph.py) from each evidence occurrence's enclosing
-function, checking it against the tagged entry points
+Classifies every CryptoAsset found by the Python, Java, and C/C++ detectors
+as LIVE_EXTERNAL, LIVE_INTERNAL, INERT, or UNKNOWN, by walking the call
+graph (hash_patch/analyze/callgraph.py) from each evidence occurrence's
+enclosing function, checking it against the tagged entry points
 (hash_patch/analyze/entrypoints.py).
 
 **HARD SAFETY RULE (non-negotiable): this analysis is fail-safe. A live,
@@ -12,9 +12,9 @@ reachability genuinely cannot be determined, the answer is UNKNOWN, never
 INERT.** See docs/REACHABILITY.md for the full rationale and the exact
 entry-point / test-file definitions this module relies on.
 
-Go and C are out of scope for this module entirely (see the one-line
-comments in hash_patch/detect/go.py and hash_patch/detect/c.py) — their
-assets simply never reach `apply_reachability` and keep the model's default
+Go is out of scope for this module entirely (see the one-line comment in
+hash_patch/detect/go.py) — its assets simply never reach
+`apply_reachability` and keep the model's default
 `CryptoAsset.reachability = UNKNOWN`.
 """
 
@@ -24,13 +24,16 @@ from collections.abc import Callable, Sequence
 from pathlib import Path, PurePosixPath
 
 from hash_patch.analyze.callgraph import (
+    _C_SOURCE_EXTENSIONS,
     CallGraph,
     FunctionId,
+    build_c_call_graph,
     build_java_call_graph,
     build_python_call_graph,
 )
 from hash_patch.analyze.entrypoints import (
     load_entrypoint_config,
+    tag_c_entrypoints,
     tag_java_entrypoints,
     tag_python_entrypoints,
 )
@@ -76,6 +79,25 @@ def is_java_test_file(locator: str) -> bool:
         return True
     name = p.name
     return name.endswith(("Test.java", "Tests.java"))
+
+
+def is_c_test_file(locator: str) -> bool:
+    """C/C++ test-file convention (mirrors the Python/Java rules above,
+    the closest real-world equivalents this codebase already has -- there
+    is no single dominant C test-framework layout convention the way
+    pytest/JUnit have one):
+
+    path contains a `test` or `tests` directory segment, OR the filename
+    starts with `test_` or ends with `_test.c`/`_test.cpp`/`_test.cc`/
+    `_test.cxx`.
+    """
+    p = PurePosixPath(locator.replace("\\", "/"))
+    if "test" in p.parts or "tests" in p.parts:
+        return True
+    name = p.name
+    return name.startswith("test_") or name.endswith(
+        ("_test.c", "_test.cpp", "_test.cc", "_test.cxx")
+    )
 
 
 class ReachabilityContext:
@@ -175,7 +197,8 @@ def build_reachability_contexts(scanned_files: Sequence[Path]) -> dict[str, Reac
     """
     python_files = [f for f in scanned_files if f.suffix.lower() == ".py"]
     java_files = [f for f in scanned_files if f.suffix.lower() == ".java"]
-    if not python_files and not java_files:
+    c_files = [f for f in scanned_files if f.suffix.lower() in _C_SOURCE_EXTENSIONS]
+    if not python_files and not java_files and not c_files:
         return {}
 
     config = load_entrypoint_config()
@@ -190,6 +213,16 @@ def build_reachability_contexts(scanned_files: Sequence[Path]) -> dict[str, Reac
         graph = build_java_call_graph(java_files)
         entrypoints = tag_java_entrypoints(graph.function_infos, config)
         contexts[".java"] = ReachabilityContext(graph, entrypoints, is_java_test_file)
+
+    if c_files:
+        # One call graph spans EVERY C/C++ source extension together (a
+        # single scan target can mix .c and .cpp), same "whole file set"
+        # rule as Python/Java -- see module docstring.
+        graph = build_c_call_graph(c_files)
+        entrypoints = tag_c_entrypoints(graph.function_infos, config)
+        ctx = ReachabilityContext(graph, entrypoints, is_c_test_file)
+        for ext in _C_SOURCE_EXTENSIONS:
+            contexts[ext] = ctx
 
     return contexts
 
@@ -216,12 +249,13 @@ def apply_reachability_with_contexts(
 
 
 def apply_reachability(assets: list[CryptoAsset], scanned_files: Sequence[Path]) -> None:
-    """Classify reachability in place for every asset with Python and/or Java
-    evidence, using ONE directory-level call graph per language built from
-    every file of that language in `scanned_files` (Step 1: per file *set*,
-    not per file).
+    """Classify reachability in place for every asset with Python, Java,
+    and/or C/C++ evidence, using ONE directory-level call graph per
+    language built from every file of that language in `scanned_files`
+    (Step 1: per file *set*, not per file).
 
-    Assets with no Python/Java evidence at all (pure Go/C findings) are left
+    Assets with no Python/Java/C evidence at all (pure Go findings, or C
+    evidence confined to a header with no function body) are left
     untouched at the model default (`Reachability.UNKNOWN`). Convenience
     wrapper around `build_reachability_contexts` +
     `apply_reachability_with_contexts` for callers that don't need the

@@ -117,7 +117,7 @@ def _collect_stack_buffers(root_node: Any) -> list[tuple[Any, Any, Any]]:
 
 
 def _walk_stack(node: Any, out: list[tuple[Any, Any, Any]]) -> None:
-    if node.type == "declaration":
+    if node.type in ("declaration", "parameter_declaration"):
         type_text = _declaration_type_text(node)
         if type_text in _BUFFER_TYPE_NAMES:
             for c in node.children:
@@ -237,25 +237,83 @@ class CBufferBlastRadiusDetector:
         results: list[SizeConstraint] = []
 
         for ident_node, size_node, decl_node in _collect_stack_buffers(tree.root_node):
-            name = _text(ident_node)
-            if match_name_pattern(name, self._patterns) is None:
-                continue
             size = _resolve_int(size_node, defines)
             if size is None:
                 continue  # unresolved (variable, un-#define'd macro, etc.) -> skip
+            name = _text(ident_node)
+            pattern_match = match_name_pattern(name, self._patterns)
+            inferred_field = pattern_match[1] if pattern_match else None
+
+            if pattern_match is None:
+                inferred_field = self._correlate_buffer(decl_node, ident_node, size, tree.root_node)
+                if inferred_field is None:
+                    continue
+
             results.append(
-                self._make_constraint("stack_buffer", name, size, ident_node, decl_node, locator)
+                self._make_constraint("stack_buffer", name, size, ident_node, decl_node, locator, inferred_field)
             )
 
         for ident_node, size, span_node in _collect_heap_allocs(tree.root_node, defines):
             name = _text(ident_node)
-            if match_name_pattern(name, self._patterns) is None:
-                continue
+            pattern_match = match_name_pattern(name, self._patterns)
+            inferred_field = pattern_match[1] if pattern_match else None
+
+            if pattern_match is None:
+                inferred_field = self._correlate_buffer(span_node, ident_node, size, tree.root_node)
+                if inferred_field is None:
+                    continue
+
             results.append(
-                self._make_constraint("heap_alloc", name, size, ident_node, span_node, locator)
+                self._make_constraint("heap_alloc", name, size, ident_node, span_node, locator, inferred_field)
             )
 
         return results
+
+    def _correlate_buffer(self, decl_node: Any, ident_node: Any, size: int, root_node: Any) -> str | None:
+        from hash_patch.detect.blast_radius.output_sizes import (
+            infer_field_from_size,
+            match_algorithm_output_size,
+        )
+
+        func_node = decl_node
+        while func_node and func_node.type != "function_definition":
+            func_node = func_node.parent
+
+        scope_node = func_node if func_node else root_node
+        scope_text = _text(scope_node).upper()
+
+        for algo in ("ED25519", "RSA", "ECDSA", "ECDH", "DH"):
+            if algo in scope_text:
+                field = match_algorithm_output_size(algo, size)
+                if field is not None:
+                    return field
+
+        if func_node is not None and self._is_crypto_data_flow(decl_node, ident_node):
+            field = infer_field_from_size(size)
+            if field is not None:
+                return field
+
+        return None
+
+    def _is_crypto_data_flow(self, decl_node: Any, ident_node: Any) -> bool:
+        func_node = decl_node
+        while func_node and func_node.type != "function_definition":
+            func_node = func_node.parent
+        if func_node is None:
+            return False
+        func_text = _text(func_node)
+        ident_name = _text(ident_node)
+        return ident_name in func_text and any(
+            crypto_term in func_text
+            for crypto_term in (
+                "EVP_",
+                "RSA_",
+                "ECDSA_",
+                "EC_KEY",
+                "sign_",
+                "verify_",
+            )
+        )
 
     def _make_constraint(
         self,
@@ -265,6 +323,7 @@ class CBufferBlastRadiusDetector:
         ident_node: Any,
         span_node: Any,
         locator: str,
+        inferred_field: str | None = None,
     ) -> SizeConstraint:
         evidence = Evidence(
             source_type="source",
@@ -282,4 +341,5 @@ class CBufferBlastRadiusDetector:
             declared_bytes=declared_bytes,
             evidence=[evidence],
             language="c",
+            inferred_field=inferred_field,  # type: ignore[arg-type]
         )

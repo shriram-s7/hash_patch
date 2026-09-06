@@ -20,6 +20,7 @@ dependencies = [
     "tree-sitter-python",
     "tree-sitter-go",
     "tree-sitter-c",
+    "python-hcl2>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +36,7 @@ dev = [
 service = [
     "fastapi",
     "uvicorn",
+    "httpx",
 ]
 
 [project.scripts]
@@ -46,7 +48,11 @@ packages = ["hash_patch"]
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["testdata", "tests/regression/fixtures"]
+extend-exclude = ["testdata", "tests/regression/fixtures", "scratch", "test1", "test2"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

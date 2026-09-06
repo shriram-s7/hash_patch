@@ -167,14 +167,18 @@ def test_run_scan_on_directory_negative_fixture_adds_no_extra_assets(tmp_path: P
     file_result = run_scan(POSITIVE_FILE)
 
     # Asset IDs are deterministic — if two files produce the same logical
-    # algorithm, they merge into one asset (more evidence, same ID).
-    dir_ids = sorted(a.id for a in dir_result.assets)
-    file_ids = sorted(a.id for a in file_result.assets)
+    # algorithm, they merge into one asset (more evidence, same ID). The
+    # negative fixture's one exact, standalone "RSA" literal (never passed
+    # to any call) legitimately adds a CRYPTO_REFERENCE asset — a
+    # structurally different, lower-severity finding type — but must never
+    # add an OPERATION (a real, observed crypto call).
+    dir_operation_ids = sorted(a.id for a in dir_result.assets if a.finding_type == "OPERATION")
+    file_operation_ids = sorted(a.id for a in file_result.assets if a.finding_type == "OPERATION")
 
-    assert dir_ids == file_ids, (
-        "Dir scan found different asset IDs than file scan — "
-        "the negative fixture may be producing false-positive assets.\n"
-        f"Dir: {dir_ids}\nFile: {file_ids}"
+    assert dir_operation_ids == file_operation_ids, (
+        "Dir scan found different OPERATION asset IDs than file scan — "
+        "the negative fixture may be producing false-positive OPERATION assets.\n"
+        f"Dir: {dir_operation_ids}\nFile: {file_operation_ids}"
     )
 
 
@@ -340,12 +344,12 @@ def test_run_scan_python_negative_fixture_adds_no_extra_assets(tmp_path: Path) -
 
     dir_result = run_scan(isolated)
     file_result = run_scan(POSITIVE_PY_FILE)
-    dir_ids = sorted(a.id for a in dir_result.assets)
-    file_ids = sorted(a.id for a in file_result.assets)
-    assert dir_ids == file_ids, (
-        "Dir scan has different asset IDs than single-file scan — "
-        "negative fixture may be producing false positives.\n"
-        f"Dir:  {dir_ids}\nFile: {file_ids}"
+    dir_ops = sorted(a.id for a in dir_result.assets if a.finding_type == "OPERATION")
+    file_ops = sorted(a.id for a in file_result.assets if a.finding_type == "OPERATION")
+    assert dir_ops == file_ops, (
+        "Dir scan has different OPERATION asset IDs than single-file scan — "
+        "negative fixture may be producing false positive operations.\n"
+        f"Dir:  {dir_ops}\nFile: {file_ops}"
     )
 
 
@@ -457,12 +461,16 @@ def test_run_scan_go_negative_fixture_adds_no_extra_assets(tmp_path: Path) -> No
 
     dir_result = run_scan(isolated)
     file_result = run_scan(POSITIVE_GO_FILE)
-    dir_ids = sorted(a.id for a in dir_result.assets)
-    file_ids = sorted(a.id for a in file_result.assets)
-    assert dir_ids == file_ids, (
-        "Dir scan has different asset IDs than single-file scan — "
-        "negative fixture may be producing false positives.\n"
-        f"Dir:  {dir_ids}\nFile: {file_ids}"
+    # The negative fixture's one exact, standalone "RSA" literal (a
+    # struct-literal field value, never passed to any call) legitimately
+    # adds a CRYPTO_REFERENCE asset — a structurally different,
+    # lower-severity finding type — but must never add an OPERATION.
+    dir_operation_ids = sorted(a.id for a in dir_result.assets if a.finding_type == "OPERATION")
+    file_operation_ids = sorted(a.id for a in file_result.assets if a.finding_type == "OPERATION")
+    assert dir_operation_ids == file_operation_ids, (
+        "Dir scan has different OPERATION asset IDs than single-file scan — "
+        "negative fixture may be producing false-positive OPERATION assets.\n"
+        f"Dir:  {dir_operation_ids}\nFile: {file_operation_ids}"
     )
 
 

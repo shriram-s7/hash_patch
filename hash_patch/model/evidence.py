@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-SourceType = Literal["source", "binary", "container", "config", "network"]
+SourceType = Literal["source", "binary", "container", "config", "network", "certificate"]
 
 
 class Evidence(BaseModel):

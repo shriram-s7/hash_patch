@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-import pytest
 
 from hash_patch.detect.c import COpenSSLDetector
 from hash_patch.detect.go import GoCryptoDetector

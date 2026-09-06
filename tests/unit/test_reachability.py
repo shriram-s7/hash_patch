@@ -18,13 +18,14 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from hash_patch.analyze.reachability import is_java_test_file, is_python_test_file
+from hash_patch.analyze.reachability import is_c_test_file, is_java_test_file, is_python_test_file
 from hash_patch.cli import run_scan
 from hash_patch.model.assets import Reachability
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTDATA_PY_DIR = REPO_ROOT / "testdata" / "python"
 TESTDATA_JAVA_DIR = REPO_ROOT / "testdata" / "java"
+TESTDATA_C_DIR = REPO_ROOT / "testdata" / "c"
 
 
 def _asset_for(assets, algorithm: str, locator_suffix: str):
@@ -96,6 +97,53 @@ def test_java_corpus_unknown_dynamic_dispatch() -> None:
     asset = _asset_for(result.assets, "DES", "ReachabilityUnknownDynamic.java")
     assert asset is not None
     assert asset.reachability == Reachability.UNKNOWN
+
+
+def test_c_corpus_live_external() -> None:
+    result = run_scan(TESTDATA_C_DIR)
+    asset = _asset_for(result.assets, "SHA-512", "reachability_live_external.c")
+    assert asset is not None
+    assert asset.reachability == Reachability.LIVE_EXTERNAL
+
+
+def test_c_corpus_live_internal() -> None:
+    result = run_scan(TESTDATA_C_DIR)
+    asset = _asset_for(result.assets, "SHA3-256", "reachability_live_internal.c")
+    assert asset is not None
+    assert asset.reachability == Reachability.LIVE_INTERNAL
+
+
+def test_c_corpus_inert() -> None:
+    result = run_scan(TESTDATA_C_DIR)
+    asset = _asset_for(result.assets, "SHA-384", "reachability_inert.c")
+    assert asset is not None
+    assert asset.reachability == Reachability.INERT
+
+
+def test_c_corpus_unknown_dynamic_dispatch() -> None:
+    result = run_scan(TESTDATA_C_DIR)
+    asset = _asset_for(result.assets, "SHA3-512", "reachability_unknown_dynamic.c")
+    assert asset is not None
+    assert asset.reachability == Reachability.UNKNOWN
+
+
+def test_c_multi_hop_chain_reachable_and_blast_radius_correlated() -> None:
+    """The 3-hop chain (main -> sign_entry -> sign_middle -> sign_leaf) in
+    testdata/c/blast_radius_reachable_chain.c is both LIVE_EXTERNAL (real C
+    call-graph resolution) AND produces a Pillar-3 blast-radius finding
+    (its RSA signature buffer is too small for ML-DSA-65) — the combined
+    case the blast-radius shockwave UI needs multi-node call-graph data for.
+    """
+    result = run_scan(TESTDATA_C_DIR)
+    asset = _asset_for(result.assets, "RSA", "blast_radius_reachable_chain.c")
+    assert asset is not None
+    assert asset.reachability == Reachability.LIVE_EXTERNAL
+    assert any(
+        f.size_constraint.evidence[0].locator.replace("\\", "/").endswith(
+            "blast_radius_reachable_chain.c"
+        )
+        for f in result.blast_radius_findings
+    )
 
 
 # ===========================================================================
@@ -277,3 +325,12 @@ def test_is_java_test_file_conventions() -> None:
     assert is_java_test_file("com/example/FooTests.java")
     assert not is_java_test_file("com/example/Foo.java")
     assert not is_java_test_file("com/example/Contestant.java")
+
+
+def test_is_c_test_file_conventions() -> None:
+    assert is_c_test_file("testdata/c/tests/test_reachability_inert.c")
+    assert is_c_test_file("src/test_foo.c")
+    assert is_c_test_file("src/foo_test.cpp")
+    assert is_c_test_file("pkg/tests/helpers.c")
+    assert not is_c_test_file("pkg/reachability_inert.c")
+    assert not is_c_test_file("pkg/contest.c")

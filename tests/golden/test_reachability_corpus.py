@@ -1,11 +1,12 @@
 """tests/golden/test_reachability_corpus.py
 
-Regression test for the reachability corpus additions under testdata/python/
-and testdata/java/ (see docs/REACHABILITY.md and the "Reachability" section
-of CLAUDE.md). Runs the real CLI scan path (hash_patch.cli.run_scan) — the
-same one `hash-patch scan` uses — over each language's testdata directory
-and checks every entry in tests/golden/reachability_manifest.json against
-the resulting CryptoAsset.reachability, so each of the four classifications
+Regression test for the reachability corpus additions under testdata/python/,
+testdata/java/, and testdata/c/ (see docs/REACHABILITY.md and the
+"Reachability" section of CLAUDE.md). Runs the real CLI scan path
+(hash_patch.cli.run_scan) — the same one `hash-patch scan` uses — over each
+language's testdata directory and checks every entry in
+tests/golden/reachability_manifest.json against the resulting
+CryptoAsset.reachability, so each of the four classifications
 (LIVE_EXTERNAL, LIVE_INTERNAL, INERT, UNKNOWN) is regression-tested rather
 than just eyeballed once.
 """
@@ -62,6 +63,22 @@ def test_python_reachability_corpus_matches_manifest() -> None:
 def test_java_reachability_corpus_matches_manifest() -> None:
     manifest = _load_manifest()["java"]
     result = run_scan(REPO_ROOT / "testdata" / "java")
+    for entry in manifest:
+        asset = _asset_for(result.assets, entry["algorithm"], entry["locator_suffix"])
+        assert asset is not None, (
+            f"No {entry['algorithm']!r} asset with evidence in "
+            f"{entry['locator_suffix']!r} found in the scan.\nScenario: {entry['scenario']}"
+        )
+        assert asset.reachability.value == entry["expected"], (
+            f"{entry['locator_suffix']} ({entry['algorithm']}): "
+            f"expected reachability={entry['expected']!r}, got {asset.reachability.value!r}.\n"
+            f"Scenario: {entry['scenario']}"
+        )
+
+
+def test_c_reachability_corpus_matches_manifest() -> None:
+    manifest = _load_manifest()["c"]
+    result = run_scan(REPO_ROOT / "testdata" / "c")
     for entry in manifest:
         asset = _asset_for(result.assets, entry["algorithm"], entry["locator_suffix"])
         assert asset is not None, (

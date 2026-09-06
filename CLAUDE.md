@@ -205,9 +205,9 @@ distributed package.
 
 ## Reachability
 
-`CryptoAsset.reachability` (Python and Java only — Go and C keep the model
-default `UNKNOWN` unconditionally, see the one-line comments in
-`hash_patch/detect/go.py` / `c.py`) is computed by
+`CryptoAsset.reachability` (Python, Java, and C/C++ — Go keeps the model
+default `UNKNOWN` unconditionally, see the one-line comment in
+`hash_patch/detect/go.py`) is computed by
 `hash_patch/analyze/{callgraph,entrypoints,reachability}.py` and wired into
 `hash-patch scan` via `hash_patch/cli.py::run_scan`.
 
@@ -244,12 +244,12 @@ work, not implemented here. See docs/SHELF_LIFE.md for the full method.
 
 Pillar 3: `hash_patch/analyze/blast_radius.py` predicts whether migrating a
 `BROKEN_BY_SHOR` `CryptoAsset` to its PQC replacement will overflow a
-statically declared size constraint (a C fixed-size buffer/heap allocation,
-or a SQL DDL fixed-width column — currently the only scope; Java/Go/Python
-buffers and wire-format/protocol detection are out of scope). Sizes come
-exclusively from `rules/pqc_sizes.yaml` (FIPS 203/204/205 — see the file's
-own header comments for sources); nothing duplicates those numbers as
-Python literals.
+statically declared size constraint — a C fixed-size buffer/heap
+allocation, a Go `[N]byte` array, a Java `new byte[N]`/`ByteBuffer.allocate`,
+a Python `bytearray(N)`/`bytes(N)`, or a SQL DDL fixed-width column.
+Wire-format/protocol detection remains out of scope. Sizes come exclusively
+from `rules/pqc_sizes.yaml` (FIPS 203/204/205 — see the file's own header
+comments for sources); nothing duplicates those numbers as Python literals.
 
 **A `SizeConstraint` is only ever correlated with a `CryptoAsset` in the
 SAME FILE, and only the NEAREST plausible one by line distance.**

@@ -30,11 +30,17 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from hash_patch.analyze.shelf_life import compute_shelf_life, run_shelf_life
 from hash_patch.detect.java import JavaJcaDetector
 from hash_patch.detect.python import PythonCryptoDetector
 from hash_patch.detect.shelf_life.data_context import find_data_context_matches
-from hash_patch.detect.shelf_life.ontology import SensitivityCategory, load_sensitivity_categories
+from hash_patch.detect.shelf_life.ontology import (
+    SensitivityCategory,
+    load_sensitivity_categories,
+    match_categories,
+)
 from hash_patch.model.assets import AssetType, CryptoAsset, Primitive, QuantumStatus
 from hash_patch.model.evidence import Evidence
 from hash_patch.model.shelf_life import DataContextMatch
@@ -199,6 +205,38 @@ def test_no_data_context_matches_produces_no_findings() -> None:
     assert findings == []
 
 
+def test_shelf_life_finding_never_has_zero_years() -> None:
+    """A ShelfLifeFinding's shelf_life_years must never be 0 -- every entry
+    in ontology/data_sensitivity.yaml carries a positive figure, and
+    "no signal" must produce no ShelfLifeFinding at all (see
+    test_no_data_context_matches_produces_no_findings above), never a
+    finding with shelf_life_years=0. A UI (or any consumer) that sees 0
+    would misread it as "expires immediately" -- a different, misleading
+    claim from "unknown" (absence of a finding).
+    """
+    assets = PythonCryptoDetector().detect(PY_FIXTURE) + JavaJcaDetector().detect(JAVA_FIXTURE)
+    findings = run_shelf_life(assets, _SCAN_DATE)
+    assert findings, "expected at least one real shelf-life finding from the fixtures"
+    assert all(f.shelf_life_years > 0 for f in findings)
+
+
+def test_adversarial_corpus_produces_no_findings_not_a_crash() -> None:
+    """The cbom_adversarial_corpus fixture (if present locally) has no
+    identifier anywhere that matches ontology/data_sensitivity.yaml's
+    name_patterns near a crypto call site -- genuinely zero signal, not a
+    bug. This must run to completion and return an empty list, never raise.
+    """
+    corpus_root = Path(r"D:\cbom_adversarial_corpus")
+    if not corpus_root.is_dir():
+        pytest.skip(f"Adversarial corpus directory not found at {corpus_root}")
+
+    from hash_patch.cli import run_scan
+
+    result = run_scan(corpus_root)
+    findings = run_shelf_life(result.assets, _SCAN_DATE)
+    assert findings == []
+
+
 def test_generic_pii_is_never_a_silent_fallback() -> None:
     """An asset with real DataContextMatch signal that matches NOTHING in the
     ontology must not somehow still get a generic_pii finding -- the
@@ -212,6 +250,42 @@ def test_generic_pii_is_never_a_silent_fallback() -> None:
         "no scenario in the corpus should trigger generic_pii; if this fails, "
         "check whether a name-pattern is too broad"
     )
+
+
+def test_hash_naming_convention_fingerprint_does_not_match_biometric() -> None:
+    """REGRESSION: 'fingerprint' as a hash-naming-convention method name
+    (a short hash used to identify/verify something -- a partner
+    fingerprint, a certificate fingerprint) must never match the
+    `biometric` category. Confirmed false positives on real code before
+    this fix: test2/java/.../LegacyGateway.java's `partnerFingerprint()`
+    (an MD5 digest of a partner id) and PolicyDigest.java's `fingerprint()`
+    (a SHA-1 digest) -- both matched purely because the bare substring
+    "fingerprint" was listed in ontology/data_sensitivity.yaml's biometric
+    category, with zero actual biometric content involved. See
+    tests/golden/shelf_life_manifest.json's "MD5"/ShelfLifeExamples.java
+    entry for the end-to-end regression test.
+    """
+    categories = load_sensitivity_categories()
+    for identifier in ("partnerFingerprint", "fingerprint"):
+        matches = match_categories(identifier, categories)
+        biometric_matches = [c for c, _ in matches if c.category_name == "biometric"]
+        assert biometric_matches == [], (
+            f"{identifier!r} should never match the biometric category "
+            f"(hash-naming-convention 'fingerprint', not biometric data)"
+        )
+
+
+def test_genuine_biometric_fingerprint_artifact_still_matches() -> None:
+    """The fix must not introduce a false negative: an identifier that
+    actually names biometric fingerprint DATA (a scan/image/template/
+    sensor reading), not just reuses the word as a hash-naming metaphor,
+    must still match the biometric category.
+    """
+    categories = load_sensitivity_categories()
+    for identifier in ("fingerprint_scan", "fingerprintTemplate", "fingerprint_sensor_reading"):
+        matches = match_categories(identifier, categories)
+        biometric_matches = [c for c, _ in matches if c.category_name == "biometric"]
+        assert biometric_matches != [], f"{identifier!r} should still match the biometric category"
 
 
 # ===========================================================================

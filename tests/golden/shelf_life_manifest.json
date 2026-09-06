@@ -18,6 +18,18 @@
       "locator_suffix": "shelf_life_examples.py",
       "expected_category": "aadhaar",
       "scenario": "SHA3_256.new(record_bytes) inside CustomerRecord.hash_record() -- resolved via same-class dataclass fields aadhaar_number + account_number (model_field candidate kind); aadhaar wins the longest-shelf-life-wins tie-break over financial_account"
+    },
+    {
+      "algorithm": "MD5",
+      "locator_suffix": "shelf_life_examples.py",
+      "expected_category": "pan",
+      "scenario": "REGRESSION (false negative -> fixed): MD5.new(pan) inside protect_pan(pan) -- the bare call_argument 'pan' now matches the widened bare 'pan' pattern (short-pattern, token-boundary matched)"
+    },
+    {
+      "algorithm": "SHA-1",
+      "locator_suffix": "shelf_life_examples.py",
+      "expected_category": "health_record",
+      "scenario": "REGRESSION (false negative -> fixed): SHA1.new(payload) inside protect_health_note() -- the enclosing_function name 'protect_health_note' now matches the widened 'health_note' pattern"
     }
   ],
   "java": [
@@ -38,6 +50,18 @@
       "locator_suffix": "ShelfLifeExamples.java",
       "expected_category": "aadhaar",
       "scenario": "MessageDigest.getInstance(\"SHA3-256\") inside CustomerRecord.hashRecord() -- resolved via same-class fields aadhaarNumber + accountNumber (model_field candidate kind); aadhaar wins the longest-shelf-life-wins tie-break over financial_account"
+    },
+    {
+      "algorithm": "MD5",
+      "locator_suffix": "ShelfLifeExamples.java",
+      "expected_category": null,
+      "scenario": "REGRESSION: MessageDigest.getInstance(\"MD5\") inside partnerFingerprint() -- 'fingerprint' here is the hash-naming-convention sense (a partner identity hash), zero biometric data. Confirmed false positive on test2's real LegacyGateway.partnerFingerprint() before ontology/data_sensitivity.yaml's biometric category dropped the bare 'fingerprint' pattern -- must produce NO finding at all."
+    },
+    {
+      "algorithm": "SHA-384",
+      "locator_suffix": "ShelfLifeExamples.java",
+      "expected_category": "health_record",
+      "scenario": "REGRESSION (false negative -> fixed): MessageDigest.getInstance(\"SHA-384\") inside encryptClinicalSummary() -- the enclosing_function name 'encryptClinicalSummary' now matches the widened 'clinical' pattern. Confirmed false negative on test2's real SensitiveStore.encryptClinicalSummary() before this fix."
     }
   ]
 }

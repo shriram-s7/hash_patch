@@ -9,10 +9,11 @@ correlates against the already-detected CryptoAsset findings. They are
 invoked directly from hash_patch/cli.py::run_scan alongside the ordinary
 detector loop, not through the shared registry.
 
-Scope for this pillar (see docs/BLAST_RADIUS.md): C fixed-size
-buffers/heap allocations (c_buffers.py) and SQL DDL fixed-width columns
-(sql_ddl.py) only. Java/Go/Python buffer detection and wire-format/protocol
-detection are explicitly out of scope.
+Scope for this pillar (see docs/BLAST_RADIUS.md): C, Go, Java, and Python
+fixed-size buffers/heap allocations (c_buffers.py, go_buffers.py,
+java_buffers.py, python_buffers.py) and SQL DDL fixed-width columns
+(sql_ddl.py). Wire-format/protocol detection remains explicitly out of
+scope.
 """
 
 from __future__ import annotations

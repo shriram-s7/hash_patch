@@ -70,3 +70,12 @@ java:
 
   # `public static void main(String[] args)` is always an entry point.
   tag_main_method: true
+
+c:
+  # A function named exactly one of these is an entry point -- the
+  # conventional C program entry point `int main(...)`. C has no
+  # decorator/annotation convention comparable to Python/Java's routing
+  # patterns, so this is deliberately just the structural main() rule,
+  # mirroring Python's `main_function_names` above.
+  main_function_names:
+    - main

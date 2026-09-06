@@ -1,0 +1,345 @@
+# rules/binary_crypto.yaml
+# Detection rules for compiled artifacts and binaries (ELF, PE, Mach-O).
+# Defines observable cryptographic libraries, symbols, operations, and false-positive filters.
+
+libraries:
+  - name: "OpenSSL/libcrypto"
+    patterns:
+      - "^libcrypto\\.so(?:\\.[0-9]+)*$"
+      - "^libcrypto-[0-9]+.*\\.dll$"
+      - "^libcrypto\\.dll$"
+      - "^crypto\\.dll$"
+      - "^libcrypto(?:\\.[0-9]+)*\\.dylib$"
+  - name: "OpenSSL/libssl"
+    patterns:
+      - "^libssl\\.so(?:\\.[0-9]+)*$"
+      - "^libssl-[0-9]+.*\\.dll$"
+      - "^libssl\\.dll$"
+      - "^ssl\\.dll$"
+      - "^libssl(?:\\.[0-9]+)*\\.dylib$"
+  - name: "libsodium"
+    patterns:
+      - "^libsodium\\.so(?:\\.[0-9]+)*$"
+      - "^libsodium\\.dll$"
+      - "^libsodium(?:\\.[0-9]+)*\\.dylib$"
+  - name: "libgcrypt"
+    patterns:
+      - "^libgcrypt\\.so(?:\\.[0-9]+)*$"
+      - "^libgcrypt\\.dll$"
+      - "^libgcrypt(?:\\.[0-9]+)*\\.dylib$"
+  - name: "BoringSSL"
+    patterns:
+      - "^libboringssl\\.so(?:\\.[0-9]+)*$"
+      - "^libbssl\\.so(?:\\.[0-9]+)*$"
+      - "^libbssl\\.dylib$"
+      - "^libbssl\\.dll$"
+  - name: "LibreSSL/libtls"
+    patterns:
+      - "^libtls\\.so(?:\\.[0-9]+)*$"
+      - "^libtls\\.dylib$"
+      - "^libtls\\.dll$"
+
+symbols:
+  # --- OpenSSL RSA ---
+  RSA_public_encrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "encrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_private_decrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "decrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_sign:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "signature"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_verify:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "verification"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_generate_key_ex:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "keygen"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.113549.1.1.1"
+
+  RSA_new:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "alloc"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.113549.1.1.1"
+
+  # --- OpenSSL ECDSA / ECDH ---
+  ECDSA_sign:
+    library: "OpenSSL/libcrypto"
+    algorithm: "ECDSA"
+    operation: "signature"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.10045.2.1"
+
+  ECDSA_verify:
+    library: "OpenSSL/libcrypto"
+    algorithm: "ECDSA"
+    operation: "verification"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.10045.2.1"
+
+  ECDSA_do_sign:
+    library: "OpenSSL/libcrypto"
+    algorithm: "ECDSA"
+    operation: "signature"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.10045.2.1"
+
+  ECDH_compute_key:
+    library: "OpenSSL/libcrypto"
+    algorithm: "ECDH"
+    operation: "key-agreement"
+    primitive: "key-agree"
+    quantum_status: "broken-by-shor"
+    oid: null
+
+  EC_KEY_new_by_curve_name:
+    library: "OpenSSL/libcrypto"
+    algorithm: "ECDSA"
+    operation: "keygen"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+    oid: "1.2.840.10045.2.1"
+
+  # --- OpenSSL AES ---
+  AES_encrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "AES"
+    operation: "encrypt"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+    oid: "2.16.840.1.101.3.4.1"
+
+  AES_decrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "AES"
+    operation: "decrypt"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+    oid: "2.16.840.1.101.3.4.1"
+
+  AES_set_encrypt_key:
+    library: "OpenSSL/libcrypto"
+    algorithm: "AES"
+    operation: "keygen"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+    oid: "2.16.840.1.101.3.4.1"
+
+  AES_cbc_encrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "AES"
+    operation: "encrypt"
+    primitive: "block-cipher"
+    mode: "cbc"
+    quantum_status: "weakened-by-grover"
+    oid: "2.16.840.1.101.3.4.1"
+
+  # --- OpenSSL EVP generic wrappers ---
+  EVP_EncryptInit:
+    library: "OpenSSL/libcrypto"
+    algorithm: "AES"
+    operation: "encrypt"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+
+  EVP_DecryptInit:
+    library: "OpenSSL/libcrypto"
+    algorithm: "AES"
+    operation: "decrypt"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+
+  EVP_DigestInit:
+    library: "OpenSSL/libcrypto"
+    algorithm: "SHA-256"
+    operation: "hash"
+    primitive: "hash"
+    quantum_status: "weakened-by-grover"
+
+  EVP_PKEY_encrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "encrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+
+  EVP_PKEY_decrypt:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "decrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+
+  EVP_PKEY_sign:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "signature"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+
+  EVP_PKEY_verify:
+    library: "OpenSSL/libcrypto"
+    algorithm: "RSA"
+    operation: "verification"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+
+  # --- OpenSSL Hashes ---
+  SHA256_Init:
+    library: "OpenSSL/libcrypto"
+    algorithm: "SHA-256"
+    operation: "hash"
+    primitive: "hash"
+    quantum_status: "weakened-by-grover"
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  SHA512_Init:
+    library: "OpenSSL/libcrypto"
+    algorithm: "SHA-512"
+    operation: "hash"
+    primitive: "hash"
+    quantum_status: "weakened-by-grover"
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  MD5_Init:
+    library: "OpenSSL/libcrypto"
+    algorithm: "MD5"
+    operation: "hash"
+    primitive: "hash"
+    quantum_status: "broken-classically"
+    oid: "1.2.840.113549.2.5"
+
+  # --- Windows CNG / CryptoAPI ---
+  BCryptEncrypt:
+    library: "Windows-CNG/bcrypt.dll"
+    algorithm: "AES"
+    operation: "encrypt"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+
+  BCryptDecrypt:
+    library: "Windows-CNG/bcrypt.dll"
+    algorithm: "AES"
+    operation: "decrypt"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+
+  BCryptSignHash:
+    library: "Windows-CNG/bcrypt.dll"
+    algorithm: "RSA"
+    operation: "signature"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+
+  BCryptVerifySignature:
+    library: "Windows-CNG/bcrypt.dll"
+    algorithm: "RSA"
+    operation: "verification"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+
+  CryptEncrypt:
+    library: "Windows-CryptoAPI/advapi32.dll"
+    algorithm: "RSA"
+    operation: "encrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+
+  CryptDecrypt:
+    library: "Windows-CryptoAPI/advapi32.dll"
+    algorithm: "RSA"
+    operation: "decrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+
+  # --- macOS CommonCrypto ---
+  CCCrypt:
+    library: "Apple-CommonCrypto"
+    algorithm: "AES"
+    operation: "cipher"
+    primitive: "block-cipher"
+    quantum_status: "weakened-by-grover"
+
+  CC_SHA256:
+    library: "Apple-CommonCrypto"
+    algorithm: "SHA-256"
+    operation: "hash"
+    primitive: "hash"
+    quantum_status: "weakened-by-grover"
+
+  CC_SHA512:
+    library: "Apple-CommonCrypto"
+    algorithm: "SHA-512"
+    operation: "hash"
+    primitive: "hash"
+    quantum_status: "weakened-by-grover"
+
+  # --- libsodium ---
+  crypto_box_easy:
+    library: "libsodium"
+    algorithm: "X25519"
+    operation: "encrypt"
+    primitive: "pke"
+    quantum_status: "broken-by-shor"
+
+  crypto_sign_detached:
+    library: "libsodium"
+    algorithm: "Ed25519"
+    operation: "signature"
+    primitive: "signature"
+    quantum_status: "broken-by-shor"
+
+  crypto_secretbox_easy:
+    library: "libsodium"
+    algorithm: "ChaCha20"
+    operation: "encrypt"
+    primitive: "stream-cipher"
+    quantum_status: "weakened-by-grover"
+
+# Strings that must NEVER be treated as cryptographic algorithm findings
+false_positive_patterns:
+  - "^keyboard$"
+  - "^userKey$"
+  - "^releaseKey$"
+  - "^encryptButton$"
+  - "^crypto_helper$"
+  - "^key_manager$"
+  - "^encryption_service$"
+  - "^primaryKey$"
+  - "^foreignKey$"
+  - "^keyStore$"
+  - "^keyEvent$"
+  - "^keyPress$"
+  - "^keyUp$"
+  - "^keyDown$"
+  - "^hotkey$"

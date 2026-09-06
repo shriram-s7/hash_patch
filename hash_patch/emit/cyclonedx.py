@@ -131,7 +131,16 @@ def _asset_properties(
     if asset.finding_type != "OPERATION":
         props.append(Property(name="hash_patch:findingType", value=asset.finding_type))
     for key in sorted(asset.properties):
-        props.append(Property(name=f"hash_patch:property.{key}", value=asset.properties[key]))
+        # Keys already carrying the hash_patch: namespace (e.g. Phase 4
+        # `hash_patch:exposureState` / `hash_patch:workload` written onto the
+        # asset by apply_iac_enrichment) are emitted verbatim as top-level
+        # component properties — exactly like `hash_patch:reachability` /
+        # `hash_patch:quantumStatus` above. Free-form keys without the
+        # resolved namespace are folded under `hash_patch:property.`.
+        if key.startswith("hash_patch:"):
+            props.append(Property(name=key, value=asset.properties[key]))
+        else:
+            props.append(Property(name=f"hash_patch:property.{key}", value=asset.properties[key]))
     return props
 
 
@@ -254,6 +263,34 @@ def to_cyclonedx(result: ScanResult) -> dict[str, Any]:
         meta_props.append(
             Property(
                 name=f"hash_patch:contradiction.{contra.id}",
+                value=json.dumps(val_data, sort_keys=True, separators=(",", ":")),
+            )
+        )
+
+    # A different Pillar 4 contradiction shape (see
+    # hash_patch/analyze/algorithm_contradictions.py) — emitted under the
+    # SAME `hash_patch:contradiction.<id>` namespace as the TLS ones above
+    # (id schemes never collide: "contradiction-*" vs "algo-contradiction-*"),
+    # so the UI's existing contradiction count/list picks these up with no
+    # separate parsing path required.
+    for divergence in sorted(result.algorithm_divergence_findings, key=lambda d: d.id):
+        val_data = {
+            "id": divergence.id,
+            "severity": divergence.severity,
+            "description": divergence.description,
+            "declaredAlgorithm": divergence.declared_algorithm,
+            "implementedAlgorithm": divergence.implemented_algorithm,
+            "declaringFunction": divergence.declaring_function,
+            "declaringBranchCondition": divergence.declaring_branch_condition,
+            "declaringLocator": divergence.declaring_evidence.locator,
+            "declaringLine": divergence.declaring_evidence.line,
+            "callSiteFunction": divergence.call_site_function,
+            "callSiteLocator": divergence.call_site_evidence.locator,
+            "callSiteLine": divergence.call_site_evidence.line,
+        }
+        meta_props.append(
+            Property(
+                name=f"hash_patch:contradiction.{divergence.id}",
                 value=json.dumps(val_data, sort_keys=True, separators=(",", ":")),
             )
         )

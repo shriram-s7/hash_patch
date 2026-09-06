@@ -11,10 +11,25 @@ Implements the 5 resolution strategies for Java JCA/JCE call sites:
 5. Ternary / if-else branching (e.g. cond ? ALGO_A : ALGO_B) resolving each
    branch independently and emitting one finding per branch tagged with
    branch_condition.
+6. Interface-based dispatch (e.g. `AlgorithmProvider provider = ...;
+   Cipher.getInstance(provider.algorithmFor(kind))` where `provider`'s
+   STATIC type is an interface): resolved by finding EVERY class in the
+   project that `implements` that interface, resolving the algorithm from
+   EACH implementation's override of the called method independently —
+   never picking one arbitrarily, same fail-safe "keep every candidate"
+   rule Strategy 5's branch handling already follows. Genuinely dynamic
+   dispatch that cannot be resolved statically at all (a concrete
+   implementation chosen via `Class.forName(...)` from a runtime-read
+   class name, reflection, a service loader) is explicitly NOT this
+   strategy's job and stays unresolved — see
+   hash_patch/detect/java.py::JavaJcaDetector and
+   testdata/java/interface_dispatch/RuntimeDynamicDispatch.java's own
+   corpus fixture for that boundary.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -39,6 +54,15 @@ class JavaResolution:
     resolution_path: list[str] | None = None
     branch_condition: str | None = None
     algo_node: Any | None = None
+    # The file `algo_node` was parsed from. Parameter passthrough (Strategy 4)
+    # is the only strategy that crosses into a different physical file than
+    # the one resolution started from — every other strategy's algo_node
+    # belongs to whatever file resolve_node() was called with. A caller must
+    # never combine `algo_node`'s tree-sitter position with a `locator` for a
+    # different file (that produces an internally inconsistent Evidence: a
+    # line number that is only valid in a different file's coordinate
+    # space) — see hash_patch/detect/java.py's use of this field.
+    algo_file: Path | None = None
 
 
 def extract_string_fragment(node: Any | None) -> str | None:
@@ -206,6 +230,202 @@ class JavaProjectIndex:
 
         return walk(class_node)
 
+    def find_implementing_classes(self, interface_name: str) -> list[tuple[Any, Path]]:
+        """Every (class_declaration node, file) in the project whose
+        `implements` clause names `interface_name` — see Strategy 6 in this
+        module's docstring. Project-wide (not scoped to one file), since an
+        interface's implementations routinely live in different files than
+        both the interface declaration and the call site.
+        """
+        results: list[tuple[Any, Path]] = []
+        for path in self.root.rglob("*.java"):
+            tree = self.get_tree(path)
+            if tree is None:
+                continue
+            stack = [tree.root_node]
+            while stack:
+                n = stack.pop()
+                if n.type == "class_declaration":
+                    interfaces_node = n.child_by_field_name("interfaces")
+                    if interfaces_node is not None:
+                        text = interfaces_node.text.decode("utf-8", errors="replace")
+                        if re.search(rf"\b{re.escape(interface_name)}\b", text):
+                            results.append((n, path))
+                stack.extend(n.children)
+        return results
+
+    @staticmethod
+    def find_method_in_class(class_node: Any, method_name: str) -> Any | None:
+        for c in class_node.children:
+            if c.type != "class_body":
+                continue
+            for m in c.children:
+                if m.type == "method_declaration":
+                    name_node = m.child_by_field_name("name")
+                    if name_node is not None and name_node.text.decode("utf-8", errors="replace") == method_name:
+                        return m
+        return None
+
+    def _local_variable_declared_type(self, var_name: str, method_node: Any) -> str | None:
+        """The declared TYPE of a local variable (unlike
+        `get_local_variable_declaration`, which returns its VALUE node) —
+        needed to detect an interface-typed local for Strategy 6.
+        """
+        res: str | None = None
+
+        def walk(n: Any) -> None:
+            nonlocal res
+            if res is not None:
+                return
+            if n.type == "local_variable_declaration":
+                for sub in n.children:
+                    if sub.type == "variable_declarator":
+                        nm = sub.child_by_field_name("name")
+                        if nm is not None and nm.text.decode("utf-8", errors="replace") == var_name:
+                            for typ in n.children:
+                                if typ.type in ("type_identifier", "generic_type"):
+                                    res = typ.text.decode("utf-8", errors="replace").split("<")[0]
+                                    return
+            for c in n.children:
+                walk(c)
+
+        if method_node is not None:
+            walk(method_node)
+        return res
+
+    def _declared_type_of_object(self, obj_node: Any, inv_node: Any, current_file: Path) -> str | None:
+        """Best-effort declared TYPE of a method_invocation's `object` node
+        -- a parameter type, a local variable's declared type, or a field
+        type in the enclosing class. Used to detect a call through an
+        INTERFACE-typed reference (Strategy 6) before assuming Strategy 3's
+        map-lookup shape.
+        """
+        if obj_node is None or obj_node.type != "identifier":
+            return None
+        var_name = obj_node.text.decode("utf-8", errors="replace")
+        enclosing_method = self.get_enclosing_method(inv_node)
+        if enclosing_method is not None:
+            params = enclosing_method.child_by_field_name("parameters")
+            if params is not None:
+                for p in params.named_children:
+                    if p.type == "formal_parameter":
+                        nm = p.child_by_field_name("name")
+                        if nm is not None and nm.text.decode("utf-8", errors="replace") == var_name:
+                            type_node = p.child_by_field_name("type")
+                            if type_node is not None:
+                                return type_node.text.decode("utf-8", errors="replace").split("<")[0]
+            decl_type = self._local_variable_declared_type(var_name, enclosing_method)
+            if decl_type is not None:
+                return decl_type
+        cur = inv_node
+        while cur is not None and cur.type != "class_declaration":
+            cur = cur.parent
+        if cur is not None:
+            return self.get_field_type_in_class(var_name, cur)
+        return None
+
+    _JCA_GETINSTANCE_METHOD = "getInstance"
+
+    @staticmethod
+    def _return_expressions_in(method_node: Any) -> list[Any]:
+        """Every `return <expr>;`'s expression node directly inside
+        `method_node` (not descending into a nested lambda/anonymous class,
+        which would have its own separate return flow).
+        """
+        exprs: list[Any] = []
+        stack = [method_node]
+        while stack:
+            n = stack.pop()
+            for c in n.children:
+                if c.type in ("lambda_expression", "class_declaration"):
+                    continue  # separate return flow -- do not descend
+                if c.type == "return_statement":
+                    for sub in c.children:
+                        if sub.is_named:
+                            exprs.append(sub)
+                            break
+                    continue
+                stack.append(c)
+        return exprs
+
+    def resolve_interface_dispatch(
+        self, interface_name: str, method_name: str, inv_node: Any, depth: int = 0
+    ) -> list[JavaResolution] | None:
+        """Strategy 6: a call through a variable/parameter/field whose
+        STATIC type is a Java interface, resolved by finding every class in
+        the project that `implements` it and resolving the algorithm EACH
+        implementation's override of `method_name` returns, independently.
+
+        Two shapes are handled, mirroring how a real algorithm-selection
+        method is written: (a) the override directly `return`s a
+        resolvable expression (a string literal, a static field, ...) —
+        the common "algorithm factory" shape; (b) the override itself makes
+        a nested `<Class>.getInstance(...)` JCA call whose own argument is
+        resolvable — a provider that performs the JCA lookup itself rather
+        than just naming an algorithm.
+
+        Returns None (never an empty list) when `interface_name` has no
+        implementing classes found in the project at all, so the caller can
+        fall back to its other strategies rather than conflating "not an
+        interface with implementers" with "found none" — an empty list
+        would incorrectly look identical to "resolved, but no candidates
+        matched", which is a real (different) case Strategy 5 already uses
+        empty-list-vs-None for elsewhere in this file.
+        """
+        implementers = self.find_implementing_classes(interface_name)
+        if not implementers:
+            return None
+
+        results: list[JavaResolution] = []
+        for class_node, class_file in implementers:
+            method_node = self.find_method_in_class(class_node, method_name)
+            if method_node is None:
+                continue
+            class_name_node = class_node.child_by_field_name("name")
+            class_name = (
+                class_name_node.text.decode("utf-8", errors="replace") if class_name_node is not None else "?"
+            )
+
+            candidates: list[tuple[Any, str]] = [
+                (expr, f"{class_name}.{method_name} returns") for expr in self._return_expressions_in(method_node)
+            ]
+            for call in self._nested_getinstance_calls_in(method_node):
+                args_node = call.child_by_field_name("arguments")
+                first_arg = next(iter(args_node.named_children), None) if args_node is not None else None
+                if first_arg is not None:
+                    call_receiver = call.child_by_field_name("object")
+                    receiver_text = (
+                        call_receiver.text.decode("utf-8", errors="replace") if call_receiver is not None else "?"
+                    )
+                    candidates.append((first_arg, f"{class_name}.{method_name} -> {receiver_text}.getInstance"))
+
+            for expr, label in candidates:
+                for res in self.resolve_node(expr, class_file, depth=depth + 1):
+                    if res.algo_raw is None:
+                        continue
+                    res.resolution_path = [label] + (res.resolution_path or [])
+                    res.algo_node = expr
+                    res.algo_file = class_file
+                    results.append(res)
+        return results or None
+
+    def _nested_getinstance_calls_in(self, node: Any) -> list[Any]:
+        """Every `<Class>.getInstance(...)`-shaped method_invocation node
+        inside `node` — the common shape every JCA/JCE algorithm-selection
+        call in rules/java_jca.yaml uses (Cipher/Signature/MessageDigest/
+        KeyPairGenerator/Mac/KeyAgreement/KeyFactory.getInstance(...)).
+        """
+        calls: list[Any] = []
+        stack = [node]
+        while stack:
+            n = stack.pop()
+            if n.type == "method_invocation":
+                name_node = n.child_by_field_name("name")
+                if name_node is not None and name_node.text.decode("utf-8", errors="replace") == self._JCA_GETINSTANCE_METHOD:
+                    calls.append(n)
+            stack.extend(n.children)
+        return calls
+
     def resolve_map_lookup(self, inv_node: Any, current_file: Path, depth: int = 0) -> list[JavaResolution]:
         """Strategy 3: Resolve map lookup method calls (e.g. policy.algorithmFor(profile))."""
         obj_node = inv_node.child_by_field_name("object")
@@ -246,6 +466,9 @@ class JavaProjectIndex:
 
         if class_name:
             class_file = self.find_class_file(class_name, current_file)
+
+        if not class_file and not obj_node:
+            class_file = current_file
 
         if not class_file:
             return []
@@ -297,6 +520,7 @@ class JavaProjectIndex:
                             confidence="HIGH",
                             resolution_path=full_path,
                             algo_node=inv_node,
+                            algo_file=current_file,
                         )
                     )
             if results:
@@ -355,9 +579,7 @@ class JavaProjectIndex:
                         if len(args) > param_idx:
                             obj = n.child_by_field_name("object")
                             match = False
-                            if not obj:
-                                match = True
-                            elif obj.text.decode("utf-8", errors="replace") == class_name:
+                            if not obj or obj.text.decode("utf-8", errors="replace") == class_name:
                                 match = True
                             else:
                                 cur_enc = self.get_enclosing_method(n)
@@ -387,13 +609,25 @@ class JavaProjectIndex:
                                         f"{n.text.decode('utf-8', errors='replace')}"
                                     )
                                     p = [step] + (cr.resolution_path or [])
+                                    # Preserve the deepest resolution's own
+                                    # algo_node/algo_file (e.g. the literal
+                                    # "customer-auth" argument several hops
+                                    # further up the call chain) rather than
+                                    # clobbering it with this hop's call
+                                    # node — otherwise every branch collapses
+                                    # onto the SAME position (this hop's
+                                    # call site) and, worse, that position
+                                    # would later be paired with a
+                                    # `locator` for a different file
+                                    # entirely by the caller.
                                     results.append(
                                         JavaResolution(
                                             algo_raw=cr.algo_raw,
                                             confidence=cr.confidence,
                                             resolution_path=p,
                                             branch_condition=cr.branch_condition,
-                                            algo_node=n,
+                                            algo_node=cr.algo_node if cr.algo_node is not None else n,
+                                            algo_file=cr.algo_file if cr.algo_file is not None else file_path,
                                         )
                                     )
                 for c in n.children:
@@ -419,13 +653,28 @@ class JavaProjectIndex:
         # Strategy 1: String literal
         s = extract_string_fragment(node)
         if s is not None:
-            return [JavaResolution(algo_raw=s, confidence="HIGH", resolution_path=None, algo_node=node)]
+            return [
+                JavaResolution(
+                    algo_raw=s, confidence="HIGH", resolution_path=None, algo_node=node, algo_file=current_file
+                )
+            ]
 
-        # Strategy 2: Field access (e.g. AlgorithmId.STORE_CIPHER)
+        # Strategy 2: Field access (e.g. AlgorithmId.STORE_CIPHER) — `node`
+        # is the reference site (e.g. in the calling file), never the
+        # constants class's own declaration file, regardless of where
+        # resolve_field_access had to look to find the value.
         if node.type == "field_access":
             val, path = self.resolve_field_access(node, current_file)
             if val:
-                return [JavaResolution(algo_raw=val, confidence="HIGH", resolution_path=path, algo_node=node)]
+                return [
+                    JavaResolution(
+                        algo_raw=val,
+                        confidence="HIGH",
+                        resolution_path=path,
+                        algo_node=node,
+                        algo_file=current_file,
+                    )
+                ]
 
         # Strategy 5: Ternary expression (cond ? A : B)
         if node.type == "ternary_expression":
@@ -445,7 +694,24 @@ class JavaProjectIndex:
             return res
 
         # Strategy 3: Method invocation (e.g. new CryptoPolicy().algorithmFor(profile))
+        # Strategy 6 is tried FIRST: if the invocation's receiver is
+        # statically typed as an interface with real implementing classes
+        # in the project, this is interface dispatch, not the map-lookup
+        # shape Strategy 3 assumes -- resolve_map_lookup would otherwise
+        # treat the interface's own (bodyless) declaration file as
+        # "class_file" and correctly, but uninformatively, find nothing.
         if node.type == "method_invocation":
+            obj_node = node.child_by_field_name("object")
+            name_node = node.child_by_field_name("name")
+            if obj_node is not None and name_node is not None:
+                receiver_type = self._declared_type_of_object(obj_node, node, current_file)
+                if receiver_type is not None:
+                    method_name = name_node.text.decode("utf-8", errors="replace")
+                    interface_results = self.resolve_interface_dispatch(
+                        receiver_type, method_name, node, depth=depth
+                    )
+                    if interface_results is not None:
+                        return interface_results
             return self.resolve_map_lookup(node, current_file, depth=depth)
 
         # Identifier: local variable, method parameter, or class constant
@@ -480,11 +746,15 @@ class JavaProjectIndex:
                     val, path = constants[var_name]
                     return [
                         JavaResolution(
-                            algo_raw=val, confidence="HIGH", resolution_path=path, algo_node=node
+                            algo_raw=val,
+                            confidence="HIGH",
+                            resolution_path=path,
+                            algo_node=node,
+                            algo_file=current_file,
                         )
                     ]
 
-        return [JavaResolution(algo_raw=None, confidence="LOW", algo_node=node)]
+        return [JavaResolution(algo_raw=None, confidence="LOW", algo_node=node, algo_file=current_file)]
 
 
 _PROJECT_INDEX_CACHE: dict[Path, JavaProjectIndex] = {}

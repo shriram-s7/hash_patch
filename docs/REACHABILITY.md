@@ -1,7 +1,7 @@
 # Reachability classification
 
-Hash Patch classifies every crypto-asset finding from the Python and Java
-detectors into one of four `CryptoAsset.reachability` values:
+Hash Patch classifies every crypto-asset finding from the Python, Java, and
+C/C++ detectors into one of four `CryptoAsset.reachability` values:
 
 | Value            | Meaning                                                                 |
 |-------------------|--------------------------------------------------------------------------|
@@ -10,10 +10,16 @@ detectors into one of four `CryptoAsset.reachability` values:
 | `INERT`           | Not reachable from anything — dead code, or reachable only from a test file. |
 | `UNKNOWN`         | Reachability could not be determined (dynamic dispatch, reflection, unresolved import, an unmapped evidence location, etc.). |
 
-**Go and C are out of scope.** Their detectors (`hash_patch/detect/go.py`,
-`hash_patch/detect/c.py`) are not wired to this analysis; their assets keep
-the model's default `Reachability.UNKNOWN` unconditionally. See the one-line
-comments on each detector class.
+**Go is out of scope.** Its detector (`hash_patch/detect/go.py`) is not
+wired to this analysis; its assets keep the model's default
+`Reachability.UNKNOWN` unconditionally. See the one-line comment on that
+detector class.
+
+C/C++ evidence confined to a header file (`.h`/`.hpp`/`.hh`) also keeps the
+model default — headers only ever contain declarations/prototypes, never a
+function *body* to walk a call graph from. Evidence in an actual C/C++
+source file (`.c`/`.cpp`/`.cc`/`.cxx`) is classified the same as
+Python/Java.
 
 ## HARD SAFETY RULE
 
@@ -30,22 +36,28 @@ exists specifically to guard this rule with a two-level-indirection case.
 ## Pipeline
 
 1. **Call graph** (`hash_patch/analyze/callgraph.py`) — for one *file set*
-   (every Python file, or every Java file, under one scan target — not per
-   file, so cross-file calls within the same target resolve), build a
-   name-based call graph: one node per function/method definition, one edge
-   per call site that resolves to exactly one function definition in the
-   set. A call that cannot be resolved to exactly one definition (a call
-   through a variable, a call into a library with no source in the set, an
-   ambiguous name shared by two definitions, any call whose target isn't a
-   plain identifier or `identifier.identifier` shape) is recorded as an
+   (every Python file, every Java file, or every C/C++ *source* file — not
+   header — under one scan target — not per file, so cross-file calls
+   within the same target resolve), build a name-based call graph: one node
+   per function/method definition, one edge per call site that resolves to
+   exactly one function definition in the set. A call that cannot be
+   resolved to exactly one definition (a call through a variable/function
+   pointer, a call into a library with no source in the set, an ambiguous
+   name shared by two definitions — e.g. two files each defining a
+   same-named `static` C function — any call whose target isn't a plain
+   identifier or `identifier.identifier` shape) is recorded as an
    **unresolved** call on the calling function — never silently dropped.
 
    Name resolution is deliberately as simple as the existing detectors
-   (`hash_patch/detect/python.py`, `hash_patch/detect/java.py`), which do
-   plain identifier matching with no import aliasing or type inference —
-   there is no separate "resolver" module elsewhere in this codebase to
-   reuse, so this module matches that level of sophistication rather than
-   inventing a fancier one.
+   (`hash_patch/detect/python.py`, `hash_patch/detect/java.py`,
+   `hash_patch/detect/c.py`), which do plain identifier matching with no
+   import aliasing or type inference — there is no separate "resolver"
+   module elsewhere in this codebase to reuse, so this module matches that
+   level of sophistication rather than inventing a fancier one. C's graph
+   is flat (no classes/methods): a function's identity is just its bare
+   name, so the ambiguous-name-is-unresolved rule above is what keeps two
+   unrelated same-named `static` functions in different files from being
+   cross-wired.
 
 2. **Entry-point tagging** (`hash_patch/analyze/entrypoints.py`, patterns in
    `rules/entrypoints.yaml`) — see below.
@@ -102,6 +114,14 @@ Python code in `analyze/`.
   direction (more `LIVE_EXTERNAL`, never more `INERT`) — under-tagging it
   is not.
 
+**C/C++:**
+- A function named exactly `main` (the conventional C program entry
+  point). C has no decorator/annotation convention comparable to
+  Python/Java's routing patterns, so this is deliberately the only C rule
+  for now — extend `rules/entrypoints.yaml`'s `c:` section if a real
+  codebase needs another convention recognized (e.g. a specific plugin
+  ABI's exported symbol names).
+
 ## What does NOT count as an entry point
 
 Anything not matching one of the patterns above — a plain function, a
@@ -127,6 +147,12 @@ flag passed at scan time:
 - **Java:** the path contains a `test` directory segment (matches
   Maven/Gradle-style `src/test/java/...` layouts), OR the filename ends
   with `Test.java` or `Tests.java`.
+- **C/C++:** the path contains a `test` or `tests` directory segment, OR
+  the filename starts with `test_` or ends with `_test.c`/`_test.cpp`/
+  `_test.cc`/`_test.cxx` — mirroring the Python convention, the closest
+  real-world equivalent this codebase already has (C has no single
+  dominant test-framework layout convention the way pytest/JUnit have
+  one).
 
 ## Why "not reachable + not test-confined" is UNKNOWN, not INERT
 
@@ -156,10 +182,11 @@ caller was found — it classifies `UNKNOWN`, never `INERT`.
 
 ## Deep-nesting safety cap
 
-`hash_patch/analyze/callgraph.py::_walk_py_calls` walks the tree-sitter AST
-of every Python function body to collect its call sites. This walk uses an
-explicit heap-allocated stack, not function-call recursion — a real-world
-file with deeply nested expressions/definitions (confirmed on
+`hash_patch/analyze/callgraph.py::_walk_py_calls` (and its C/C++ counterpart
+`_walk_c_calls`) walks the tree-sitter AST of every function body to collect
+its call sites. This walk uses an explicit heap-allocated stack, not
+function-call recursion — a real-world file with deeply nested
+expressions/definitions (confirmed on
 `cryptography/hazmat/primitives/asymmetric/mldsa.py` from `pyca/cryptography`)
 can exceed the native C thread stack before Python's own `RecursionError`
 guard ever triggers, crashing the process with no catchable exception.

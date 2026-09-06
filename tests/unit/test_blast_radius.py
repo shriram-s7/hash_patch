@@ -26,6 +26,7 @@ from pathlib import Path
 from hash_patch.analyze.blast_radius import (
     _estimate_effort_days,
     _severity_for_overflow,
+    blast_radius_diagnostics,
     compute_blast_radius,
     primitive_for_replacement,
     run_blast_radius,
@@ -407,3 +408,99 @@ def test_primitive_for_replacement_helper() -> None:
     assert primitive_for_replacement("ML-DSA-65") == Primitive.SIGNATURE
     assert primitive_for_replacement("ML-KEM-768") == Primitive.KEM
     assert primitive_for_replacement("unknown-family") == Primitive.UNKNOWN
+
+
+# ===========================================================================
+# blast_radius_diagnostics — distinguishes "ran, found nothing" from a crash
+# (the latter would raise uncaught; see run_blast_radius's own docstring and
+# hash_patch/cli.py::run_scan, which has no try/except around this pillar).
+# ===========================================================================
+
+
+def test_diagnostics_on_positive_fixture_reports_real_nonzero_counts() -> None:
+    """testdata/c/blast_radius_examples.c is a known-positive fixture (see the
+    tests above) -- diagnostics against it must report nonzero size
+    constraints, nonzero BROKEN_BY_SHOR candidates, and nonzero findings,
+    proving the pillar actually works end-to-end, not just that it fails to
+    crash.
+    """
+    assets = COpenSSLDetector().detect(C_FIXTURE)
+    diag = blast_radius_diagnostics(assets, [C_FIXTURE])
+    assert diag["size_constraints_found"] > 0
+    assert diag["broken_by_shor_candidates"] > 0
+    assert diag["findings"] > 0
+
+
+def test_diagnostics_with_no_size_constraints_reports_zero_not_a_crash() -> None:
+    """A file set with BROKEN_BY_SHOR candidates but genuinely no fixed-size
+    buffer or DB column-width declaration anywhere (e.g. this project's own
+    Python-only fixtures) must report `size_constraints_found: 0` and
+    `findings: 0` -- a real, honest "ran and found nothing" result, not an
+    exception. If this pillar crashed instead, this call would raise.
+    """
+    rsa_asset = CryptoAsset.create(
+        asset_type=AssetType.ALGORITHM,
+        name="RSA",
+        primitive=Primitive.PKE,
+        quantum_status=QuantumStatus.BROKEN_BY_SHOR,
+        evidence=[
+            Evidence(source_type="source", locator="x.py", line=1, detector_id="d", detector_version="0")
+        ],
+    )
+    py_file = REPO_ROOT / "testdata" / "python" / "hashlib_examples.py"
+    diag = blast_radius_diagnostics([rsa_asset], [py_file])
+    assert diag == {"size_constraints_found": 0, "broken_by_shor_candidates": 1, "findings": 0}
+
+
+# ===========================================================================
+# Python buffer detector (hash_patch/detect/blast_radius/python_buffers.py)
+# ===========================================================================
+
+
+def test_python_slice_assignment_from_literal_is_not_crypto_data_flow(tmp_path: Path) -> None:
+    """`buf[i] = 1` (a literal, not a name) must never be treated as a
+    crypto-result data-flow into `buf` -- only `buf[...] = some_name` is.
+    A buffer with no name-pattern match, no crypto API in scope, and only
+    literal slice-assignments must produce NO SizeConstraint at all.
+    """
+    from hash_patch.detect.blast_radius.python_buffers import PythonBufferBlastRadiusDetector
+
+    f = tmp_path / "scratch.py"
+    f.write_text(
+        "def make_scratch():\n"
+        "    scratch = bytearray(16)\n"
+        "    scratch[0] = 1\n"
+        "    return bytes(scratch)\n"
+    )
+    constraints = PythonBufferBlastRadiusDetector().detect(f)
+    assert constraints == []
+
+
+def test_real_world_ed25519_signature_bytearray_produces_a_finding() -> None:
+    """End-to-end regression against test2's real, hand-authored corpus:
+    python/freight_api/signing.py:19's `wire_signature = bytearray(64)`
+    holds an Ed25519 signature and must produce a real blast-radius
+    finding once hash_patch/detect/blast_radius/python_buffers.py exists --
+    this was the concrete validation target for adding Python blast-radius
+    coverage at all.
+    """
+    from hash_patch.cli import run_scan
+
+    test2_dir = REPO_ROOT / "test2"
+    if not test2_dir.is_dir():
+        import pytest
+
+        pytest.skip("test2 corpus not present in this checkout")
+
+    result = run_scan(test2_dir)
+    matches = [
+        f
+        for f in result.blast_radius_findings
+        if f.size_constraint.name == "wire_signature"
+        and f.size_constraint.evidence[0].locator.replace("\\", "/").endswith(
+            "python/freight_api/signing.py"
+        )
+    ]
+    assert len(matches) == 1, f"expected exactly one wire_signature finding, got: {matches}"
+    assert matches[0].overflow_bytes > 0
+    assert matches[0].size_constraint.declared_bytes == 64

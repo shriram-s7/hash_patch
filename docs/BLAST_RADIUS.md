@@ -6,9 +6,10 @@ ciphertext — is small, and predicts whether migrating the algorithm that
 produces it to its PQC replacement will overflow that assumption.
 
 **Scope for this pillar (current):** C fixed-size stack buffers and heap
-allocations, and SQL DDL fixed-width columns, only. Java/Go/Python buffer
-detection and wire-format/protocol detection are explicitly out of scope
-and not attempted.
+allocations, Go `[N]byte` arrays, Java `new byte[N]`/`ByteBuffer.allocate`,
+Python `bytearray(N)`/`bytes(N)`, and SQL DDL fixed-width columns.
+Wire-format/protocol detection remains explicitly out of scope and not
+attempted.
 
 ## The size reference table
 

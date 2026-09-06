@@ -154,11 +154,20 @@ def test_does_not_support_non_go_file(detector: GoCryptoDetector, tmp_path: Path
 # ---------------------------------------------------------------------------
 
 
-def test_negative_fixture_produces_no_assets(negative_assets: list[CryptoAsset]) -> None:
-    """Algorithm mentions in comments, strings, and non-crypto structs must yield 0 assets."""
-    assert negative_assets == [], (
-        f"Expected 0 assets from negative fixture, got: {[a.name for a in negative_assets]}"
+def test_negative_fixture_produces_no_operation_assets(negative_assets: list[CryptoAsset]) -> None:
+    """Algorithm mentions in comments, strings, and non-crypto structs must never
+    produce an OPERATION finding (no crypto API call anywhere in this file). The
+    one exact, standalone "RSA" literal (a struct-literal field value, never
+    passed to any call) is legitimately a CRYPTO_REFERENCE — a structurally
+    different, lower-severity finding type — not silently dropped and not an
+    OPERATION.
+    """
+    operation_assets = [a for a in negative_assets if a.finding_type == "OPERATION"]
+    assert operation_assets == [], (
+        f"Expected 0 OPERATION assets from negative fixture, got: {[a.name for a in operation_assets]}"
     )
+    for a in negative_assets:
+        assert a.finding_type == "CRYPTO_REFERENCE"
 
 
 # ---------------------------------------------------------------------------
@@ -383,3 +392,130 @@ def test_function_index_has_bcrypt_entries() -> None:
     index = _build_function_index(_load_rules())
     assert "bcrypt.GenerateFromPassword" in index
     assert "bcrypt.CompareHashAndPassword" in index
+
+
+# ---------------------------------------------------------------------------
+# Step 4: Named const blocks, conditional branching, and bare constant tests
+# ---------------------------------------------------------------------------
+
+
+def test_go_bare_constant_aes_block_size_produces_zero_findings(tmp_path: Path) -> None:
+    """Bare constant read (e.g. aes.BlockSize) must never produce operation findings."""
+    f = tmp_path / "store.go"
+    f.write_text(
+        """package keyflow
+import "crypto/aes"
+
+func CipherName() string {
+    _ = aes.BlockSize
+    return "AES-256-GCM"
+}
+""",
+        encoding="utf-8",
+    )
+    detector = GoCryptoDetector()
+    assets = detector.detect(f)
+    assert assets == [], f"Expected 0 findings for bare constant read, got: {assets}"
+
+
+def test_go_const_block_direct_indirection(tmp_path: Path) -> None:
+    """Passing a named const to a crypto API resolves the const to its algorithm value."""
+    f = tmp_path / "signer.go"
+    f.write_text(
+        """package crypto
+
+const (
+    AuthSignature = "SHA256-RSA"
+)
+
+func DoSign() {
+    signature.New(AuthSignature)
+}
+""",
+        encoding="utf-8",
+    )
+    detector = GoCryptoDetector()
+    assets = detector.detect(f)
+    assert len(assets) == 1
+    asset = assets[0]
+    assert asset.name == "RSASSA-PKCS1v15"
+    assert asset.confidence == "confirmed"
+    assert "AuthSignature ->" in asset.properties.get("resolution_path", "")
+
+
+def test_go_conditional_return_branching_from_const_block(tmp_path: Path) -> None:
+    """Conditional returns of named consts branch into distinct findings at the call site."""
+    f = tmp_path / "gateway.go"
+    f.write_text(
+        """package crypto
+
+const (
+    AuthSignature = "SHA256-RSA"
+    LegacySignature = "SHA1-RSA"
+    EllipticSignature = "ECDSA"
+)
+
+type Policy struct {
+    compatibility bool
+}
+
+func (p *Policy) SignatureFamily(partner string) string {
+    if partner == "old-bank" || p.compatibility {
+        return LegacySignature
+    }
+    if partner == "ec-partner" {
+        return EllipticSignature
+    }
+    return AuthSignature
+}
+
+func Dispatch(p *Policy, partner string) {
+    signature.New(p.SignatureFamily(partner))
+}
+""",
+        encoding="utf-8",
+    )
+    detector = GoCryptoDetector()
+    assets = detector.detect(f)
+    # Should resolve all 3 branches:
+    # 1. LegacySignature ("SHA1-RSA" -> RSASSA-PKCS1v15)
+    # 2. EllipticSignature ("ECDSA" -> ECDSA)
+    # 3. AuthSignature ("SHA256-RSA" -> RSASSA-PKCS1v15)
+    # Assets for RSASSA-PKCS1v15 will merge evidence/properties, and ECDSA is separate asset
+    names = {a.name for a in assets}
+    assert "RSASSA-PKCS1v15" in names
+    assert "ECDSA" in names
+    # Verify branch conditions are recorded
+    all_conditions = [
+        a.properties.get("branch_condition") for a in assets if a.properties.get("branch_condition")
+    ]
+    assert len(all_conditions) >= 2
+
+
+def test_go_local_variable_assignment_branching(tmp_path: Path) -> None:
+    """Local variable assigned conditionally resolves each branch."""
+    f = tmp_path / "exchange.go"
+    f.write_text(
+        """package crypto
+
+const (
+    Exchange = "ECDH"
+    LegacyExchange = "DH"
+)
+
+func Derive(compatibility bool) {
+    family := Exchange
+    if compatibility {
+        family = LegacyExchange
+    }
+    signature.New(family)
+}
+""",
+        encoding="utf-8",
+    )
+    detector = GoCryptoDetector()
+    assets = detector.detect(f)
+    names = {a.name for a in assets}
+    assert "ECDH" in names
+    assert "DH" in names
+

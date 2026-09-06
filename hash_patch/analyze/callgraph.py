@@ -1,20 +1,30 @@
 """hash_patch/analyze/callgraph.py — directory-level call graph builder.
 
 Builds a simple, name-based call graph over a *set* of source files for one
-language (Python or Java) — not per file, per Step 1 of the reachability
-feature: two files in the same scan target can call into each other, so the
-graph has to span the whole file set to be useful.
+language (Python, Java, or C/C++) — not per file, per Step 1 of the
+reachability feature: two files in the same scan target can call into each
+other, so the graph has to span the whole file set to be useful.
 
 Name resolution deliberately mirrors the level of sophistication the
-existing detectors (hash_patch/detect/python.py, hash_patch/detect/java.py)
-already use: plain identifier / "identifier.identifier" matching, no import
-aliasing, no type inference, no data-flow. There is no separate "resolver"
-module to reuse in this codebase today — the detectors do their own
-ad-hoc name matching inline — so this module follows that exact convention
-rather than inventing a fancier one, and reuses the *parsers* the detectors
-already construct (`hash_patch.detect.python._PARSER`,
-`hash_patch.detect.java._PARSER`) instead of standing up new tree-sitter
+existing detectors (hash_patch/detect/python.py, hash_patch/detect/java.py,
+hash_patch/detect/c.py) already use: plain identifier /
+"identifier.identifier" matching, no import aliasing, no type inference, no
+data-flow. There is no separate "resolver" module to reuse in this codebase
+today — the detectors do their own ad-hoc name matching inline — so this
+module follows that exact convention rather than inventing a fancier one,
+and reuses the *parsers* the detectors already construct
+(`hash_patch.detect.python._PARSER`, `hash_patch.detect.java._PARSER`,
+`hash_patch.detect.c._PARSER`) instead of standing up new tree-sitter
 `Language`/`Parser` instances.
+
+C's call graph is flat (no classes/methods): a `FunctionId.qualname` is
+just the bare function name. Two different files each defining a
+same-named `static` function (legal, common C practice — internal linkage)
+would be a genuine ambiguity a name-only resolver cannot tell apart, so
+`_NameIndex`'s existing "more than one definition sharing a name -> treat
+as unresolved" rule (see `_NameIndex` below) already does the safe thing
+here for free, the same way it protects Python/Java call resolution from a
+same-named-function false match.
 
 Anything this simple matcher cannot resolve to exactly one function
 definition in the set — a call through a variable, a call into a library
@@ -34,10 +44,21 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from hash_patch.detect.c import _PARSER as _C_PARSER
+from hash_patch.detect.c import _TREE_SITTER_AVAILABLE as _C_TREE_SITTER_AVAILABLE
 from hash_patch.detect.java import _PARSER as _JAVA_PARSER
 from hash_patch.detect.java import _TREE_SITTER_AVAILABLE as _JAVA_TREE_SITTER_AVAILABLE
 from hash_patch.detect.python import _PARSER as _PY_PARSER
 from hash_patch.detect.python import _TREE_SITTER_AVAILABLE as _PY_TREE_SITTER_AVAILABLE
+
+# C/C++ source extensions that can contain function DEFINITIONS (bodies) --
+# headers (.h/.hpp/...) only ever contain declarations/prototypes in the
+# corpora this tool targets, so they never define a `function_definition`
+# node and are deliberately excluded from the call-graph file set itself
+# (evidence found IN a header still gets a reachability vote of UNKNOWN via
+# hash_patch/analyze/reachability.py's `ctx is None` path, same as any other
+# suffix with no context).
+_C_SOURCE_EXTENSIONS = frozenset({".c", ".cpp", ".cc", ".cxx"})
 
 # ---------------------------------------------------------------------------
 # Shared data model
@@ -535,6 +556,135 @@ def build_java_call_graph(files: Sequence[Path]) -> CallGraph:
         _walk_java_calls(fn.node, calls)
         for shape in calls:
             target = _resolve_java_call(shape, fn, index)
+            if target is not None:
+                graph.add_edge(fn.id, target)
+            else:
+                graph.add_unresolved(fn.id)
+    return graph
+
+
+# ---------------------------------------------------------------------------
+# C/C++: function collection
+# ---------------------------------------------------------------------------
+
+
+def _c_function_declarator(declarator_node: Any) -> Any | None:
+    """Descend through wrapping declarators (pointer_declarator for a
+    pointer return type, parenthesized_declarator, etc.) to find the
+    innermost `function_declarator` -- e.g. for `const char *foo(int x)`,
+    the function_definition's `declarator` field is a `pointer_declarator`
+    wrapping the actual `function_declarator`.
+    """
+    node = declarator_node
+    depth = 0
+    while node is not None and node.type != "function_declarator" and depth < 20:
+        nxt = node.child_by_field_name("declarator")
+        if nxt is None:
+            return None
+        node = nxt
+        depth += 1
+    return node if node is not None and node.type == "function_declarator" else None
+
+
+def _c_function_name(function_definition_node: Any) -> str | None:
+    """Name of a `function_definition` node, or None if it cannot be
+    resolved to a plain identifier (e.g. a macro-generated declarator this
+    simple matcher doesn't understand) -- callers must skip such a
+    function rather than guess.
+    """
+    declarator = function_definition_node.child_by_field_name("declarator")
+    if declarator is None:
+        return None
+    fd = _c_function_declarator(declarator)
+    if fd is None:
+        return None
+    ident = fd.child_by_field_name("declarator")
+    if ident is not None and ident.type == "identifier":
+        return _text(ident)
+    return None
+
+
+def _collect_c_functions(root_node: Any, file_str: str) -> list[FunctionInfo]:
+    """Top-level function definitions only -- standard C has no nested
+    function definitions, so (unlike Python's class-nested methods) there
+    is nothing to recurse into beyond `translation_unit`'s direct children.
+    """
+    functions: list[FunctionInfo] = []
+    for child in root_node.children:
+        if child.type != "function_definition":
+            continue
+        name = _c_function_name(child)
+        if name is None:
+            continue
+        body = child.child_by_field_name("body")
+        functions.append(
+            FunctionInfo(
+                id=FunctionId(file_str, name),
+                start_line=child.start_point.row + 1,
+                end_line=child.end_point.row + 1,
+                node=body if body is not None else child,
+            )
+        )
+    return functions
+
+
+# ---------------------------------------------------------------------------
+# C/C++: call-site collection and resolution
+# ---------------------------------------------------------------------------
+
+
+def _c_call_target(call_node: Any) -> str | None:
+    """The called function's bare name for a plain `foo(...)` call, or None
+    for anything this simple matcher can't resolve (a call through a
+    function pointer, `obj->fn(...)`, a macro-expanded call, ...) -- an
+    unresolved call, never a guess.
+    """
+    fn_node = call_node.child_by_field_name("function")
+    if fn_node is not None and fn_node.type == "identifier":
+        return _text(fn_node)
+    return None
+
+
+def _walk_c_calls(node: Any, out: list[str | None]) -> None:
+    """Same explicit-heap-stack traversal as `_walk_py_calls` (see its
+    comment) -- real C files can nest expressions/declarators deep enough
+    to risk a native stack overflow under function-call recursion.
+    """
+    stack: list[tuple[Any, int]] = [(node, 0)]
+    while stack:
+        current, depth = stack.pop()
+        if depth > _MAX_WALK_DEPTH:
+            continue
+        if current.type == "call_expression":
+            out.append(_c_call_target(current))
+        children = current.children
+        if children:
+            stack.extend((child, depth + 1) for child in reversed(children))
+
+
+def build_c_call_graph(files: Sequence[Path]) -> CallGraph:
+    """Build one call graph spanning every given C/C++ file (a "file set"
+    per Step 1 — typically every .c/.cpp/.cc/.cxx file under a single scan
+    target; headers are excluded, see `_C_SOURCE_EXTENSIONS`).
+    """
+    functions: list[FunctionInfo] = []
+    if _C_TREE_SITTER_AVAILABLE:
+        for f in files:
+            if not (f.is_file() and f.suffix.lower() in _C_SOURCE_EXTENSIONS):
+                continue
+            source = f.read_bytes()
+            tree = _C_PARSER.parse(source)
+            functions.extend(_collect_c_functions(tree.root_node, str(f)))
+
+    graph = CallGraph(function_infos=functions)
+    index = _NameIndex(functions)
+    for fn in functions:
+        if fn.node is None:
+            continue
+        calls: list[str | None] = []
+        _walk_c_calls(fn.node, calls)
+        for name in calls:
+            target = index.resolve_bare(name) if name is not None else None
             if target is not None:
                 graph.add_edge(fn.id, target)
             else:

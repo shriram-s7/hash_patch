@@ -1,0 +1,126 @@
+{
+  "_comment": "Expected-field manifest for testdata/cloud_kms/*, consumed by tests/golden/test_cloud_kms_golden.py. One entry per source fixture; 'expected_findings' lists the exact cloud-key operation findings the fixture must produce (empty = negative case, must stay empty). Each expected finding asserts: asset name = '<PROVIDER> KMS <operation>', finding_type = 'CLOUD_KEY_OPERATION', quantum_status = 'algorithm-opaque-provider-managed', properties cloudKey.{provider,sdk,operation} and cloudKey.verificationScope = 'client_call_only'. Provider values: aws | gcp | azure. Operations are spellings taken VERBATIM from the call site (snake_case in Python, camelCase in Java, PascalCase in Go).",
+  "cloud_kms": [
+    {
+      "file": "python/aws_boto3.py",
+      "detector_id": "python-cloud-kms",
+      "expected_findings": [
+        { "provider": "aws", "operation": "encrypt", "sdk": "boto3" },
+        { "provider": "aws", "operation": "decrypt", "sdk": "boto3" }
+      ]
+    },
+    {
+      "file": "python/gcp_google_cloud.py",
+      "detector_id": "python-cloud-kms",
+      "expected_findings": [
+        { "provider": "gcp", "operation": "encrypt", "sdk": "google-cloud-kms" },
+        { "provider": "gcp", "operation": "decrypt", "sdk": "google-cloud-kms" }
+      ]
+    },
+    {
+      "file": "python/azure_keyvault.py",
+      "detector_id": "python-cloud-kms",
+      "expected_findings": [
+        { "provider": "azure", "operation": "encrypt", "sdk": "azure-keyvault-keys" },
+        { "provider": "azure", "operation": "create_key", "sdk": "azure-keyvault-keys" }
+      ]
+    },
+    {
+      "file": "python/negative_import_only.py",
+      "detector_id": "python-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "python/negative_constructed_unused.py",
+      "detector_id": "python-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "python/negative_unrelated_http.py",
+      "detector_id": "python-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "java/aws_v2_kms.java",
+      "detector_id": "java-cloud-kms",
+      "expected_findings": [
+        { "provider": "aws", "operation": "encrypt", "sdk": "aws-sdk-java-v2" },
+        { "provider": "aws", "operation": "decrypt", "sdk": "aws-sdk-java-v2" }
+      ]
+    },
+    {
+      "file": "java/gcp_kms.java",
+      "detector_id": "java-cloud-kms",
+      "expected_findings": [
+        { "provider": "gcp", "operation": "decrypt", "sdk": "google-cloud-kms" }
+      ]
+    },
+    {
+      "file": "java/azure_keyvault.java",
+      "detector_id": "java-cloud-kms",
+      "expected_findings": [
+        { "provider": "azure", "operation": "encrypt", "sdk": "azure-keyvault-keys" },
+        { "provider": "azure", "operation": "createKey", "sdk": "azure-keyvault-keys" }
+      ]
+    },
+    {
+      "file": "java/negative_import_only.java",
+      "detector_id": "java-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "java/negative_constructed_unused.java",
+      "detector_id": "java-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "java/negative_unrelated_http.java",
+      "detector_id": "java-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "go/aws_kms.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": [
+        { "provider": "aws", "operation": "Encrypt", "sdk": "aws-sdk-go" },
+        { "provider": "aws", "operation": "Decrypt", "sdk": "aws-sdk-go" }
+      ]
+    },
+    {
+      "file": "go/aws_kms_v2.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": [
+        { "provider": "aws", "operation": "Encrypt", "sdk": "aws-sdk-go-v2" }
+      ]
+    },
+    {
+      "file": "go/gcp_kms.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": [
+        { "provider": "gcp", "operation": "Decrypt", "sdk": "cloud.google.com/go/kms/apiv1" }
+      ]
+    },
+    {
+      "file": "go/azure_kv.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": [
+        { "provider": "azure", "operation": "Encrypt", "sdk": "azure-sdk-for-go" }
+      ]
+    },
+    {
+      "file": "go/negative_import_only.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "go/negative_constructed_unused.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": []
+    },
+    {
+      "file": "go/negative_unrelated_http.go",
+      "detector_id": "go-cloud-kms",
+      "expected_findings": []
+    }
+  ]
+}

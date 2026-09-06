@@ -191,7 +191,55 @@ functions:
     quantum_status: broken-by-shor
     oid: "1.3.132.1.12"
 
+  ecdh.P256.GenerateKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P256.NewPrivateKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P256.NewPublicKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
   ecdh.P384:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "384"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P384.GenerateKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "384"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P384.NewPrivateKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "384"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P384.NewPublicKey:
     canonical: ECDH
     primitive: key-agree
     parameter_set: "384"
@@ -207,7 +255,55 @@ functions:
     quantum_status: broken-by-shor
     oid: "1.3.132.1.12"
 
+  ecdh.P521.GenerateKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "521"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P521.NewPrivateKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "521"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  ecdh.P521.NewPublicKey:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: "521"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
   ecdh.X25519:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  ecdh.X25519.GenerateKey:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  ecdh.X25519.NewPrivateKey:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+  ecdh.X25519.NewPublicKey:
     canonical: X25519
     primitive: key-agree
     parameter_set: "255"
@@ -545,3 +641,246 @@ functions:
     mode: null
     quantum_status: weakened-by-grover
     oid: null
+
+# -----------------------------------------------------------------------------
+# Functions whose argument specifies an algorithm or signature family
+# -----------------------------------------------------------------------------
+algorithm_arg_functions:
+  signature.New:
+    arg_index: 0
+  cipher.New:
+    arg_index: 0
+  crypto.New:
+    arg_index: 0
+
+# -----------------------------------------------------------------------------
+# Algorithm lookup table for resolving algorithm arguments to canonical assets
+# -----------------------------------------------------------------------------
+algorithms:
+  RSA:
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSASSA-PKCS1V15:
+    canonical: RSASSA-PKCS1v15
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  RSASSA-PSS:
+    canonical: RSASSA-PSS
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.10"
+
+  SHA256-RSA:
+    canonical: RSASSA-PKCS1v15
+    primitive: signature
+    parameter_set: "256"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.11"
+
+  SHA1-RSA:
+    canonical: RSASSA-PKCS1v15
+    primitive: signature
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.5"
+
+  ECDSA:
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
+
+  ECDH:
+    canonical: ECDH
+    primitive: key-agree
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.132.1.12"
+
+  DH:
+    canonical: DH
+    primitive: key-agree
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.3.1"
+
+  DSA:
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  AES:
+    canonical: AES
+    primitive: block-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1"
+
+  AES-256-GCM:
+    canonical: AES
+    primitive: ae
+    parameter_set: "256"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1.46"
+
+  AES-128-GCM:
+    canonical: AES
+    primitive: ae
+    parameter_set: "128"
+    mode: gcm
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.1.6"
+
+  3DES:
+    canonical: 3DES
+    primitive: block-cipher
+    parameter_set: "112"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.7"
+
+  DES:
+    canonical: DES
+    primitive: block-cipher
+    parameter_set: "56"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.7"
+
+  RC4:
+    canonical: RC4
+    primitive: stream-cipher
+    parameter_set: null
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.3.4"
+
+  MD5:
+    canonical: MD5
+    primitive: hash
+    parameter_set: "128"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.2.840.113549.2.5"
+
+  SHA-1:
+    canonical: SHA-1
+    primitive: hash
+    parameter_set: "160"
+    mode: null
+    quantum_status: broken-classically
+    oid: "1.3.14.3.2.26"
+
+  SHA-256:
+    canonical: SHA-256
+    primitive: hash
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.1"
+
+  SHA-384:
+    canonical: SHA-384
+    primitive: hash
+    parameter_set: "384"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.2"
+
+  SHA-512:
+    canonical: SHA-512
+    primitive: hash
+    parameter_set: "512"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: "2.16.840.1.101.3.4.2.3"
+
+  CHACHA20:
+    canonical: ChaCha20
+    primitive: stream-cipher
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  CHACHA20-POLY1305:
+    canonical: ChaCha20-Poly1305
+    primitive: ae
+    parameter_set: "256"
+    mode: null
+    quantum_status: weakened-by-grover
+    oid: null
+
+  ED25519:
+    canonical: Ed25519
+    primitive: signature
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.112"
+
+  X25519:
+    canonical: X25519
+    primitive: key-agree
+    parameter_set: "255"
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.3.101.110"
+
+
+# -----------------------------------------------------------------------------
+# Standalone string literal algorithm references (CRYPTO_REFERENCE finding type)
+#
+# A string literal that merely LOOKS like an algorithm name — e.g. a map
+# value, a var/const initializer, or a return value — never passed as an
+# argument to any recognized crypto function call anywhere in the file — is a
+# reference to that name, not an observed crypto operation. Same schema and
+# same rationale as rules/c_openssl.yaml's crypto_references section.
+# -----------------------------------------------------------------------------
+crypto_references:
+
+  "RSA":
+    canonical: RSA
+    primitive: pke
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.113549.1.1.1"
+
+  "DSA":
+    canonical: DSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10040.4.1"
+
+  "ECDSA":
+    canonical: ECDSA
+    primitive: signature
+    parameter_set: null
+    mode: null
+    quantum_status: broken-by-shor
+    oid: "1.2.840.10045.4.3.2"
