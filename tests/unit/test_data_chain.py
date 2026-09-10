@@ -17,12 +17,16 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from hash_patch.cli import run_scan
 from hash_patch.model.assets import CryptoAsset
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTDATA_JAVA_DATA_CHAIN_DIR = REPO_ROOT / "testdata" / "java" / "data_chain"
-CBOM_CRYPTO_TEST_DIR = REPO_ROOT.parent / "cbom_crypto_test"
+CBOM_CRYPTO_TEST_DIR = REPO_ROOT / "testdata" / "java" / "cbom_crypto_test"
+if not CBOM_CRYPTO_TEST_DIR.is_dir():
+    CBOM_CRYPTO_TEST_DIR = REPO_ROOT.parent / "cbom_crypto_test"
 
 
 def _asset_at_line(assets: list[CryptoAsset], locator_suffix: str, line: int) -> CryptoAsset | None:
@@ -162,7 +166,8 @@ def test_cascade_ciphertext_chain_edge_type() -> None:
     aesCipher, and aesCipher's output is passed to chaChaCipher. Both edges
     must carry chainType == "ciphertext".
     """
-    assert CBOM_CRYPTO_TEST_DIR.is_dir(), f"{CBOM_CRYPTO_TEST_DIR} does not exist"
+    if not CBOM_CRYPTO_TEST_DIR.is_dir():
+        pytest.skip(f"{CBOM_CRYPTO_TEST_DIR} does not exist")
     result = run_scan(CBOM_CRYPTO_TEST_DIR)
 
     rsa_cipher = _asset_at_line(result.assets, "Main.java", 19)
@@ -200,7 +205,8 @@ def test_cascade_key_material_binding_edge_type() -> None:
     chainType == "key_material", and pure-keygen assets should have a
     uniform chainType == "key_material".
     """
-    assert CBOM_CRYPTO_TEST_DIR.is_dir(), f"{CBOM_CRYPTO_TEST_DIR} does not exist"
+    if not CBOM_CRYPTO_TEST_DIR.is_dir():
+        pytest.skip(f"{CBOM_CRYPTO_TEST_DIR} does not exist")
     result = run_scan(CBOM_CRYPTO_TEST_DIR)
 
     rsa_kpg = _asset_at_line(result.assets, "Main.java", 15)

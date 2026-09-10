@@ -34,6 +34,11 @@ GROUND_TRUTH_FILE = Path("D:/CBOM-SIH/hash_patch_entangled_crypto_ground_truth_v
 if not GROUND_TRUTH_FILE.is_file():
     GROUND_TRUTH_FILE = REPO_ROOT.parent / "hash_patch_entangled_crypto_ground_truth_v2" / "ground_truth.json"
 
+pytestmark = pytest.mark.skipif(
+    not CORPUS_DIR.is_dir() or not GROUND_TRUTH_FILE.is_file(),
+    reason="hash_patch_entangled_crypto_corpus_v2 or ground truth not found in checkout",
+)
+
 
 @pytest.fixture(scope="module")
 def ground_truth() -> dict:
