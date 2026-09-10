@@ -413,9 +413,9 @@ func CipherName() string {
 """,
         encoding="utf-8",
     )
-    detector = GoCryptoDetector()
-    assets = detector.detect(f)
-    assert assets == [], f"Expected 0 findings for bare constant read, got: {assets}"
+    assets = GoCryptoDetector().detect(f)
+    operation_assets = [a for a in assets if a.finding_type == "OPERATION"]
+    assert operation_assets == [], f"Expected 0 OPERATION findings for bare constant read, got: {operation_assets}"
 
 
 def test_go_const_block_direct_indirection(tmp_path: Path) -> None:

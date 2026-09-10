@@ -512,6 +512,12 @@ class GoCryptoDetector(Detector):
                 detector_version=_DETECTOR_VERSION,
             )
 
+            ref_properties = {"finding_type": "CRYPTO_REFERENCE"}
+            if "matched_text" in rule:
+                ref_properties["matched_text"] = rule["matched_text"]
+            if "matched_name" in rule:
+                ref_properties["matched_name"] = rule["matched_name"]
+
             ref_asset = CryptoAsset.create(
                 asset_type=ref_asset_type,
                 name=rule["canonical"],
@@ -522,7 +528,7 @@ class GoCryptoDetector(Detector):
                 oid=rule.get("oid"),
                 confidence="confirmed",
                 finding_type="CRYPTO_REFERENCE",
-                properties={"finding_type": "CRYPTO_REFERENCE"},
+                properties=ref_properties,
                 extra_id_seed="CRYPTO_REFERENCE",
                 evidence=[ev],
             )

@@ -106,7 +106,10 @@ def match_algorithm_string(candidate: str) -> dict[str, Any] | None:
         lowered = cleaned.lower()
         if lowered in ("key", "hash", "mac", "sign", "verify", "digest"):
             return None
-        return rule
+        res = dict(rule)
+        if res.get("mode"):
+            res["mode"] = res["mode"].lower()
+        return res
 
     up = cleaned.upper()
 

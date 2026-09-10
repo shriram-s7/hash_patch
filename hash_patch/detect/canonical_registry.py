@@ -80,6 +80,34 @@ def _infer_tls_quantum_status(suite_name: str) -> str:
     return "weakened-by-grover"
 
 
+_KNOWN_CRYPTO_MODES = frozenset({
+    "CBC", "CFB", "CTR", "CTS", "ECB", "GCM", "OFB", "CCM", "XTS", "OCB",
+    "KW", "KWP", "WRAP", "EDE", "EDE3", "BC", "PCBC",
+})
+
+_KNOWN_CRYPTO_QUALIFIERS = frozenset({
+    "OAEP", "PSS", "PKCS1", "PKCS1V15", "NOPADDING", "RAW", "POLY1305",
+    "HMAC", "CMAC", "GMAC", "SHA1", "SHA224", "SHA256", "SHA384", "SHA512",
+    "MD5", "RIPEMD160", "P256", "P384", "P521", "SECP256R1", "SECP256K1",
+    "BRAINPOOL", "CURVE25519", "ED25519",
+})
+
+_CRYPTO_PARAM_PATTERN = re.compile(r"^\d+(?:BIT|BITS|K|B)?$", re.IGNORECASE)
+
+
+def _is_crypto_param(token: str) -> bool:
+    return bool(_CRYPTO_PARAM_PATTERN.match(token))
+
+
+def _is_valid_suffix_token(tok: str, upper_registry: dict[str, Any]) -> bool:
+    return (
+        _is_crypto_param(tok)
+        or tok in _KNOWN_CRYPTO_MODES
+        or tok in _KNOWN_CRYPTO_QUALIFIERS
+        or tok in upper_registry
+    )
+
+
 def lookup_canonical_algorithm(name: str | None) -> dict[str, Any] | None:
     """Look up an algorithm by exact name, normalized uppercase name, or TLS pattern.
 
@@ -117,5 +145,52 @@ def lookup_canonical_algorithm(name: str | None) -> dict[str, Any] | None:
             "quantum_status": _infer_tls_quantum_status(up),
             "oid": None,
         }
+
+    # 4. Compound-form tokenization fallback (e.g. "AES-256-GCM", "RSA-2048", "RSA-4096")
+    if "-" in up or "_" in up:
+        parts = [p for p in re.split(r"[-_]", up) if p]
+        if len(parts) >= 2:
+            prefix_key: str | None = None
+            suffix_parts: list[str] = []
+
+            # Check if first token matches a canonical base algorithm
+            if parts[0] in _UPPER_REGISTRY:
+                prefix_key = parts[0]
+                suffix_parts = parts[1:]
+            else:
+                # Check multi-token prefix (e.g. "SHA-256" in "SHA-256-RAW")
+                for k in range(2, len(parts)):
+                    c_prefix = "-".join(parts[:k])
+                    if c_prefix in _UPPER_REGISTRY:
+                        prefix_key = c_prefix
+                        suffix_parts = parts[k:]
+                        break
+                    c_prefix_u = "_".join(parts[:k])
+                    if c_prefix_u in _UPPER_REGISTRY:
+                        prefix_key = c_prefix_u
+                        suffix_parts = parts[k:]
+                        break
+
+            if prefix_key is not None and all(
+                _is_valid_suffix_token(tok, _UPPER_REGISTRY) for tok in suffix_parts
+            ):
+                base_rule = dict(_UPPER_REGISTRY[prefix_key])
+                param_set = base_rule.get("parameter_set")
+                mode = base_rule.get("mode")
+
+                for tok in suffix_parts:
+                    if param_set is None and re.match(r"^\d+$", tok):
+                        param_set = tok
+                    elif tok in _KNOWN_CRYPTO_MODES:
+                        mode = tok if mode is None else f"{mode}-{tok}"
+
+                return {
+                    **base_rule,
+                    "canonical": base_rule.get("canonical", prefix_key),
+                    "parameter_set": param_set,
+                    "mode": mode,
+                    "matched_text": cleaned,
+                    "matched_name": cleaned,
+                }
 
     return None

@@ -54,6 +54,15 @@ def test_scan_nonexistent_path_returns_400(client: TestClient) -> None:
     assert "does not exist" in body["detail"].lower()
 
 
+def test_scan_path_with_forward_slashes_and_quotes(client: TestClient) -> None:
+    target_dir = REPO_ROOT / "testdata" / "python"
+    slash_path = f'"{str(target_dir).replace(chr(92), "/")}"'
+    response = client.post("/api/scan", json={"path": slash_path})
+    assert response.status_code == 200
+    body = response.json()
+    assert "bomFormat" in body
+
+
 def test_scan_file_path_returns_400(client: TestClient) -> None:
     file_path = REPO_ROOT / "pyproject.toml"
     response = client.post("/api/scan", json={"path": str(file_path)})

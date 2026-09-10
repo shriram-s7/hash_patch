@@ -44,3 +44,4 @@ ui_fixtures/
 # Scratch & temporary artifacts
 scratch/
 corpus_scan_output.json
+test3/

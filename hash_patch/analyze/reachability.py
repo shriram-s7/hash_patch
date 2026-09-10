@@ -227,6 +227,20 @@ def build_reachability_contexts(scanned_files: Sequence[Path]) -> dict[str, Reac
     return contexts
 
 
+def classify_evidence_sites(
+    asset: CryptoAsset, contexts: dict[str, ReachabilityContext]
+) -> dict[str, Reachability]:
+    """Return a mapping of 'locator:line' -> Reachability for each evidence
+    occurrence of the asset.
+    """
+    result: dict[str, Reachability] = {}
+    for ev in asset.evidence:
+        label = _classify_evidence(ev, contexts)
+        if label is not None:
+            result[f"{ev.locator}:{ev.line}"] = label
+    return result
+
+
 def apply_reachability_with_contexts(
     assets: list[CryptoAsset], contexts: dict[str, ReachabilityContext]
 ) -> None:
@@ -237,15 +251,22 @@ def apply_reachability_with_contexts(
     for asset in assets:
         best = Reachability.INERT
         has_vote = False
+        ev_reach: dict[str, Reachability] = {}
         for ev in asset.evidence:
             label = _classify_evidence(ev, contexts)
             if label is None:
                 continue
             has_vote = True
+            ev_key = f"{ev.locator}:{ev.line}"
+            ev_reach[ev_key] = label
+            asset.properties[f"evidenceReachability.{ev_key}"] = label.value
             if _RANK[label] > _RANK[best]:
                 best = label
         if has_vote:
             asset.reachability = best
+            distinct_labels = set(ev_reach.values())
+            if len(distinct_labels) > 1:
+                asset.properties["mixedReachability"] = "true"
 
 
 def apply_reachability(assets: list[CryptoAsset], scanned_files: Sequence[Path]) -> None:

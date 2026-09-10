@@ -149,16 +149,19 @@ def scan_directory(req: ScanRequest) -> dict[str, Any]:
     if not raw_path:
         raise HTTPException(status_code=400, detail="Path cannot be empty.")
 
-    target_path = Path(raw_path)
-    if not target_path.exists():
-        raise HTTPException(status_code=400, detail=f"Path does not exist: {raw_path}")
+    cleaned_path = raw_path.strip("\"'")
+    normalized_path = os.path.normpath(cleaned_path)
+    if not os.path.exists(normalized_path):
+        raise HTTPException(status_code=400, detail=f"Path does not exist: {normalized_path}")
+
+    target_path = Path(normalized_path)
     from hash_patch.detect.container.formats import probe_container_target
 
     if target_path.is_file():
         if not probe_container_target(target_path):
-            raise HTTPException(status_code=400, detail=f"Path is not a directory: {raw_path}")
+            raise HTTPException(status_code=400, detail=f"Path is not a directory: {normalized_path}")
     elif not target_path.is_dir():
-        raise HTTPException(status_code=400, detail=f"Path is not a directory: {raw_path}")
+        raise HTTPException(status_code=400, detail=f"Path is not a directory: {normalized_path}")
 
     try:
         result = run_scan(target_path)

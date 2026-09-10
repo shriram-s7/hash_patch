@@ -5,7 +5,7 @@ from collections import Counter
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 
@@ -17,8 +17,12 @@ from hash_patch.analyze.blast_radius import (
     primitive_for_replacement,
     run_blast_radius,
 )
-from hash_patch.analyze.call_relations import compute_call_relations
+from hash_patch.analyze.call_relations import (
+    compute_call_graph_edges,
+    compute_call_relations,
+)
 from hash_patch.analyze.cbom_reader import read_candidates, read_reference_year
+from hash_patch.analyze.data_chain import compute_data_chains
 from hash_patch.analyze.optimizer import run_optimizer
 from hash_patch.analyze.reachability import (
     apply_reachability_with_contexts,
@@ -128,6 +132,36 @@ def _attach_call_relation_properties(
             continue
         asset.properties["callRelation"] = json.dumps(
             {"callers": rel["callers"], "callees": rel["callees"]},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
+
+def _attach_data_chain_properties(
+    result: ScanResult, chains: dict[str, dict[str, Any]]
+) -> None:
+    """Mirror hash_patch/analyze/data_chain.py's per-asset chainSources/
+    chainTargets ids and edges onto that asset's `properties` bag, the same pattern
+    `_attach_call_relation_properties` uses — deliberately a SEPARATE
+    property key (`dataChain`, not `callRelation`) so the two relationship
+    types stay structurally distinguishable downstream in the CBOM and in
+    the UI (hash_patch-ui/src/graphEdges.ts).
+    """
+    by_id = {asset.id: asset for asset in result.assets}
+    for asset_id, rel in chains.items():
+        asset = by_id.get(asset_id)
+        if asset is None:
+            continue
+        prop_payload: dict[str, Any] = {
+            "chainSources": rel.get("chainSources", []),
+            "chainTargets": rel.get("chainTargets", []),
+        }
+        if "edges" in rel:
+            prop_payload["edges"] = rel["edges"]
+        if "chainType" in rel:
+            prop_payload["chainType"] = rel["chainType"]
+        asset.properties["dataChain"] = json.dumps(
+            prop_payload,
             sort_keys=True,
             separators=(",", ":"),
         )
@@ -334,6 +368,15 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     # hash_patch/analyze/call_relations.py.
     call_relations = compute_call_relations(result.assets, reachability_contexts)
     _attach_call_relation_properties(result, call_relations)
+
+    target_root = path if path.is_dir() else path.parent
+    result.call_graph_edges = compute_call_graph_edges(reachability_contexts, target_root=target_root)
+
+    # Same-function data-flow chains (Java only) — a relationship type
+    # explicitly distinct from the cross-function call-graph edges above;
+    # see hash_patch/analyze/data_chain.py.
+    data_chains = compute_data_chains(result.assets, reachability_contexts)
+    _attach_data_chain_properties(result, data_chains)
 
     # Pillar 3 (Blast Radius): only does anything when the scanned file set
     # contains C and/or .sql files — see hash_patch/analyze/blast_radius.py.

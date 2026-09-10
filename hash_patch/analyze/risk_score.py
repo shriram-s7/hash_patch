@@ -200,3 +200,25 @@ def estimate_cost_days(
         days = DEFAULT_COST_DAYS_NO_BLAST_RADIUS + CALL_SITE_COST_INCREMENT_DAYS * extra_sites
         return min(days, MAX_CALL_SITE_COST_DAYS), "call_sites"
     return DEFAULT_COST_DAYS_NO_BLAST_RADIUS, "default"
+
+
+def estimate_binary_artefact_cost_days() -> tuple[float, str]:
+    """Cost estimate for a COMPILED_CRYPTO_ARTEFACT finding (binary/container
+    symbol, linked-library, embedded-string, or embedded-certificate
+    evidence -- hash_patch/detect/binary/detector.py).
+
+    `evidence_occurrence_count` for this finding type counts distinct
+    byte-offset observations of the SAME static artefact (e.g. two places
+    the same embedded algorithm string appears), not distinct source call
+    sites -- there is no source line, no surrounding test to touch, no
+    "one more place a developer has to edit" the way a real call site is.
+    Reusing `estimate_cost_days`'s call-sites formula against that count
+    would treat "the same string was seen a second time" as "twice as
+    expensive to migrate", which is meaningless. So this finding type
+    always gets the flat, documented default instead -- tagged with its own
+    `cost_source` ("binary_artefact_default") rather than plain "default"
+    so it stays honestly distinguishable in the CBOM/optimizer output from
+    a source-code finding that fell back to the same number for a different
+    reason (see this module's docstring's "Cost estimation" section).
+    """
+    return DEFAULT_COST_DAYS_NO_BLAST_RADIUS, "binary_artefact_default"

@@ -28,6 +28,7 @@ from typing import Any
 
 from hash_patch.analyze.risk_score import (
     compute_risk_score,
+    estimate_binary_artefact_cost_days,
     estimate_cost_days,
     estimate_shelf_life_magnitude,
     is_migration_candidate,
@@ -166,7 +167,10 @@ def read_candidates(doc: dict[str, Any]) -> tuple[list[OptimizerCandidate], int]
         if component.get("type") != "cryptographic-asset":
             continue
         props = _property_map(component)
-        # Only a real, observed crypto OPERATION is a migration candidate.
+        # Only a real, observed crypto OPERATION -- or a COMPILED_CRYPTO_
+        # ARTEFACT (a binary/container symbol, linked-library, embedded-
+        # string, or embedded-certificate finding; see
+        # hash_patch/detect/binary/detector.py) -- is a migration candidate.
         # `hash_patch:findingType` is only ever emitted for a NON-default
         # finding_type (see emit/cyclonedx.py::_asset_properties), so its
         # absence means "OPERATION". Anything else — CRYPTO_REFERENCE (a
@@ -181,7 +185,8 @@ def read_candidates(doc: dict[str, Any]) -> tuple[list[OptimizerCandidate], int]
         # finding_type is excluded by default until deliberately opted in,
         # rather than silently becoming a migration candidate.
         finding_type = _get_prop(props, "findingType")
-        if finding_type is not None and finding_type != "OPERATION":
+        is_binary_artefact = finding_type == "COMPILED_CRYPTO_ARTEFACT"
+        if finding_type is not None and finding_type != "OPERATION" and not is_binary_artefact:
             excluded += 1
             continue
         quantum_status = _parse_quantum_status(_get_prop(props, "quantumStatus"))
@@ -192,9 +197,16 @@ def read_candidates(doc: dict[str, Any]) -> tuple[list[OptimizerCandidate], int]
         reachability = _parse_reachability(_get_prop(props, "reachability"))
         shelf_life_years, shelf_life_category = _shelf_life_from_properties(props)
         magnitude, is_default = estimate_shelf_life_magnitude(shelf_life_years)
-        blast_radius_days = _blast_radius_effort_days(props)
-        occurrence_count = len(component.get("evidence", {}).get("occurrences") or [])
-        cost_days, cost_source = estimate_cost_days(blast_radius_days, occurrence_count)
+        if is_binary_artefact:
+            # No source call site exists for binary/container evidence, so
+            # the occurrence-count-based "call_sites" cost formula has no
+            # meaning here -- see estimate_binary_artefact_cost_days's
+            # docstring.
+            cost_days, cost_source = estimate_binary_artefact_cost_days()
+        else:
+            blast_radius_days = _blast_radius_effort_days(props)
+            occurrence_count = len(component.get("evidence", {}).get("occurrences") or [])
+            cost_days, cost_source = estimate_cost_days(blast_radius_days, occurrence_count)
         risk = compute_risk_score(reachability, shelf_life_years)
 
         candidates.append(

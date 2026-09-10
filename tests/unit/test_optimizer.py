@@ -271,13 +271,18 @@ def test_read_candidates_excludes_non_broken_by_shor() -> None:
     candidates, excluded = read_candidates(doc)
 
     # A CRYPTO_REFERENCE (a string literal that merely looks like an
-    # algorithm name, never passed to a crypto call) is never a migration
-    # candidate even when its quantum_status happens to be broken-by-shor —
-    # there is no real crypto operation behind it to migrate.
+    # algorithm name, never passed to a crypto call) or a CERTIFICATE is
+    # never a migration candidate even when its quantum_status happens to be
+    # broken-by-shor — there is no real crypto operation (source call site
+    # OR binary artefact) behind it to migrate. OPERATION and
+    # COMPILED_CRYPTO_ARTEFACT (binary/container symbol evidence — see
+    # test_mixed_fixture_migration_candidates in
+    # tests/golden/test_container_crypto_golden.py) both DO qualify.
     shor_count = sum(
         1
         for a in result.assets
-        if a.quantum_status.value == "broken-by-shor" and a.finding_type == "OPERATION"
+        if a.quantum_status.value == "broken-by-shor"
+        and a.finding_type in ("OPERATION", "COMPILED_CRYPTO_ARTEFACT")
     )
     assert len(candidates) == shor_count
     assert excluded == len(result.assets) - shor_count

@@ -407,6 +407,10 @@ class COpenSSLDetector(Detector):
             oid = rule.get("oid")
             confidence = "confirmed"
             properties = {"finding_type": "CRYPTO_REFERENCE"}
+            if "matched_text" in rule:
+                properties["matched_text"] = rule["matched_text"]
+            if "matched_name" in rule:
+                properties["matched_name"] = rule["matched_name"]
             extra_id_seed = "CRYPTO_REFERENCE"
 
             line = pos_node.start_point.row + 1

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from hash_patch.analyze.cbom_reader import read_candidates
 from hash_patch.cli import run_scan
 from hash_patch.detect.container import scan_container_image
 from hash_patch.emit.cyclonedx import render_cbom_json, to_cyclonedx
@@ -142,3 +143,31 @@ class TestContainerCryptoGolden:
         assert "/usr/bin/server" in cbom_json
         assert "hash_patch:property.effectiveFs" in cbom_json
         assert "hash_patch:reachability" in cbom_json
+
+    def test_mixed_fixture_migration_candidates(self) -> None:
+        """Regression guard: RSA/ECDSA (COMPILED_CRYPTO_ARTEFACT, broken-by-
+        shor) must appear as Pillar 5 migration candidates with the
+        binary_artefact_default cost fallback -- not silently excluded the
+        way a CERTIFICATE/CRYPTO_REFERENCE finding correctly is. Before this
+        fallback existed, real Shor-broken findings from binary/container
+        scans never appeared in any migration plan at all.
+        """
+        target = FIXTURES_DIR / "mixed" / "container.tar"
+        scan_res = run_scan(target)
+        doc = to_cyclonedx(scan_res)
+
+        candidates, excluded_count = read_candidates(doc)
+
+        candidates_by_name = {c.name: c for c in candidates}
+        for algo in ("RSA", "ECDSA"):
+            assert algo in candidates_by_name, f"{algo} missing from migration candidates"
+            candidate = candidates_by_name[algo]
+            assert candidate.cost_source == "binary_artefact_default"
+            assert candidate.cost_days == 0.5
+            assert candidate.risk_score > 0
+
+        # Every OTHER component in this fixture (AES/SHA-256 weakened-by-
+        # grover, Kyber quantum-safe, the AWS KMS ops, the embedded
+        # certificate, OpenSSL/libcrypto linkage, ...) is correctly still
+        # excluded -- this fallback is additive, not a blanket bypass.
+        assert excluded_count == len(scan_res.assets) - 2

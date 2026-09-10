@@ -76,7 +76,7 @@ def _map_mode(mode: str | None) -> tuple[CryptoMode | None, str | None]:
     return None, mode
 
 
-def _evidence_to_occurrence(ev: Evidence) -> Occurrence:
+def _evidence_to_occurrence(ev: Evidence, reachability: str | None = None) -> Occurrence:
     """Map an Evidence entry onto a CycloneDX occurrence.
 
     location/line/offset have direct CycloneDX homes. `symbol` has no
@@ -93,6 +93,8 @@ def _evidence_to_occurrence(ev: Evidence) -> Occurrence:
         "column": ev.column,
         "snippet": ev.snippet,
     }
+    if reachability is not None:
+        extra["reachability"] = reachability
     extra = {k: v for k, v in extra.items() if v is not None}
     return Occurrence(
         location=ev.locator,
@@ -177,7 +179,12 @@ def _asset_to_component(asset: CryptoAsset) -> Component:
         oid=asset.oid,
     )
 
-    occurrences = [_evidence_to_occurrence(ev) for ev in asset.evidence]
+    occurrences = [
+        _evidence_to_occurrence(
+            ev, reachability=asset.properties.get(f"evidenceReachability.{ev.locator}:{ev.line}")
+        )
+        for ev in asset.evidence
+    ]
     properties = _asset_properties(asset, unmapped_functions, unmapped_mode)
 
     return Component(
@@ -292,6 +299,14 @@ def to_cyclonedx(result: ScanResult) -> dict[str, Any]:
             Property(
                 name=f"hash_patch:contradiction.{divergence.id}",
                 value=json.dumps(val_data, sort_keys=True, separators=(",", ":")),
+            )
+        )
+
+    if getattr(result, "call_graph_edges", None):
+        meta_props.append(
+            Property(
+                name="hash_patch:callGraphEdges",
+                value=json.dumps(result.call_graph_edges, sort_keys=True, separators=(",", ":")),
             )
         )
 

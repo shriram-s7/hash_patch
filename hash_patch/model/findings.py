@@ -46,6 +46,7 @@ class ScanResult(BaseModel):
     # existing contradiction count/list picks these up without needing a
     # separate code path.
     algorithm_divergence_findings: list[AlgorithmDivergenceFinding] = Field(default_factory=list)
+    call_graph_edges: list[dict[str, str]] = Field(default_factory=list)
 
     def add_asset(self, asset: CryptoAsset) -> None:
         """Add an asset, merging into an existing one with the same id.

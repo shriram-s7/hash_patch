@@ -360,6 +360,10 @@ def _try_collect_call(
             })
         return
 
+    if (obj_id == "hmac" or obj_id == "secrets") and attr_id == "compare_digest":
+        # Timing-safe string/buffer comparison utility, not a cryptographic operation.
+        return
+
     if obj_id == "hmac" and attr_id == "new":
         digestmod_arg = _positional_or_keyword_arg(call_node, index=2, keyword="digestmod")
         matched = False
@@ -703,6 +707,12 @@ class PythonCryptoDetector(Detector):
                 detector_version=_DETECTOR_VERSION,
             )
 
+            ref_properties = {"finding_type": "CRYPTO_REFERENCE"}
+            if "matched_text" in rule:
+                ref_properties["matched_text"] = rule["matched_text"]
+            if "matched_name" in rule:
+                ref_properties["matched_name"] = rule["matched_name"]
+
             ref_asset = CryptoAsset.create(
                 asset_type=ref_asset_type,
                 name=rule["canonical"],
@@ -713,7 +723,7 @@ class PythonCryptoDetector(Detector):
                 oid=rule.get("oid"),
                 confidence="confirmed",
                 finding_type="CRYPTO_REFERENCE",
-                properties={"finding_type": "CRYPTO_REFERENCE"},
+                properties=ref_properties,
                 extra_id_seed="CRYPTO_REFERENCE",
                 evidence=[evidence],
             )
@@ -726,6 +736,25 @@ class PythonCryptoDetector(Detector):
                     existing.evidence.append(evidence)
             else:
                 local[ref_id] = ref_asset
+
+        # Deduplication pass: if a call site produced both a specific HMAC-<digest>
+        # and a generic HMAC, suppress the generic HMAC at that site.
+        specific_hmac_locs = {
+            (ev.locator, ev.line)
+            for asset in local.values()
+            if asset.name.startswith("HMAC-")
+            for ev in asset.evidence
+        }
+        if specific_hmac_locs:
+            for asset_id in list(local.keys()):
+                asset = local[asset_id]
+                if asset.name == "HMAC":
+                    asset.evidence = [
+                        ev for ev in asset.evidence
+                        if (ev.locator, ev.line) not in specific_hmac_locs
+                    ]
+                    if not asset.evidence:
+                        del local[asset_id]
 
         for asset in local.values():
             asset.evidence.sort(key=lambda e: e.key())
@@ -759,7 +788,9 @@ class PythonCryptoDetector(Detector):
         # Pattern C: Fallback to shared canonical registry
         from hash_patch.detect.canonical_registry import lookup_canonical_algorithm
 
-        c_rule = lookup_canonical_algorithm(attr) or lookup_canonical_algorithm(obj)
+        c_rule = lookup_canonical_algorithm(attr)
+        if c_rule is None and attr not in {"compare_digest"}:
+            c_rule = lookup_canonical_algorithm(obj)
         if c_rule is not None:
             return c_rule
 
