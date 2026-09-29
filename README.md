@@ -6,7 +6,7 @@
 [![CBOM](https://img.shields.io/badge/CBOM-CycloneDX%201.6-purple?style=flat-square)](https://cyclonedx.org)
 [![Offline](https://img.shields.io/badge/network-100%25%20air--gapped%20ready-success?style=flat-square)](https://github.com/shriram-s7/hash_patch)
 
-**Hash Patch** is a post-quantum cryptographic (PQC) discovery, risk assessment, and migration platform developed for Smart India Hackathon 2026 (Problem Statement 26164 - NTRO).
+**Hash Patch** is a post-quantum cryptographic (PQC) discovery, risk assessment, and migration platform
 
 It scans polyglot codebases, configuration files, and container manifests completely offline to produce deterministic **CycloneDX 1.6 Cryptography Bill of Materials (CBOM)**, calculate call-graph reachability, trace cryptographic data chains, evaluate data shelf-life (Mosca Law / DPDP Act), and synthesize migration roadmaps.
 
