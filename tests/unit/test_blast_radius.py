@@ -504,3 +504,40 @@ def test_real_world_ed25519_signature_bytearray_produces_a_finding() -> None:
     assert len(matches) == 1, f"expected exactly one wire_signature finding, got: {matches}"
     assert matches[0].overflow_bytes > 0
     assert matches[0].size_constraint.declared_bytes == 64
+
+
+# ===========================================================================
+# Go buffer detector (hash_patch/detect/blast_radius/go_buffers.py)
+# ===========================================================================
+
+
+def test_go_blast_radius_fixture_overflows_into_ml_dsa() -> None:
+    """Exercises testdata/go/blast_radius_examples.go:
+    A 64-byte signature buffer alongside Ed25519 signing overflows by 3245 bytes
+    when replaced by ML-DSA-65 (3309 bytes).
+    """
+    from hash_patch.detect.blast_radius.go_buffers import GoBufferBlastRadiusDetector
+    from hash_patch.detect.go import GoCryptoDetector
+
+    go_fixture = REPO_ROOT / "testdata" / "go" / "blast_radius_examples.go"
+    assets = GoCryptoDetector().detect(go_fixture)
+    constraints = GoBufferBlastRadiusDetector().detect(go_fixture)
+
+    sig_constraints = [c for c in constraints if c.name == "signature"]
+    assert len(sig_constraints) == 1
+    assert sig_constraints[0].declared_bytes == 64
+    assert sig_constraints[0].inferred_field == "signature"
+
+    findings = compute_blast_radius(assets, constraints)
+    sig_findings = [f for f in findings if f.size_constraint.name == "signature"]
+    assert len(sig_findings) == 1
+    assert sig_findings[0].pqc_replacement_name == "ML-DSA-65"
+    assert sig_findings[0].pqc_bytes == 3309
+    assert sig_findings[0].size_constraint.declared_bytes == 64
+    assert sig_findings[0].overflow_bytes == 3245
+    assert sig_findings[0].severity == "high"
+
+    # Generous buffer must NOT fire
+    large_findings = [f for f in findings if f.size_constraint.name == "large_signature_buf"]
+    assert len(large_findings) == 0
+

@@ -516,6 +516,12 @@ def scan(
     typer.echo(blast_radius_summary)
     typer.echo(shelf_life_summary)
     typer.echo(contradictions_summary)
+    for c in result.contradiction_findings:
+        safe_desc = c.description.replace("\u2014", "--")
+        typer.echo(f"  * [{c.severity}] {safe_desc}")
+    for d in result.algorithm_divergence_findings:
+        safe_desc = d.description.replace("\u2014", "--")
+        typer.echo(f"  * [{d.severity}] {safe_desc}")
     if benchmark_report is not None:
         meas_count = sum(1 for r in recs if r.confidence == "measured")
         typer.echo(f"{len(recs)} PQC recommendations generated ({meas_count} measured)")
