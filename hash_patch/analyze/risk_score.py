@@ -76,7 +76,7 @@ optimiser's whole reason to differ from a naive risk-only ordering) a
 no-op: see docs/OPTIMISER.md. Instead, the second-best real complexity
 signal already sitting in every emitted CBOM is used: the NUMBER OF
 EVIDENCE OCCURRENCES (call sites) hash_patch's own evidence rule already
-requires for every asset (CLAUDE.md hard constraint #3) — an algorithm
+requires for every asset (CONSTITUTION.md hard constraint #3) — an algorithm
 called from five places in the codebase genuinely costs more engineer-days
 to migrate than the same algorithm called from exactly one place (more
 call sites to update, more surrounding tests to touch, more chance of a

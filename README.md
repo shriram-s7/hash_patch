@@ -10,7 +10,7 @@
 
 Quantum computers running Shor's algorithm would break RSA and elliptic-curve cryptography, and data stolen today can be decrypted later ("harvest now, decrypt later"). Organisations first need an inventory of where cryptography is used. Hash Patch builds that inventory entirely offline and ties every finding to direct evidence (file, line, column, byte offset, snippet). It was built for Smart India Hackathon 2026, problem statement 26164 (NTRO).
 
-The name (*pratyaksha*, "direct perception") is the design rule: a finding without evidence is never emitted, and anything inferred by the optional local LLM is labelled `inferred` and kept out of the confirmed inventory (see `CLAUDE.md`).
+The name (*pratyaksha*, "direct perception") is the design rule: a finding without evidence is never emitted, and anything inferred by the optional local LLM is labelled `inferred` and kept out of the confirmed inventory (see `CONSTITUTION.md`).
 
 ## Features
 

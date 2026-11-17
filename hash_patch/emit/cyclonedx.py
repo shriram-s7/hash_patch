@@ -28,14 +28,14 @@ _CRYPTO_FUNCTION_VALUES = {f.value for f in CryptoFunction}
 _CRYPTO_MODE_VALUES = {m.value for m in CryptoMode}
 
 # Every asset still needs at least one Evidence entry regardless of
-# confidence (an asset with none is refused below -- CLAUDE.md hard
+# confidence (an asset with none is refused below -- CONSTITUTION.md hard
 # constraint #3). `hash_patch:confidence` itself comes straight from
 # CryptoAsset.confidence: "confirmed" for a real detector finding, or
 # "inferred" for a name-pattern-only guess (e.g. the blast-radius db_column
 # fallback synthetic asset built in hash_patch/cli.py) that still carries
 # real evidence (it points at the file/line that suggested it) but is not a
 # direct observation of which algorithm actually produced the artefact — see
-# CLAUDE.md's "Name" section.
+# CONSTITUTION.md's "Name" section.
 
 
 def _derive_serial_number(result: ScanResult) -> UUID:
@@ -44,7 +44,7 @@ def _derive_serial_number(result: ScanResult) -> UUID:
 
     Never uuid4(): the same target + the same assets must always yield the
     same serial number, so that repeated scans of identical input are
-    byte-identical apart from the timestamp (see CLAUDE.md hard constraint
+    byte-identical apart from the timestamp (see CONSTITUTION.md hard constraint
     #2). Sorting the asset ids first makes this independent of insertion
     order.
     """
@@ -85,7 +85,7 @@ def _evidence_to_occurrence(ev: Evidence, reachability: str | None = None) -> Oc
     source_type, column and snippet have no structured field in
     occurrenceType, so they are folded into additional_context as a compact
     JSON object -- lossless, and scoped to the correct occurrence, rather
-    than flattened into unscoped component-level properties. See CLAUDE.md
+    than flattened into unscoped component-level properties. See CONSTITUTION.md
     "Output format" section.
     """
     extra = {
@@ -112,7 +112,7 @@ def _asset_properties(
     """Our extra fields that have no standard CycloneDX component-level home.
 
     All live under the hash_patch: namespace prefix, never as invented
-    top-level keys (see CLAUDE.md "Output format" section).
+    top-level keys (see CONSTITUTION.md "Output format" section).
     """
     detector_ids = sorted({ev.detector_id for ev in asset.evidence})
     detector_versions = sorted({ev.detector_version for ev in asset.evidence})
@@ -150,7 +150,7 @@ def _asset_to_component(asset: CryptoAsset) -> Component:
     if not asset.evidence:
         raise ValueError(
             f"CryptoAsset {asset.id!r} ({asset.name}) has no evidence; "
-            "refusing to emit (see CLAUDE.md hard constraint #3)"
+            "refusing to emit (see CONSTITUTION.md hard constraint #3)"
         )
 
     algorithm_properties: AlgorithmProperties | None = None
@@ -162,7 +162,7 @@ def _asset_to_component(asset: CryptoAsset) -> Component:
         # type -- our model has no certificate/protocol-specific fields
         # (subject/issuer/validity, cipher suite, ...) to populate
         # certificateProperties/protocolProperties with, so we never
-        # fabricate them for other asset types. See CLAUDE.md.
+        # fabricate them for other asset types. See CONSTITUTION.md.
         mapped_functions, unmapped_functions = _map_crypto_functions(asset.crypto_functions)
         mapped_mode, unmapped_mode = _map_mode(asset.mode)
         algorithm_properties = AlgorithmProperties(
@@ -205,7 +205,7 @@ def _sort_document_for_determinism(doc: dict[str, Any]) -> dict[str, Any]:
     properties by name, each component's evidence occurrences by
     (location, line, offset), and each cryptoFunctions list.
 
-    See CLAUDE.md "Output format" -> "Determinism".
+    See CONSTITUTION.md "Output format" -> "Determinism".
     """
     for component in doc.get("components", []):
         properties = component.get("properties")
@@ -239,7 +239,7 @@ def to_cyclonedx(result: ScanResult) -> dict[str, Any]:
     """Map a ScanResult onto a CycloneDX 1.6 BOM document (as a plain dict).
 
     metadata.timestamp is the only field allowed to vary between runs over
-    identical input (see CLAUDE.md hard constraint #2); everything else,
+    identical input (see CONSTITUTION.md hard constraint #2); everything else,
     including the BOM serial number and all list ordering, is derived
     deterministically.
     """
@@ -350,6 +350,6 @@ def render_cbom_json(doc: dict[str, Any]) -> str:
     Fixed key order (sort_keys), fixed indentation, no ASCII-escaping, and a
     trailing newline -- the single serialization path every writer (CLI,
     write_cbom, tests) must go through so output is byte-identical for
-    byte-identical documents. See CLAUDE.md "Output format" -> "Determinism".
+    byte-identical documents. See CONSTITUTION.md "Output format" -> "Determinism".
     """
     return json.dumps(doc, sort_keys=True, indent=2, ensure_ascii=False) + "\n"

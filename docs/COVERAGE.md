@@ -2,7 +2,7 @@
 
 Hash Patch's detectors are **rule-based, not heuristic**: every algorithm,
 library, and API surface they can find is explicitly listed in
-`rules/*.yaml`. This is deliberate (see CLAUDE.md's "Detection rules live in
+`rules/*.yaml`. This is deliberate (see CONSTITUTION.md's "Detection rules live in
 YAML, not Python") — it makes the tool's exact reach auditable in a way a
 fuzzy/ML detector isn't. The direct consequence is also unavoidable: **a
 library or API shape that is not listed in the relevant `rules/*.yaml` file
@@ -122,7 +122,7 @@ function/macro/string this pillar matches on.
 
 ## Why this list, not "we cover everything"
 
-Per CLAUDE.md's "Detection rules live in YAML, not Python": every entry
+Per CONSTITUTION.md's "Detection rules live in YAML, not Python": every entry
 above exists because someone wrote it into a `rules/*.yaml` file. There is
 no fallback heuristic, no LLM-based guess, no partial credit for "looks like
 crypto" — a call this tool doesn't recognize produces **no finding**, the

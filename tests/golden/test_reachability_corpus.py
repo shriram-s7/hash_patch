@@ -2,7 +2,7 @@
 
 Regression test for the reachability corpus additions under testdata/python/,
 testdata/java/, and testdata/c/ (see docs/REACHABILITY.md and the
-"Reachability" section of CLAUDE.md). Runs the real CLI scan path
+"Reachability" section of CONSTITUTION.md). Runs the real CLI scan path
 (hash_patch.cli.run_scan) — the same one `hash-patch scan` uses — over each
 language's testdata directory and checks every entry in
 tests/golden/reachability_manifest.json against the resulting

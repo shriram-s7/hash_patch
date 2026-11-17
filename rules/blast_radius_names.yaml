@@ -3,7 +3,7 @@
 # Crypto-material NAME PATTERNS shared by both blast-radius detectors —
 # hash_patch/detect/blast_radius/c_buffers.py (buffer/heap-alloc variable
 # names) and hash_patch/detect/blast_radius/sql_ddl.py (column names) — so
-# the pattern list is defined exactly once, per CLAUDE.md's "detection
+# the pattern list is defined exactly once, per CONSTITUTION.md's "detection
 # rules live in YAML, not Python".
 #
 # Matching is substring, case-insensitive, against the identifier (variable

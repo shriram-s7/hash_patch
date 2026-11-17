@@ -3,7 +3,7 @@
 # Pillar 5 (Migration Optimiser) quantum-arrival scenarios. Data only — no
 # Python logic hardcodes a scenario name, an estimated year, or a
 # probability weight anywhere else in the codebase; everything reads this
-# file, per CLAUDE.md's "detection rules live in YAML, not Python".
+# file, per CONSTITUTION.md's "detection rules live in YAML, not Python".
 #
 # ===========================================================================
 # HONESTY DISCLAIMER — READ BEFORE TRUSTING THESE NUMBERS FOR ANYTHING

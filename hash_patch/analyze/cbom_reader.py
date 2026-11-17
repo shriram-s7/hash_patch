@@ -10,11 +10,11 @@ out exactly the `hash_patch:` properties P1/P2/P3 already attached —
 `hash_patch:quantumStatus`, `hash_patch:reachability`, the
 `hash_patch:property.shelfLife.<category>` and
 `hash_patch:property.blastRadius.<kind>.<name>.<line>` free-form properties
-— never re-deriving or inventing any of them. See CLAUDE.md's "Output
+— never re-deriving or inventing any of them. See CONSTITUTION.md's "Output
 format" -> "Field mapping" for the exact property shapes this reads back.
 
 Also reads the component's own `evidence.occurrences` array length (a
-required, real field per CLAUDE.md hard constraint #3 -- never invented
+required, real field per CONSTITUTION.md hard constraint #3 -- never invented
 here) as the call-site count `hash_patch/analyze/risk_score.py`'s cost
 model falls back to when there is no blast-radius figure; see that
 module's docstring.
@@ -141,7 +141,7 @@ def _blast_radius_effort_days(props: dict[str, str]) -> float | None:
 def read_reference_year(doc: dict[str, Any]) -> int:
     """The scan date embedded in the CBOM's own `metadata.timestamp` — the
     one place this pillar reads a "current date" from. It never reads the
-    system clock itself; see CLAUDE.md hard constraint #2 and
+    system clock itself; see CONSTITUTION.md hard constraint #2 and
     docs/OPTIMISER.md.
     """
     timestamp = doc.get("metadata", {}).get("timestamp")
@@ -175,7 +175,7 @@ def read_candidates(doc: dict[str, Any]) -> tuple[list[OptimizerCandidate], int]
         # finding_type (see emit/cyclonedx.py::_asset_properties), so its
         # absence means "OPERATION". Anything else — CRYPTO_REFERENCE (a
         # string literal that merely looks like an algorithm name, never
-        # passed to a crypto call; see CLAUDE.md's "Name" section and
+        # passed to a crypto call; see CONSTITUTION.md's "Name" section and
         # hash_patch/detect/c.py's `_try_collect_reference`), or a parsed
         # CERTIFICATE finding (hash_patch/detect/certificates.py — a real
         # crypto artefact, but not yet wired into Pillar 5's cost model,

@@ -1,7 +1,7 @@
 # Vendored CycloneDX schemas
 
 These files are the official CycloneDX 1.6 JSON schemas, downloaded once as a
-dev-tooling step (network access is allowed here — see CLAUDE.md hard
+dev-tooling step (network access is allowed here — see CONSTITUTION.md hard
 constraint #1) and committed so that scan-time and test-time stay fully
 offline.
 
@@ -21,7 +21,7 @@ change these files underneath us.
 ## Re-fetching
 
 Only do this deliberately, as a one-off dev-tooling step, when bumping the
-CycloneDX spec version this project targets (see CLAUDE.md "DO NOT"). Never
+CycloneDX spec version this project targets (see CONSTITUTION.md "DO NOT"). Never
 fetch these at scan time or test time.
 
 ```bash

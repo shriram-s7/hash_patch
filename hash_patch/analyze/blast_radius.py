@@ -10,7 +10,7 @@ caveat.
 **Correlation is same-file AND nearest-by-line.** A SizeConstraint is only
 ever correlated with a CryptoAsset that (a) shares a locator (file path)
 among its evidence — cross-file name-based correlation is a false-positive
-machine, see CLAUDE.md's "Blast Radius" section — and, among same-file
+machine, see CONSTITUTION.md's "Blast Radius" section — and, among same-file
 candidates, (b) is the CLOSEST by line distance. A single file legitimately
 containing two unrelated crypto operations (e.g. an RSA signing routine and
 an Ed25519 keygen routine) must not let a buffer near one get credited to

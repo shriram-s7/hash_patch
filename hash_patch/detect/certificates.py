@@ -47,7 +47,7 @@ all, not a negative one.
 
 `reference_date` is always the caller-supplied scan date
 (ScanResult.scan_started_at.date() in hash_patch/cli.py::run_scan) — never
-read from the system clock in this module, per CLAUDE.md hard constraint
+read from the system clock in this module, per CONSTITUTION.md hard constraint
 #2. Two scans of the same certificate on different days will legitimately
 report different `expired`/`expiringSoon`/`shelf_life_years` values because
 time genuinely passed; this mirrors the one sanctioned exception

@@ -259,7 +259,7 @@ same displayed value.)
 ## Determinism
 
 Like every other pillar, this one must produce byte-identical output for
-identical input (CLAUDE.md hard constraint #2). `compute_risk_score`,
+identical input (CONSTITUTION.md hard constraint #2). `compute_risk_score`,
 `estimate_cost_days`, `_schedule`, and `run_optimizer` never read the
 system clock — the ONE date this pillar needs (`reference_year`) is read
 from the input CBOM's own `metadata.timestamp`

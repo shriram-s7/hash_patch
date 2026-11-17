@@ -3,7 +3,7 @@
 Unit tests for hash_patch.detect.c.COpenSSLDetector.
 
 Design notes:
-  - No algorithm names are hardcoded in this file (CLAUDE.md constraint).
+  - No algorithm names are hardcoded in this file (CONSTITUTION.md constraint).
     Expected canonical names and quantum statuses are read from
     rules/c_openssl.yaml via helper functions.
   - Every assertion about a CryptoAsset verifies that at least one Evidence

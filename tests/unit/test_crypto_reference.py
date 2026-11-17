@@ -6,7 +6,7 @@ A CRYPTO_REFERENCE is a string literal that merely looks like an algorithm or
 cipher-suite name (a TLS-suite getter, a certificate-family getter, an unused
 algorithm-name map/const value) but is never passed as an argument to any
 recognized crypto API call anywhere in the file. It must never be reported as
-an OPERATION (a real, observed crypto call) — see CLAUDE.md's "Name" section
+an OPERATION (a real, observed crypto call) — see CONSTITUTION.md's "Name" section
 and hash_patch/detect/c.py::_try_collect_reference for the rationale that
 first established this for C; hash_patch/detect/java.py and
 hash_patch/detect/go.py mirror the same logic.

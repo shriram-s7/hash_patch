@@ -8,7 +8,7 @@ actually does on the other side of that API call — which algorithm it
 uses, how the key is actually protected, whether the provider has already
 migrated to PQC. Every finding here is "cloud-managed key usage detected",
 never "cloud infrastructure scanned" or "KMS configuration verified" — see
-CLAUDE.md's "Cloud KMS" section. This is why every finding carries
+CONSTITUTION.md's "Cloud KMS" section. This is why every finding carries
 `hash_patch:property.cloudKey.verificationScope = "client_call_only"`
 (never omitted) and why `quantum_status` is always
 `QuantumStatus.ALGORITHM_OPAQUE` (hash_patch/model/assets.py) rather than a

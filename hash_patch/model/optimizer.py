@@ -18,7 +18,7 @@ class OptimizerCandidate(BaseModel):
     docs/OPTIMISER.md for why broken-classically/weakened-by-grover findings
     are out of scope for this pillar.
 
-    `shelf_life_is_default` / `cost_source` make clear, per CLAUDE.md's
+    `shelf_life_is_default` / `cost_source` make clear, per CONSTITUTION.md's
     honesty conventions, when a figure came from real P2/P3 data versus a
     documented low-confidence fallback — never silently blur the two.
     """

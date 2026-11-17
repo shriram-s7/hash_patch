@@ -177,10 +177,10 @@ _attach_blast_radius_properties` builds a SYNTHETIC `CryptoAsset` for it
 (`_synthetic_asset_for_inferred_finding`) — named after the inferred PQC
 family (e.g. `"ML-DSA-65 (inferred)"`), typed `cryptographic-asset` like
 every other component, carrying the `SizeConstraint`'s own evidence (so
-CLAUDE.md hard constraint #3 is still satisfied: it points at the real
+CONSTITUTION.md hard constraint #3 is still satisfied: it points at the real
 `.sql` file/line), and with `hash_patch:confidence = "inferred"` rather
 than `"confirmed"` — never merged into the confirmed inventory as if it
-were an equivalent, direct observation (CLAUDE.md's "Name" section). This
+were an equivalent, direct observation (CONSTITUTION.md's "Name" section). This
 makes the finding visible in the actual written CBOM, not just the CLI
 summary line and `ScanResult.blast_radius_findings`. See
 `tests/golden/test_blast_radius_golden.py::
@@ -212,7 +212,7 @@ whenever the scanned file set contains `.c`/`.h`/`.cpp`/`.cc`/`.cxx`/
 value: `declaredBytes`, `classicalBytes`, `pqcBytes`, `overflowBytes`,
 `pqcReplacement`, `severity`, `estimatedEffortDays`, `locator`) — the same
 free-form `properties` bag / `hash_patch:property.<key>` namespacing
-CLAUDE.md already documents, not a new top-level CBOM section. A finding
+CONSTITUTION.md already documents, not a new top-level CBOM section. A finding
 with no real correlated `CryptoAsset` (the `db_column` name-pattern-only
 fallback — see above) gets a SYNTHETIC component of its own instead, with
 the same `blastRadius.*` property and `hash_patch:confidence = "inferred"`.

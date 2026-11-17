@@ -170,7 +170,7 @@ def test_cost_falls_back_to_default_for_zero_blast_radius_days() -> None:
 
 
 def test_default_cost_and_default_shelf_life_are_distinguishable_sources() -> None:
-    """CLAUDE.md's honesty convention: a default must never be
+    """CONSTITUTION.md's honesty convention: a default must never be
     indistinguishable from a real figure in the output.
     """
     _, shelf_is_default = estimate_shelf_life_magnitude(None)

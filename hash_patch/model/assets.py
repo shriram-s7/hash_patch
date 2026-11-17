@@ -12,7 +12,7 @@ from hash_patch.model.evidence import Evidence
 # CryptoAsset). "inferred" = a name-pattern-only guess with no corroborating
 # direct evidence of *which* algorithm produced the artefact (e.g. the
 # blast-radius db_column fallback, see hash_patch/analyze/blast_radius.py) —
-# per CLAUDE.md's "Name" section, this is never merged into the confirmed
+# per CONSTITUTION.md's "Name" section, this is never merged into the confirmed
 # inventory as if it were equivalent; it must stay visibly distinguishable in
 # the emitted CBOM (hash_patch:confidence property, see emit/cyclonedx.py).
 Confidence = Literal["confirmed", "inferred", "HIGH", "LOW", "high", "low"]
@@ -61,7 +61,7 @@ class QuantumStatus(str, Enum):
     # and never a blast-radius candidate (Pillar 3) -- both pillars only
     # ever consider BROKEN_BY_SHOR assets, so this status excludes cloud-key
     # findings from both automatically, with no separate exclusion logic
-    # needed. See CLAUDE.md's "Cloud KMS" section.
+    # needed. See CONSTITUTION.md's "Cloud KMS" section.
     ALGORITHM_OPAQUE = "algorithm-opaque-provider-managed"
 
 

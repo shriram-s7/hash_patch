@@ -11,7 +11,7 @@ tests/golden/test_shelf_life_golden.py, which drives the same corpus off
 tests/golden/shelf_life_manifest.json).
 
 Section 2: cross-file correlation must NEVER happen — the same honesty rule
-hash_patch/analyze/blast_radius.py enforces (CLAUDE.md's "Blast Radius"
+hash_patch/analyze/blast_radius.py enforces (CONSTITUTION.md's "Blast Radius"
 section), applied here to DataContextMatch <-> CryptoAsset correlation.
 
 Section 3: "no signal found" must produce no finding at all — never a

@@ -17,7 +17,7 @@ def _load_schema_validator() -> jsonschema.Draft7Validator:
 
     Resolves $refs (spdx.schema.json, jsf-0.82.schema.json#/definitions/signature)
     purely from the local vendored files under schemas/ -- never over the
-    network, at scan time or test time (see CLAUDE.md hard constraint #1 and
+    network, at scan time or test time (see CONSTITUTION.md hard constraint #1 and
     "DO NOT"). This is the single validator both the CLI's --validate flag
     and tests/unit/test_cyclonedx.py go through.
     """

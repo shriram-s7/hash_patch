@@ -7,7 +7,7 @@
 # algorithm it uses, how the key is protected, whether it's PQC-migrated
 # already). Every finding this produces carries
 # hash_patch:property.cloudKey.verificationScope = "client_call_only" for
-# exactly this reason. See CLAUDE.md's "Cloud KMS" section.
+# exactly this reason. See CONSTITUTION.md's "Cloud KMS" section.
 #
 # Hash Patch constraint (same as every other detector): no SDK class name,
 # method name, or provider identity is hardcoded in Python -- it all lives

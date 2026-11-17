@@ -4,7 +4,7 @@ matching for the blast-radius detectors.
 Loads rules/blast_radius_names.yaml exactly once per call site and matches
 a buffer/column identifier against it. Both c_buffers.py and sql_ddl.py
 import this module rather than each loading/duplicating the pattern list,
-per CLAUDE.md's "detection rules live in YAML, not Python".
+per CONSTITUTION.md's "detection rules live in YAML, not Python".
 """
 
 from __future__ import annotations

@@ -140,7 +140,7 @@ def test_sql_inferred_finding_is_emitted_as_a_synthetic_cbom_component() -> None
     assert parsed["overflowBytes"] > 0
     assert parsed["locator"].replace("\\", "/").endswith("testdata/sql/schema.sql")
 
-    assert asset.evidence, "the synthetic asset must carry real evidence (CLAUDE.md hard constraint #3)"
+    assert asset.evidence, "the synthetic asset must carry real evidence (CONSTITUTION.md hard constraint #3)"
     assert any(ev.locator.replace("\\", "/").endswith("testdata/sql/schema.sql") for ev in asset.evidence)
 
     doc = to_cyclonedx(result)

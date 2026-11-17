@@ -187,7 +187,7 @@ def _shelf_life_property(finding: ShelfLifeFinding) -> tuple[str, str]:
 def _attach_shelf_life_properties(result: ScanResult) -> None:
     """Mirror each shelf-life finding onto its correlated CBOM component's
     `properties` bag — the same `hash_patch:property.<key>` namespacing
-    CLAUDE.md documents (see hash_patch/emit/cyclonedx.py's field mapping)
+    CONSTITUTION.md documents (see hash_patch/emit/cyclonedx.py's field mapping)
     and `_attach_blast_radius_properties` already uses.
 
     Unlike blast radius, every ShelfLifeFinding always has a real,
@@ -230,11 +230,11 @@ def _synthetic_asset_for_inferred_finding(finding: BlastRadiusFinding) -> Crypto
     docstring) so it's actually visible in the emitted CBOM instead of only
     existing in the CLI summary line / ScanResult.blast_radius_findings.
 
-    Marked `confidence="inferred"` (never "confirmed" -- CLAUDE.md's "Name"
+    Marked `confidence="inferred"` (never "confirmed" -- CONSTITUTION.md's "Name"
     section) since this isn't a direct observation of which algorithm
     produced the underlying data, only a name-pattern guess at what it would
     need to become. It still carries real Evidence -- the SizeConstraint's
-    own file/line -- satisfying CLAUDE.md hard constraint #3.
+    own file/line -- satisfying CONSTITUTION.md hard constraint #3.
     """
     return CryptoAsset.create(
         asset_type=AssetType.ALGORITHM,
@@ -249,7 +249,7 @@ def _synthetic_asset_for_inferred_finding(finding: BlastRadiusFinding) -> Crypto
 def _attach_blast_radius_properties(result: ScanResult) -> None:
     """Mirror each blast-radius finding onto a CBOM component's `properties`
     bag — the same `hash_patch:property.<key>` CBOM namespacing pattern
-    CLAUDE.md already documents for arbitrary asset-level data (see
+    CONSTITUTION.md already documents for arbitrary asset-level data (see
     hash_patch/emit/cyclonedx.py's field mapping).
 
     A finding with a real correlated CryptoAsset (asset_id matches one in
@@ -347,7 +347,7 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
     # Certificate file parsing (.pem/.crt/.cer/.der/.p12/.pfx): a NEW,
     # INDEPENDENT pipeline stage, not a language source detector -- see
     # hash_patch/detect/certificates.py's module docstring. reference_date
-    # is scan_started_at.date(), the one wall-clock read CLAUDE.md permits
+    # is scan_started_at.date(), the one wall-clock read CONSTITUTION.md permits
     # (same source shelf-life inference below already uses), never a fresh
     # clock read inside the certificate module itself.
     for cert_asset in detect_certificates(scanned_files, result.scan_started_at.date()):
@@ -385,7 +385,7 @@ def run_scan(path: Path, tool_version: str = __version__) -> ScanResult:
 
     # Pillar 2 (Shelf-Life Inference), Python/Java only — see
     # hash_patch/analyze/shelf_life.py. scan_started_at.date() is the one
-    # wall-clock read CLAUDE.md permits (ScanResult.scan_started_at itself);
+    # wall-clock read CONSTITUTION.md permits (ScanResult.scan_started_at itself);
     # run_shelf_life/compute_shelf_life never read the clock themselves.
     result.shelf_life_findings = run_shelf_life(result.assets, result.scan_started_at.date())
     _attach_shelf_life_properties(result)

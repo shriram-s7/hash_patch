@@ -3,7 +3,7 @@
 Unit tests for hash_patch.detect.java.JavaJcaDetector.
 
 Design notes:
-  - No algorithm names are hardcoded in this test file (CLAUDE.md constraint).
+  - No algorithm names are hardcoded in this test file (CONSTITUTION.md constraint).
     Expected algorithm names and quantum statuses come from rules/java_jca.yaml
     via a helper that loads the same file the detector uses.
   - Every assertion about a CryptoAsset verifies that at least one Evidence

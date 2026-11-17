@@ -19,7 +19,7 @@ case. The code CLAIMS "ECDSA" (via the value it computed and could have
 branched on) while actually doing RSA.
 
 **Scope and honesty caveats (deliberately conservative, same design
-discipline as CLAUDE.md's "Blast Radius" and shelf-life same-file rules):**
+discipline as CONSTITUTION.md's "Blast Radius" and shelf-life same-file rules):**
 
 1. **Same package (directory) only.** A Go package is a real,
    language-defined visibility/call boundary — not an arbitrary heuristic

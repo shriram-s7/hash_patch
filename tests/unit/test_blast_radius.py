@@ -5,7 +5,7 @@ Unit tests for Pillar 3 (Blast Radius):
   hash_patch/analyze/blast_radius.py
 
 Section 1: cross-file correlation must NEVER happen (the single most
-important safety property this pillar has, per CLAUDE.md's "Blast Radius"
+important safety property this pillar has, per CONSTITUTION.md's "Blast Radius"
 section — same-file correlation is what keeps this from being a
 false-positive machine).
 

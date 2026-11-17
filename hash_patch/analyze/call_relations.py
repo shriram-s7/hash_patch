@@ -197,7 +197,7 @@ def compute_call_relations(
 
     Returns `{asset_id: {"callers": [asset_id, ...], "callees": [asset_id, ...]}}`,
     sorted for determinism, omitting any asset with no relations at all (an
-    empty dict entry would carry no information and CLAUDE.md hard constraint
+    empty dict entry would carry no information and CONSTITUTION.md hard constraint
     #2 requires deterministic, minimal output). A same-orchestrator "sibling"
     relation (neither asset transitively calls the other; they're both
     delegated to by a shared ancestor) has no natural caller/callee direction

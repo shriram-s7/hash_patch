@@ -6,7 +6,7 @@ Section 1 exercises the four reachability corpus fixtures under
 testdata/python/ and testdata/java/ (see docs/REACHABILITY.md), each with
 its own explicit assertion of the exact expected classification.
 
-Section 2 is the safety-critical suite: the HARD SAFETY RULE in CLAUDE.md
+Section 2 is the safety-critical suite: the HARD SAFETY RULE in CONSTITUTION.md
 and docs/REACHABILITY.md says a live, externally-reachable crypto call must
 NEVER be classified INERT, and "when in doubt, UNKNOWN, not INERT" for
 anything genuinely uncertain. test_live_call_never_classified_as_inert is

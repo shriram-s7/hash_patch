@@ -117,7 +117,7 @@ and produces a `ShelfLifeFinding` (`hash_patch/model/shelf_life.py`) for an
 asset when at least one `DataContextMatch` shares BOTH the asset's file
 (`locator`) AND one of the asset's own evidence LINES — never cross-file
 (the same same-file correlation honesty rule
-`hash_patch/analyze/blast_radius.py` follows, per CLAUDE.md's "Blast
+`hash_patch/analyze/blast_radius.py` follows, per CONSTITUTION.md's "Blast
 Radius" section), and never merely "somewhere else in the same file"
 either, per the class-scoping design above.
 
@@ -136,12 +136,12 @@ synthetic and a real-file order-swap, not just a single hardcoded outcome.
 **An asset with zero same-file, same-call-site `DataContextMatch` gets no
 `ShelfLifeFinding` at all.** This is deliberately NOT the same as "assign
 the `generic_pii` default" — genuinely unmatched code produces no opinion,
-per the "hard evidence or it doesn't exist" principle CLAUDE.md's "Name"
+per the "hard evidence or it doesn't exist" principle CONSTITUTION.md's "Name"
 section describes for the rest of this tool.
 
 `scan_date` is a required parameter, always supplied by the caller
 (`hash_patch/cli.py::run_scan` passes `ScanResult.scan_started_at.date()` —
-the one wall-clock read CLAUDE.md's determinism hard constraint already
+the one wall-clock read CONSTITUTION.md's determinism hard constraint already
 permits, and only there). `compute_shelf_life` and `run_shelf_life`
 themselves never read the system clock, so two calls with the same
 `scan_date` and the same inputs always produce byte-identical
@@ -157,7 +157,7 @@ Findings are mirrored onto that asset's CBOM component as
 `hash_patch:property.shelfLife.<category>` properties (JSON value:
 `shelfLifeYears`, `statutoryBasis`, `confidence`, `moscaNote`, `locator`) —
 the same free-form `properties` bag / `hash_patch:property.<key>`
-namespacing CLAUDE.md documents. Every scan prints a summary line:
+namespacing CONSTITUTION.md documents. Every scan prints a summary line:
 `N shelf-life findings (longest: X years, category)`.
 
 ## Corpus

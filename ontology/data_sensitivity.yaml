@@ -3,7 +3,7 @@
 # Pillar 2 (Shelf-Life Inference) data-sensitivity ontology. Data only — no
 # Python logic hardcodes a category name, a name pattern, a shelf-life
 # figure, or a statutory citation anywhere else in the codebase; everything
-# reads this file, per CLAUDE.md's "detection rules live in YAML, not
+# reads this file, per CONSTITUTION.md's "detection rules live in YAML, not
 # Python".
 #
 # ===========================================================================

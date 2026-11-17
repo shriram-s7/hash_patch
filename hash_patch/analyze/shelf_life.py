@@ -11,7 +11,7 @@ reasonable-effort defaults, NOT verified legal citations).
 
 **Correlation is same-file AND same-call-site.** A DataContextMatch is only
 ever correlated with a CryptoAsset when they share BOTH a locator (file
-path) AND an exact evidence line — never cross-file (CLAUDE.md's same-file
+path) AND an exact evidence line — never cross-file (CONSTITUTION.md's same-file
 correlation honesty rule, mirrored from hash_patch/analyze/blast_radius.py),
 and never merely "somewhere else in the same file" either. This works
 because hash_patch/detect/shelf_life/data_context.py always anchors a
@@ -111,10 +111,10 @@ def compute_shelf_life(
     with at least one match.
 
     `scan_date` must come from the caller (hash_patch/cli.py::run_scan uses
-    `ScanResult.scan_started_at.date()` — the one wall-clock read CLAUDE.md
+    `ScanResult.scan_started_at.date()` — the one wall-clock read CONSTITUTION.md
     already permits, and only there). This function itself never reads the
     system clock: two calls with the same `scan_date` and inputs always
-    produce byte-identical `mosca_note` text, preserving CLAUDE.md's
+    produce byte-identical `mosca_note` text, preserving CONSTITUTION.md's
     determinism hard constraint.
     """
     if not data_context_matches:

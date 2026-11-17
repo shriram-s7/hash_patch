@@ -179,7 +179,7 @@ something `to_cyclonedx` added.
     `hash_patch/cli.py::_synthetic_asset_for_inferred_finding`): a
     synthetic component that still carries real `Evidence` (the file/line
     that suggested it) but is not a direct observation of which algorithm
-    produced the artefact, per CLAUDE.md's "Name" section.
+    produced the artefact, per CONSTITUTION.md's "Name" section.
   - Any `crypto_functions` / `mode` value that does *not* match the
     CycloneDX enum is preserved verbatim in
     `hash_patch:cryptoFunctionsUnmapped` / `hash_patch:modeUnmapped` rather

@@ -55,7 +55,7 @@ def test_certificate_never_gets_a_reachability_vote() -> None:
     """Reachability does not apply to certificate files -- they are never
     "called" from code. Evidence.source_type="certificate" (not "source")
     means hash_patch/analyze/reachability.py's classifier casts no vote, so
-    it stays at the model default. See CLAUDE.md's Reachability section.
+    it stays at the model default. See CONSTITUTION.md's Reachability section.
     """
     result = run_scan(CERT_DIR)
     cert_assets = [a for a in result.assets if a.asset_type is AssetType.CERTIFICATE]
